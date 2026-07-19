@@ -1,17 +1,18 @@
 """Core forensic analysis functions.
 
-Implements Error Level Analysis (ELA) and JPEG Ghost (multi-quality
-recompression scan) as the first two forensic cues. Each cue returns a
-bounded 0-1 "score" (higher = more suspicious) plus the raw evidence used
-to compute it, so results stay explainable.
+Implements Error Level Analysis (ELA) plus complementary cues: EXIF/metadata
+inspection and JPEG quantization-table checks. Each cue returns a bounded
+0-1 "score" (higher = more suspicious) plus the raw evidence used to compute
+it, so results stay explainable.
 """
 import base64
 import io
 import math
+import re
 from typing import Any, Dict, List, Tuple
 
 import numpy as np
-from PIL import Image, ImageChops, ImageFilter
+from PIL import Image, ImageChops, ImageFilter, ExifTags
 
 
 # ---------------------------------------------------------------------------
@@ -186,5 +187,74 @@ def compute_jpeg_ghost(image: Image.Image, block_size: int = 16,
         "largest_cluster_ratio": round(cluster_ratio, 4),
         "largest_cluster_size": int(cluster_size),
         "qualities_tested": qualities,
+        "score": round(score, 4),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Metadata / EXIF
+# ---------------------------------------------------------------------------
+
+def check_metadata(image: Image.Image) -> Dict[str, Any]:
+    exif_raw = image.getexif()
+    fields: Dict[str, str] = {}
+    if exif_raw:
+        for tag_id, value in exif_raw.items():
+            tag = ExifTags.TAGS.get(tag_id, tag_id)
+            if isinstance(value, bytes):
+                try:
+                    value = value.decode(errors="replace")
+                except Exception:
+                    value = str(value)
+            fields[str(tag)] = str(value)[:200]
+
+    suspicious: List[str] = []
+    weight = 0.0
+    software = fields.get("Software", "")
+    editing_tools = ["photoshop", "gimp", "paint.net", "pixelmator", "affinity", "canva"]
+    if any(tool in software.lower() for tool in editing_tools):
+        suspicious.append(f"Software tag indicates an editing tool was used: {software}")
+        weight += 1.0
+
+    has_gps = any(k.lower().startswith("gps") for k in fields)
+    if has_gps:
+        suspicious.append("GPS metadata present (stripped before any storage/response logging)")
+        weight += 0.5
+
+    has_camera_tags = "Make" in fields or "Model" in fields
+    if has_camera_tags:
+        suspicious.append("Camera EXIF (Make/Model) present on an image submitted as a screenshot")
+        weight += 0.5
+
+    metadata_score = min(1.0, weight)
+    return {
+        "has_exif": bool(fields),
+        "fields": fields,
+        "suspicious_flags": suspicious,
+        "score": round(metadata_score, 4),
+    }
+
+
+# ---------------------------------------------------------------------------
+# JPEG quantization tables
+# ---------------------------------------------------------------------------
+
+def check_quantization_tables(image: Image.Image) -> Dict[str, Any]:
+    qtables = getattr(image, "quantization", None)
+    if not qtables:
+        return {
+            "present": False,
+            "num_tables": 0,
+            "note": "No JPEG quantization tables found (not a native JPEG, e.g. a PNG screenshot).",
+            "score": 0.0,
+        }
+
+    num_tables = len(qtables)
+    suspicious = num_tables > 2
+    score = 0.6 if suspicious else 0.0
+    return {
+        "present": True,
+        "num_tables": num_tables,
+        "suspicious_multiple_tables": suspicious,
         "score": round(score, 4),
     }
