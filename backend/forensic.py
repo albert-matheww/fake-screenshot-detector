@@ -1,9 +1,9 @@
 """Core forensic analysis functions.
 
 Implements Error Level Analysis (ELA) plus complementary cues: EXIF/metadata
-inspection and JPEG quantization-table checks. Each cue returns a bounded
-0-1 "score" (higher = more suspicious) plus the raw evidence used to compute
-it, so results stay explainable.
+inspection, JPEG quantization-table checks, and OCR-based document text
+forensics. Each cue returns a bounded 0-1 "score" (higher = more suspicious)
+plus the raw evidence used to compute it, so results stay explainable.
 """
 import base64
 import io
@@ -13,6 +13,11 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 from PIL import Image, ImageChops, ImageFilter, ExifTags
+
+try:
+    import pytesseract
+except ImportError:
+    pytesseract = None
 
 
 # ---------------------------------------------------------------------------
@@ -232,6 +237,56 @@ def check_metadata(image: Image.Image) -> Dict[str, Any]:
         "fields": fields,
         "suspicious_flags": suspicious,
         "score": round(metadata_score, 4),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Document text (OCR) — watermark / placeholder-data detection
+# ---------------------------------------------------------------------------
+
+_GENERATOR_WATERMARKS = [
+    "bankstatements.net", "bank statements.net", "thepaystubs", "paystubcreator",
+    "stubcreator", "makereceipt", "receiptmakerly", "docutemplates",
+    "specimen", "sample statement", "not a real bank statement",
+    "for novelty purposes only", "for entertainment purposes only",
+    "this is not a real", "template only", "demo purposes only",
+    "not a real document", "not an official document",
+]
+
+_PLACEHOLDER_NAMES = ["john doe", "jane doe", "john smith", "test user", "sample name"]
+
+_PLACEHOLDER_NUMBER_RE = re.compile(r"(\d)\1{5,}|123456789|987654321")
+
+
+def check_document_text(image: Image.Image) -> Dict[str, Any]:
+    if pytesseract is None:
+        return {"score": 0.0, "note": "OCR not available in this environment.", "matched_flags": []}
+
+    try:
+        text = pytesseract.image_to_string(image.convert("RGB"))
+    except Exception as exc:
+        return {"score": 0.0, "note": f"OCR failed: {exc}", "matched_flags": []}
+
+    lower = text.lower()
+    flags: List[str] = []
+
+    for marker in _GENERATOR_WATERMARKS:
+        if marker in lower:
+            flags.append(f'Text contains a known fake-document-generator marker: "{marker}"')
+
+    for name in _PLACEHOLDER_NAMES:
+        if name in lower:
+            flags.append(f'Text contains a placeholder name: "{name}"')
+
+    if _PLACEHOLDER_NUMBER_RE.search(lower.replace(" ", "")):
+        flags.append("Text contains an obviously placeholder account/routing number "
+                      "(repeated or sequential digits)")
+
+    score = min(1.0, 0.9 * len(flags)) if flags else 0.0
+    return {
+        "score": round(score, 4),
+        "matched_flags": flags,
+        "extracted_text_length": len(text.strip()),
     }
 
 
