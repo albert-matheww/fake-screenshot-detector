@@ -1,9 +1,10 @@
 """Core forensic analysis functions.
 
 Implements Error Level Analysis (ELA) plus complementary cues: EXIF/metadata
-inspection, JPEG quantization-table checks, and OCR-based document text
-forensics. Each cue returns a bounded 0-1 "score" (higher = more suspicious)
-plus the raw evidence used to compute it, so results stay explainable.
+inspection, JPEG quantization-table checks, OCR-based document text
+forensics, and block-wise noise consistency analysis. Each cue returns a
+bounded 0-1 "score" (higher = more suspicious) plus the raw evidence used
+to compute it, so results stay explainable.
 """
 import base64
 import io
@@ -311,5 +312,49 @@ def check_quantization_tables(image: Image.Image) -> Dict[str, Any]:
         "present": True,
         "num_tables": num_tables,
         "suspicious_multiple_tables": suspicious,
+        "score": round(score, 4),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Block-wise noise consistency
+# ---------------------------------------------------------------------------
+
+_HIGH_PASS_KERNEL = ImageFilter.Kernel((3, 3), [-1, -1, -1, -1, 8, -1, -1, -1, -1], scale=1)
+
+
+def estimate_noise_inconsistency(image: Image.Image, block_size: int = 32) -> Dict[str, Any]:
+    gray = image.convert("L")
+    w, h = gray.size
+    hp = np.array(gray.filter(_HIGH_PASS_KERNEL), dtype=np.float32)
+
+    bh, bw = h // block_size, w // block_size
+    if bh < 2 or bw < 2:
+        return {"score": 0.0, "note": "Image too small for reliable block noise analysis."}
+
+    cropped = hp[: bh * block_size, : bw * block_size]
+    block_stds = cropped.reshape(bh, block_size, bw, block_size).std(axis=(1, 3))
+
+    overall_mean = float(block_stds.mean()) or 1e-6
+    overall_std = float(block_stds.std())
+    coefficient_of_variation = overall_std / overall_mean
+
+    if bh >= 5 and bw >= 5:
+        outlier_mask = _local_outlier_mask(block_stds)
+        cluster_size = _largest_connected_component(outlier_mask)
+    else:
+        outlier_mask = np.zeros_like(block_stds, dtype=bool)
+        cluster_size = 0
+    outlier_ratio = float(outlier_mask.mean())
+    cluster_ratio = cluster_size / (bh * bw)
+
+    cluster_term = min(1.0, cluster_size / 2.0)
+    score = min(1.0, (cluster_term * 0.7) + max(0.0, (coefficient_of_variation - 0.6) / 2.5) * 0.5)
+    return {
+        "block_count": int(bh * bw),
+        "noise_cv": round(coefficient_of_variation, 4),
+        "outlier_block_ratio": round(outlier_ratio, 4),
+        "largest_cluster_ratio": round(cluster_ratio, 4),
+        "largest_cluster_size": int(cluster_size),
         "score": round(score, 4),
     }
