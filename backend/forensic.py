@@ -2,9 +2,9 @@
 
 Implements Error Level Analysis (ELA) plus complementary cues: EXIF/metadata
 inspection, JPEG quantization-table checks, OCR-based document text
-forensics, and block-wise noise consistency analysis. Each cue returns a
-bounded 0-1 "score" (higher = more suspicious) plus the raw evidence used
-to compute it, so results stay explainable.
+forensics, block-wise noise consistency analysis, and copy-move (clone)
+detection. Each cue returns a bounded 0-1 "score" (higher = more suspicious)
+plus the raw evidence used to compute it, so results stay explainable.
 """
 import base64
 import io
@@ -356,5 +356,101 @@ def estimate_noise_inconsistency(image: Image.Image, block_size: int = 32) -> Di
         "outlier_block_ratio": round(outlier_ratio, 4),
         "largest_cluster_ratio": round(cluster_ratio, 4),
         "largest_cluster_size": int(cluster_size),
+        "score": round(score, 4),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Lightweight copy-move (clone) detection
+# ---------------------------------------------------------------------------
+
+def _block_hash(block: np.ndarray) -> int:
+    small = Image.fromarray(block).resize((8, 8), Image.BILINEAR).convert("L")
+    arr = np.array(small, dtype=np.float32)
+    avg = arr.mean()
+    bits = (arr > avg).flatten()
+    h = 0
+    for bit in bits:
+        h = (h << 1) | int(bit)
+    return h
+
+
+def detect_clone_regions(image: Image.Image, block_size: int = 24, stride: int = 12,
+                          max_blocks: int = 2000, flat_std_threshold: float = 15.0) -> Dict[str, Any]:
+    rgb = np.array(image.convert("RGB"))
+    h, w, _ = rgb.shape
+
+    positions = [
+        (x, y)
+        for y in range(0, max(h - block_size, 0), stride)
+        for x in range(0, max(w - block_size, 0), stride)
+    ]
+
+    if len(positions) > max_blocks:
+        step = math.ceil(len(positions) / max_blocks)
+        positions = positions[::step]
+
+    buckets: Dict[int, List[Tuple[int, int]]] = {}
+    textured_blocks = 0
+    for (x, y) in positions:
+        block = rgb[y:y + block_size, x:x + block_size]
+        if block.std() < flat_std_threshold:
+            continue
+        textured_blocks += 1
+        h_val = _block_hash(block)
+        buckets.setdefault(h_val, []).append((x, y))
+
+    offset_votes: Dict[Tuple[int, int], int] = {}
+    offset_source_points: Dict[Tuple[int, int], List[Tuple[int, int]]] = {}
+    matched_hashes = 0
+    for h_val, pts in buckets.items():
+        if len(pts) < 2:
+            continue
+        found_far_pair = False
+        for i in range(len(pts)):
+            for j in range(i + 1, len(pts)):
+                (x1, y1), (x2, y2) = pts[i], pts[j]
+                if math.hypot(x2 - x1, y2 - y1) <= block_size * 3:
+                    continue
+                found_far_pair = True
+                dx, dy = x2 - x1, y2 - y1
+                src = (x1, y1)
+                if dx < 0 or (dx == 0 and dy < 0):
+                    dx, dy = -dx, -dy
+                    src = (x2, y2)
+                key = (round(dx / stride) * stride, round(dy / stride) * stride)
+                offset_votes[key] = offset_votes.get(key, 0) + 1
+                offset_source_points.setdefault(key, []).append(src)
+        if found_far_pair:
+            matched_hashes += 1
+
+    unique_patterns = max(1, len(buckets))
+    total_votes = sum(offset_votes.values())
+    if offset_votes:
+        dominant_offset, dominant_votes = max(offset_votes.items(), key=lambda kv: kv[1])
+    else:
+        dominant_offset, dominant_votes = (0, 0), 0
+
+    peak_ratio = dominant_votes / total_votes if total_votes else 0.0
+    coverage_ratio = dominant_votes / max(1, textured_blocks)
+
+    compact_ratio = 0.0
+    if dominant_votes >= 3:
+        src_pts = offset_source_points[dominant_offset]
+        xs = [p[0] for p in src_pts]
+        ys = [p[1] for p in src_pts]
+        bbox_area = (max(xs) - min(xs) + block_size) * (max(ys) - min(ys) + block_size)
+        compact_ratio = 1.0 - min(1.0, bbox_area / (w * h))
+
+    score = min(1.0, (peak_ratio * coverage_ratio * compact_ratio) * 20.0) if dominant_votes >= 3 else 0.0
+    return {
+        "blocks_checked": len(positions),
+        "textured_blocks": textured_blocks,
+        "unique_patterns": unique_patterns,
+        "duplicate_pairs": matched_hashes,
+        "dominant_offset": dominant_offset,
+        "dominant_offset_votes": dominant_votes,
+        "offset_peak_ratio": round(peak_ratio, 4),
+        "source_compactness": round(compact_ratio, 4),
         "score": round(score, 4),
     }
