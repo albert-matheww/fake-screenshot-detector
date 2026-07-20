@@ -1,0 +1,11 @@
+{
+  "feature_keys": [
+    "ela_score",
+    "ghost_score",
+    "quant_score",
+    "noise_score",
+    "clone_score",
+    "metadata_score",
+    "text_score"
+  ]
+}
