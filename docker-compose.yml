@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: fsd-backend
+    ports:
+      - "5050:5000"
+    environment:
+      - ELA_QUALITY=90
+      - FAKE_THRESHOLD=0.5
+      - CORS_ORIGINS=*
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: fsd-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
