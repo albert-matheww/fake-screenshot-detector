@@ -1,0 +1,814 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage{cite}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric,fit}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\code}[1]{\path{#1}}
+
+\begin{document}
+
+\title{Detecting Fabricated Chat and Bank-Statement Screenshots:\\
+Architecture, Implementation, and Evaluation of a Multi-Cue Forensic Pipeline}
+
+\author{
+\IEEEauthorblockN{Screenshot Forensics Project}
+\IEEEauthorblockA{Technical Report \\ July 2026}
+}
+
+\maketitle
+
+\begin{abstract}
+Screenshots of chat conversations and bank statements are widely accepted as
+informal proof of payment, identity, or communication, and are correspondingly
+widely forged. This paper presents the design, implementation, and evaluation
+of a working system that detects fabricated chat and bank-statement
+screenshots by combining seven forensic cues -- Error Level Analysis (ELA),
+JPEG Ghost double-compression analysis, JPEG quantization-table inspection,
+block-wise noise-consistency analysis, offset-vector-voting copy-move
+detection, EXIF/metadata inspection, and a novel optical-character-recognition
+(OCR) based document-text cue -- into a single suspicion score. Cue scores
+are combined by a RandomForest classifier trained on a real, publicly
+available labeled document-forgery dataset, with a high-confidence override
+layer that prevents a single conclusive signal (an editing-tool fingerprint,
+a caught fake-document-generator watermark) from being diluted by noisier
+pixel-level cues. We describe the full system architecture (a Flask backend
+and React frontend, containerized with Docker), the end-to-end usage flow, and
+the implementation of every cue in detail. We evaluate the system against both
+a self-generated synthetic corpus and a real labeled receipt-forgery dataset,
+report precision/recall/F1 results for a hand-weighted heuristic baseline
+versus the trained classifier, and present a documented real-world case study
+in which a fake bank statement was corrected from a false negative by the
+override mechanism. We situate this work against 23 papers spanning classical
+JPEG forensics, copy-move and splicing detection, deep-learning manipulation
+detection, and document/identity-document forgery detection, and identify a
+concrete literature gap: no prior published work specifically targets
+digitally rendered chat or bank-statement screenshots as a content class
+distinct from photographed or scanned documents. We report our results
+honestly, including a documented recall ceiling and a training/deployment
+domain gap, and outline concrete future work.
+\end{abstract}
+
+\begin{IEEEkeywords}
+image forensics, document forgery detection, error level analysis, copy-move detection, JPEG compression forensics, optical character recognition, RandomForest, fraud detection
+\end{IEEEkeywords}
+
+\section{Introduction}
+\label{sec:intro}
+
+Digital screenshots occupy an unusual evidentiary position: they are trivially
+easy to fabricate, yet routinely accepted at face value in disputes,
+marketplace transactions, and informal loan or tenancy verification. Two
+document classes account for the overwhelming majority of this misuse:
+chat-application screenshots (used to fake proof of payment, e.g.\ peer-to-peer
+transfer confirmations) and bank-statement screenshots or exports (used to
+fake proof of funds or income). Industry reporting on ``fake payment
+screenshot'' scams describes purpose-built generator tools that reproduce a
+target payment app's fonts, logos, and layout closely enough that manual
+visual inspection fails, and documents cases where victims released goods or
+services against a screenshot alone before any funds actually
+settled.\footnote{See, e.g., ``Fake Payment Screenshot Scams: How to Identify
+\& Prevent UPI Fraud,'' Cashfree blog, and ``What Is the Fake Payment
+Screenshot Scam? How Fraudsters Use Fake Receipts to Trick Retailers,''
+LatestLY, both accessed 2026.}
+
+This is, in forensic terms, a passive (blind) image authentication problem:
+the verifier has only the image itself, with no reference original, no
+digital signature, and -- critically for this content class -- no camera
+sensor to fingerprint, since the ``photo'' is a rendered user-interface (UI)
+screenshot rather than an optical capture. Decades of work in digital image
+forensics address adjacent versions of this problem for photographs
+(splicing, copy-move, resampling) and, more recently, for scanned or
+photographed physical documents (receipts, ID cards, passports).
+Section~\ref{sec:related} reviews this literature in depth. As
+Section~\ref{sec:gap} makes explicit, however, none of it directly targets
+screenshots of software UI as a content class, and this gap has concrete
+consequences: several classical cues that are well validated on photographic
+or scanned content are measurably weaker on flat, vector-rendered UI -- a
+finding this paper documents empirically (Section~\ref{sec:results}) rather
+than merely asserting.
+
+\subsection{Contributions}
+This paper makes the following contributions:
+\begin{itemize}
+\item A seven-cue forensic pipeline purpose-adapted for chat/bank-statement
+screenshots, including a novel OCR-based document-text cue that targets what
+turns out to be the most diagnostic signal for this content class: not pixel
+statistics, but the document's own text.
+\item A high-confidence override architecture that provably corrects a
+documented real-world false negative (Section~\ref{sec:case-study}) without
+increasing false-positive risk on the noisier pixel-level cues.
+\item A trained classifier evaluated against a real, publicly available
+labeled forgery dataset, with measured precision, recall, and F1 against both
+a hand-weighted heuristic baseline and the trained model.
+\item A literature review of 23 papers identifying where classical and
+learned forensic techniques do and do not transfer to this content domain.
+\end{itemize}
+
+\subsection{Paper Organization}
+Section~\ref{sec:related} reviews related work. Section~\ref{sec:architecture}
+describes the system architecture. Section~\ref{sec:cues} details every
+forensic cue's design and implementation.
+Section~\ref{sec:classification} describes the decision logic.
+Section~\ref{sec:implementation} covers implementation and deployment.
+Section~\ref{sec:usage} walks through the end-to-end usage flow.
+Section~\ref{sec:datasets} describes the datasets used.
+Section~\ref{sec:results} reports experimental results.
+Section~\ref{sec:discussion} discusses limitations, and
+Section~\ref{sec:conclusion} concludes with future work.
+
+\section{Related Work}
+\label{sec:related}
+
+This section reviews prior work across the subfields this project draws on.
+Within each subsection we note not only what each paper contributes but,
+where relevant, how well its assumptions transfer to the screenshot-forensics
+setting, since several of the negative results in Section~\ref{sec:results}
+trace directly to assumptions (photographic sensor noise, natural-image
+statistics, an optical capture pipeline) that do not hold for a digitally
+rendered UI.
+
+\subsection{Classical JPEG and Compression-History Forensics}
+The foundational insight exploited throughout this subfield is that JPEG
+compression is lossy and content-dependent, so a region that has been edited
+and re-saved carries a different compression history than the untouched
+remainder of the image. Farid~\cite{farid2009ghosts} formalized this as
+``JPEG Ghosts'': recompressing an image at a range of candidate qualities and
+locating a region whose recompression error is minimized at a different
+quality than the rest of the frame reveals a splice compressed at a different
+generation. Lin~et~al.~\cite{lin2009fast} instead analyze the block-wise
+histogram of discrete cosine transform (DCT) coefficients directly, since a
+doubly JPEG-compressed region produces a distinctive periodic artifact that a
+single compression does not. Bianchi and Piva contributed two closely related
+detectors: a block-grained likelihood map for aligned and non-aligned double
+JPEG compression~\cite{bianchi2012block}, and a companion method based on
+integer periodicity maps for the non-aligned case~\cite{bianchi2012nonaligned},
+which arises when a pasted region's block grid does not line up with the host
+image's original $8\times8$ grid.
+
+All four methods share an assumption this paper's results complicate: they
+were validated on natural photographs or scanned documents, where legitimate
+content is spatially smooth enough that compression artifacts concentrate
+visibly at edited edges. A bank-statement screenshot is instead dense with
+sharp, high-contrast text and hairline table borders throughout -- content
+that itself produces strong, spatially widespread JPEG blocking artifacts
+unrelated to any edit. Section~\ref{sec:results} reports that this content
+mismatch, not an implementation defect, is the primary reason our JPEG-Ghost
+and Error-Level-Analysis cues under-perform relative to these techniques'
+reported accuracy on photographic benchmarks.
+
+\subsection{Copy-Move Forgery Detection}
+Copy-move -- duplicating a region within the same image, e.g.\ cloning a
+background patch over an unwanted object, or in our threat model, duplicating
+a transaction row to insert a fabricated one -- is one of the best-studied
+forgery types because the duplicated content is pixel-identical (or
+near-identical) to itself. Fridrich~et~al.~\cite{fridrich2003copymove}
+proposed the original block-matching formulation: divide the image into
+overlapping blocks, represent each with quantized DCT coefficients, and flag
+blocks whose representations match at a spatial offset large enough to rule
+out coincidental neighboring-block similarity. Popescu and
+Farid~\cite{popescu2004exposing} refined the block representation using
+principal component analysis (PCA) to improve robustness to minor noise or
+compression differences. Huang~et~al.~\cite{huang2008sift} moved to
+keypoint-based matching with SIFT features, trading some sensitivity to small
+or smooth regions for strong robustness to rotation and rescaling.
+Christlein~et~al.~\cite{christlein2012evaluation} later benchmarked fifteen
+prominent feature sets under a common evaluation pipeline and found
+keypoint-based methods (SIFT, SURF) and several block transforms (DCT, DWT,
+PCA, Zernike moments) most robust overall, while cautioning that no single
+method dominates across all post-processing scenarios -- a finding consistent
+with our own decision (Section~\ref{sec:cue-copymove}) to combine block
+hashing with an explicit geometric-consistency check rather than rely on raw
+block matching alone.
+
+Wu~et~al.'s BusterNet~\cite{wu2018busternet} represents the deep-learning-era
+approach: a two-branch, end-to-end trainable network with one branch
+localizing manipulation via visual artifacts and a second, dedicated branch
+localizing copy-move regions via learned visual similarity, jointly
+distinguishing source from target region. We did not adopt a learned
+copy-move detector for this project; Section~\ref{sec:discussion} explains
+why (principally, the absence of any labeled screenshot copy-move data to
+train or validate one against) and instead describes a classical
+offset-vector-voting detector in the Fridrich/Popescu lineage, extended with
+a compactness gate motivated by a failure mode discovered empirically:
+periodic decorative UI elements (repeated icons, evenly spaced list dividers)
+produce coincidental block matches that a raw match count cannot distinguish
+from a genuine rigid copy-paste.
+
+\subsection{Splicing Detection and Sensor/Noise-Based Forensics}
+Ng and Chang's Columbia dataset~\cite{ng2004columbia} -- 183 authentic images
+and a matched set of spliced composites with no further post-processing --
+was among the first public benchmarks built specifically for splicing
+detection. Lyu, Pan, and Zhang~\cite{lyu2014exposing} address splicing
+detection by exploiting the fact that image regions from different physical
+sources typically carry different noise levels; their method estimates local
+noise via the kurtosis of band-pass-filtered patches, then clusters regions
+by estimated noise level to isolate a spliced region without needing a
+reference image. Lukas, Fridrich, and Goljan~\cite{lukas2006digital} instead
+exploit Photo Response Non-Uniformity (PRNU), a fixed noise pattern imprinted
+by every camera's specific sensor, to attribute an image to its source camera
+or flag a region whose PRNU does not match the rest of the frame.
+
+This subfield illustrates a structural limitation for the present project
+rather than a soft calibration issue: PRNU forensics is inapplicable to
+screenshots outright, since a UI screenshot has no optical sensor and
+therefore no PRNU signal to compare -- it is a rendering, not a photograph.
+Our block-wise noise-consistency cue targets the same underlying idea as
+Lyu~et~al.~\cite{lyu2014exposing} but must operate on whatever low-level
+rendering/compression noise a screenshot happens to carry, which is a far
+weaker signal than either PRNU or natural-image sensor noise.
+
+\subsection{Deep-Learning-Era Manipulation Detection and Benchmark Datasets}
+The CASIA Image Tampering Detection Evaluation Database~\cite{dong2013casia},
+introduced by Dong, Wang, and Tan, provided a larger and more realistic
+labeled tampering benchmark than the datasets available at the time and
+remains widely used for training and evaluating both classical and learned
+detectors. Zhou~et~al.~\cite{zhou2018learning} proposed a two-stream Faster
+R-CNN (``RGB-N'') that fuses an RGB stream, which learns visual tampering
+artifacts directly, with a dedicated noise stream built on steganalysis-style
+rich filters, learning the same noise-inconsistency principle as
+\cite{lyu2014exposing} end-to-end. Wang~et~al.~\cite{wang2020cnngenerated}
+studied a related but distinct problem -- detecting wholly generated (not
+just locally edited) CNN-synthesized images -- and showed a classifier
+trained on a single generator family generalizes surprisingly well to unseen
+architectures. Verdoliva's survey~\cite{verdoliva2020media} situates all of
+the above within the field's broader shift from hand-crafted statistical
+cues toward data-driven, end-to-end learned detectors, while noting that
+data-driven methods inherit a generalization risk: performance can degrade
+sharply on manipulation types or content domains absent from training data.
+
+That generalization risk is precisely the argument this project's design
+leans on in the opposite direction from most work in this subsection: rather
+than train an end-to-end deep model with no labeled screenshot data to train
+it on (Section~\ref{sec:gap}), we retain interpretable, individually
+inspectable cues and train only a shallow classifier over their outputs, on
+the closest available labeled data (Section~\ref{sec:datasets}).
+
+\subsection{Document and Identity-Document Forgery Detection}
+\label{sec:related-docs}
+This subsection is the closest prior work to the present system's actual
+deployment target. The SROIE dataset~\cite{huang2019icdar} (Huang~et~al.),
+built for the ICDAR 2019 scanned-receipt OCR and information-extraction
+competition, established a standard 1{,}000-receipt corpus with layout and
+key-field annotations. Mart\'{i}nez Torn\'{e}s~et~al.'s ``Find it
+again!''~dataset~\cite{martineztornes2023receipt} extends it directly for
+forgery detection: 988 receipts drawn from SROIE, of which 163 carry
+realistic forgeries (copy-paste, text imitation, deletion, and pixel-level
+edits) with ground-truth region annotations. It is, to our knowledge, the
+most directly applicable public labeled forgery dataset for this project's
+problem, and Section~\ref{sec:datasets} describes its use here in detail.
+
+Beyond receipts, a growing literature addresses identity-document forgery. A
+preprint on deep-learning-based forgery attacks on document
+images~\cite{anon2021forgery} examines both how deep networks can generate
+convincing document forgeries and how the same technology can detect them. A
+2026 systematic survey~\cite{anon2026survey} catalogs the shift in this area
+from classical, hand-crafted approaches toward foundation-model-based
+detectors, alongside purpose-built synthetic datasets created specifically
+because real identity documents cannot be publicly released for privacy and
+legal reasons. An ongoing competition series~\cite{anon2026competition} is
+further evidence of how active this specific subfield now is.
+
+The privacy constraint identified in~\cite{anon2026survey} for identity
+documents applies with at least equal force to bank statements and
+payment-app screenshots, which carry account numbers, balances, and personal
+financial history -- and is precisely why this project
+(Section~\ref{sec:datasets}) resorted to a self-generated synthetic corpus
+for its own primary content domain, using the real receipt
+dataset~\cite{martineztornes2023receipt} only as the closest available
+substitute with genuine, non-synthetic ground truth.
+
+\subsection{Adjacent Financial-Fraud-Detection Literature}
+Two further pieces of literature, while not image forensics, directly
+informed methodological choices in this project.
+Hafemann~et~al.~\cite{hafemann2017learning} apply deep convolutional feature
+learning to offline handwritten signature verification -- an older and
+physically distinct form of financial-document authentication but one that
+shares this project's core structure: an authenticator must distinguish
+genuine from forged artifacts using only the static end artifact.
+Jesus~et~al.'s Bank Account Fraud dataset suite~\cite{jesus2022turning}
+established a widely used, realistic benchmark for fraud detection under
+severe class imbalance; the practice it exemplifies -- training with
+class-balanced weighting rather than naive accuracy optimization on a rare
+positive class -- is the same principle behind this project's use of
+\code{class_weight="balanced"} when training its RandomForest classifier
+(Section~\ref{sec:classification}), since forged examples are a small
+minority ($\approx$16\%) of the labeled data available.
+
+\subsection{The Gap: Screenshot-Specific Forgery Detection}
+\label{sec:gap}
+Despite the breadth of work reviewed above -- spanning natural photographs
+and, increasingly, scanned or photographed physical documents and identity
+cards -- we found no academic literature or public dataset that specifically
+targets chat-application or bank-statement screenshots: images that are a
+direct digital rendering of software UI, never optically captured, and
+typically saved once as a single-generation PNG or JPEG rather than scanned
+or photographed. This is a meaningful gap for two reasons documented in
+Sections~\ref{sec:results}--\ref{sec:discussion} of this paper. First,
+several assumptions underlying the classical cues above do not hold for this
+content, and our results show the corresponding cues transfer measurably
+worse than their reported performance on photographic or scanned-document
+benchmarks. Second, the practical harm is well documented outside the
+academic literature (Section~\ref{sec:intro}). This project treats that gap
+not as a reason to import ill-fitting photographic-forensics assumptions
+unmodified, but as the reason to add a cue (Section~\ref{sec:cue-ocr}) that
+targets what is actually diagnostic for this specific content class.
+
+\section{System Architecture}
+\label{sec:architecture}
+
+The system is deployed as two containerized services orchestrated by Docker
+Compose: a React single-page frontend served by nginx, and a Python/Flask
+backend exposing a single analysis endpoint. Figure~\ref{fig:architecture}
+shows the high-level component structure.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  box/.style={rectangle, draw, rounded corners, minimum width=6.6cm, minimum height=0.9cm, align=center, font=\small},
+  cuebox/.style={rectangle, draw, minimum width=6.6cm, align=left, font=\scriptsize, inner sep=6pt},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+\node[box] (client) {React Frontend (Vite, served via nginx)};
+\node[box, below=0.55cm of client] (api) {Flask REST API: \code{POST /analyze}};
+\node[cuebox, below=0.55cm of api] (cues) {
+\textbf{Forensic Cue Extraction} (Section~\ref{sec:cues}):\\
+1. Error Level Analysis \quad 2. JPEG Ghost\\
+3. Quantization tables \quad 4. Noise consistency\\
+5. Copy-move (offset voting) \quad 6. EXIF/metadata\\
+7. Document text (OCR)
+};
+\node[box, below=0.55cm of cues] (classify) {Classification: RandomForest / heuristic (Sec.~\ref{sec:classification})};
+\node[box, below=0.55cm of classify] (override) {High-Confidence Override Check};
+\node[box, below=0.55cm of override] (response) {JSON Response: \code{fake_score}, \code{is_fake}, per-cue detail};
+
+\draw[arr] (client) -- (api);
+\draw[arr] (api) -- (cues);
+\draw[arr] (cues) -- (classify);
+\draw[arr] (classify) -- (override);
+\draw[arr] (override) -- (response);
+\draw[arr] (response.east) -- ++(1.3cm,0) |- (client.east);
+\end{tikzpicture}
+\caption{System architecture: request lifecycle for a single \code{/analyze} call.}
+\label{fig:architecture}
+\end{figure}
+
+Images are processed entirely in memory: the backend never writes an
+uploaded image to disk, logging only a SHA-256 hash for traceability. The
+backend loads a trained RandomForest model (Section~\ref{sec:classification})
+from \code{model_data/rf_model.joblib} at process start if present, and falls
+back to a transparent weighted-average heuristic otherwise, so the service
+remains functional in a minimal environment without scikit-learn or a
+bundled model file.
+
+\section{Forensic Cue Design}
+\label{sec:cues}
+
+Each cue returns a bounded suspicion score in $[0,1]$ together with the raw
+evidence used to compute it, so the final verdict stays explainable rather
+than a black-box output. Table~\ref{tab:cues} summarizes all seven cues and
+the related work each draws on.
+
+\begin{table}[t]
+\centering
+\caption{Forensic cues, their targets, and related work.}
+\label{tab:cues}
+\small
+\begin{tabular}{@{}p{1.7cm}p{3.6cm}p{2.2cm}@{}}
+\toprule
+\textbf{Cue} & \textbf{Targets} & \textbf{Related work} \\
+\midrule
+ELA & Localized recompression artifacts & \cite{farid2009ghosts,bianchi2012block,bianchi2012nonaligned} \\
+JPEG Ghost & Double compression at a different generation & \cite{farid2009ghosts,lin2009fast} \\
+Quantization tables & Multiple compression generations & \cite{bianchi2012block,bianchi2012nonaligned} \\
+Noise consistency & Locally inconsistent noise energy & \cite{lukas2006digital,lyu2014exposing} \\
+Copy-move & Rigidly duplicated regions & \cite{fridrich2003copymove,popescu2004exposing,huang2008sift,christlein2012evaluation} \\
+Metadata/EXIF & Editing-tool fingerprints, camera tags & (domain-specific) \\
+Document text (OCR) & Generator watermarks, placeholder data & this work \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Error Level Analysis}
+Following Farid's recompression-diff principle~\cite{farid2009ghosts}, the
+image is recompressed at a fixed JPEG quality and diffed against the input;
+per-pixel error is aggregated into $16\times16$ blocks. Rather than flag
+blocks whose error exceeds a single whole-image threshold -- which, on a
+screenshot dense with text and table borders, flags most of the image
+regardless of tampering -- each block is compared against a robust statistic
+(median absolute deviation) of only its immediate spatial neighborhood. A
+block that merely sits in a naturally detailed area is not flagged, since its
+neighbors are similarly elevated; only a block that disagrees with its own
+surroundings is. The size of the largest contiguous flagged cluster, not the
+raw flagged-block count, drives the score, since a genuine localized edit
+produces a compact cluster rather than scattered noise.
+
+\subsection{JPEG Ghost}
+This cue implements Farid's JPEG Ghost method~\cite{farid2009ghosts}
+directly: the image is recompressed across ten candidate qualities
+(50--95 in steps of 5) and, per block, the method looks for a genuine local
+minimum in recompression error as a function of quality -- the signature of a
+block's own native compression quality -- rather than naively taking the
+single lowest-error quality across the whole range, which we found
+empirically trivially selects the highest quality tested for almost any
+content, producing no signal. Blocks are compared to their local
+neighborhood rather than a single whole-image dominant quality, for the same
+reason as Section~\ref{sec:cues}.A. Calibration testing
+(Section~\ref{sec:results}) nonetheless found this cue unreliable on
+screenshot content specifically -- in some cases scoring an untouched image
+higher than its tampered counterpart -- so it is computed and shown for
+transparency but deliberately excluded from the final weighted score.
+
+\subsection{JPEG Quantization Tables}
+A standard single JPEG encode carries at most two quantization tables (luma
+and chroma); more than two on a re-opened file is a coarse signal of multiple
+compression generations, in the spirit of Bianchi and Piva's double
+compression detectors~\cite{bianchi2012block,bianchi2012nonaligned}, though
+far less precise than their block-grained likelihood-map approach. In
+practice this cue rarely fires, so it is retained as a cheap, low-weight
+legacy signal.
+
+\subsection{Block-Wise Noise Consistency}
+A high-pass-filtered version of the image is divided into $32\times32$
+blocks, and each block's local noise energy (standard deviation) is compared
+to its spatial neighborhood using the same robust, local-outlier logic as
+above, in the spirit of noise-inconsistency splicing
+detection~\cite{lyu2014exposing} and PRNU-based source
+consistency~\cite{lukas2006digital} -- adapted, since neither camera sensor
+noise nor natural-image noise statistics are available for a rendered
+screenshot, to whatever rendering/compression noise the image happens to
+carry.
+
+\subsection{Copy-Move Detection via Offset-Vector Voting}
+\label{sec:cue-copymove}
+Overlapping image blocks are perceptually hashed and grouped by hash; for
+every pair of near-duplicate blocks that are spatially far apart, the
+displacement vector between them is recorded as a ``vote,'' following the
+block-matching lineage of~\cite{fridrich2003copymove,popescu2004exposing}. A
+genuine rigid copy-paste produces many block pairs sharing the same
+displacement vector, clustered in one spatially compact source area -- both
+properties are required before the cue fires. This directly targets a
+false-positive mode discovered empirically that a raw ``any two blocks
+match'' count cannot distinguish: regularly spaced decorative UI elements
+produce many block pairs that coincidentally share a common small offset
+purely from the layout's own periodicity, without a spatially compact source
+region, and are filtered out by the compactness requirement.
+
+\subsection{EXIF / Metadata Analysis}
+A genuine screenshot normally carries no EXIF data at all; this cue instead
+flags its presence when specific tags are unusual for that fact: an
+editing-tool \code{Software} tag (Photoshop, GIMP, etc.), camera
+\code{Make}/\code{Model} tags, or GPS data, weighting an editing-tool
+fingerprint especially heavily, since no legitimate screenshot-capture
+pipeline stamps one. This is one of the two cues validated as reliable in
+Section~\ref{sec:results}.
+
+\subsection{Document Text Analysis (OCR)}
+\label{sec:cue-ocr}
+Motivated directly by the gap identified in Section~\ref{sec:gap} and the
+case study in Section~\ref{sec:case-study}, this cue runs Tesseract OCR over
+the image and checks the extracted text against two pattern families: known
+fake-document-generator brand markers and disclaimer phrasing (e.g.\ a
+generator site's own watermark, or ``specimen'' / ``not a real document''
+boilerplate), and placeholder data a generator defaults to when unedited
+(generic names such as ``John Doe,'' and obviously sequential or
+repeated-digit account/routing numbers). Unlike every pixel-level cue above,
+this cue reads what the document \emph{says} rather than how its bytes were
+compressed, and is the other cue validated as reliable in
+Section~\ref{sec:results}.
+
+\section{Classification and the High-Confidence Override}
+\label{sec:classification}
+
+Cue scores are combined into a single \code{fake_score} by a
+\code{RandomForestClassifier} (300 trees, max depth 6,
+\code{class_weight="balanced"} per the class-imbalance precedent
+in~\cite{jesus2022turning}) trained on labeled data
+(Section~\ref{sec:datasets}). A pure weighted average -- the system's
+original design and still its fallback when no trained model is available --
+has a documented failure mode this project encountered directly: a genuinely
+conclusive single cue (an editing-tool EXIF tag, an OCR-caught generator
+watermark) can be diluted below the decision threshold by several other,
+noisier cues that happen to read elevated on legitimate content, as
+Section~\ref{sec:case-study}'s case study shows concretely.
+
+To close this gap without simply re-weighting the noisy cues higher (which
+would raise false positives on legitimate dense documents instead), an
+explicit override rule sits on top of either classifier:
+\begin{equation}
+\label{eq:override}
+\text{is\_fake} =
+\begin{cases}
+\text{true} & \text{if } s_{\text{composite}} \geq \tau \\
+\text{true} & \text{if } \exists\, c \in \mathcal{O} : s_c \geq \theta_c \\
+\text{false} & \text{otherwise}
+\end{cases}
+\end{equation}
+where $s_{\text{composite}}$ is the classifier's output, $\tau$ is the
+decision threshold (0.5), $\mathcal{O} = \{\text{metadata\_score},
+\text{text\_score}\}$ is the set of override-eligible cues, and
+$\theta_c = 0.8$ for each. Only cues independently validated as
+high-precision, low-false-positive signals belong in $\mathcal{O}$; the
+composite score $s_{\text{composite}}$ is still reported unmodified alongside
+an explicit \code{override_reason} field, so an override is never applied
+silently.
+
+\section{Implementation}
+\label{sec:implementation}
+
+\subsection{Backend}
+The backend is implemented in Python using Flask, with Pillow for image
+decoding/encoding, NumPy for the numerical cue computations described in
+Section~\ref{sec:cues}, pytesseract/Tesseract for the OCR cue
+(Section~\ref{sec:cue-ocr}), and scikit-learn/joblib for the trained
+classifier (Section~\ref{sec:classification}). A single route,
+\code{POST /analyze}, accepts a multipart image upload (PNG, JPEG, or WebP,
+capped at 10\,MB), validates the file extension and non-emptiness, and
+returns a JSON response containing the composite verdict, the raw per-cue
+feature vector, per-cue diagnostic detail (e.g.\ dominant JPEG quality,
+matched OCR flags, clone-detection offset votes), and a base64-encoded ELA
+heatmap image for display. A companion \code{GET /status} route serves as a
+health check. Errors are handled explicitly: an unreadable file returns
+HTTP~400 with a descriptive message, and any unexpected exception during
+analysis is logged server-side and returns a generic HTTP~500 without leaking
+internals to the client.
+
+\subsection{Frontend}
+The frontend is a React single-page application built with Vite. It handles
+drag-and-drop or click-to-browse file selection with client-side validation
+(file type, size), displays a live preview before analysis, and renders the
+full result set after a successful \code{/analyze} call: a verdict card with
+an icon and a horizontal severity meter for the composite score, a
+side-by-side original/ELA-heatmap comparison, and a per-cue breakdown list in
+which every cue is rendered as its own severity meter with an explanatory
+note drawn from that cue's diagnostic detail. A visible banner explains when
+the high-confidence override (Section~\ref{sec:classification}) rather than
+the composite score determined the verdict. A ``Download report'' action
+exports the full JSON response as a file for external record-keeping.
+
+\subsection{Deployment and Testing}
+Both services are containerized with dedicated Dockerfiles and orchestrated
+via Docker Compose, with nginx reverse-proxying frontend API calls to the
+Flask container. The backend test suite (pytest) covers each cue function in
+isolation, end-to-end API behavior, the override mechanism, and an
+explicit accuracy-regression test tied to the case study in
+Section~\ref{sec:case-study}. The frontend test suite (Vitest,
+React Testing Library) covers upload validation behavior. A calibration
+tool, \code{tools/calibrate.py}, generates the synthetic corpus described in
+Section~\ref{sec:datasets} and reports per-cue win-rates against it; a
+companion \code{tools/train_model.py} retrains the bundled classifier from
+any dataset following the same labeled-image-directory convention as the
+real dataset in Section~\ref{sec:datasets}.
+
+\section{Usage Flow}
+\label{sec:usage}
+
+Figure~\ref{fig:usage} shows the end-to-end user interaction sequence, which
+maps directly onto the implementation described in
+Section~\ref{sec:implementation}.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  step/.style={rectangle, draw, rounded corners, minimum width=6.4cm, minimum height=0.8cm, align=center, font=\small},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+\node[step] (s1) {1. User drags in or selects an image file};
+\node[step, below=0.4cm of s1] (s2) {2. Client-side validation (type, size $\leq$10\,MB)};
+\node[step, below=0.4cm of s2] (s3) {3. Preview shown; user clicks ``Analyze''};
+\node[step, below=0.4cm of s3] (s4) {4. \code{POST /analyze} (multipart upload)};
+\node[step, below=0.4cm of s4] (s5) {5. Backend runs all 7 cues (Sec.~\ref{sec:cues})};
+\node[step, below=0.4cm of s5] (s6) {6. Classifier + override determine verdict};
+\node[step, below=0.4cm of s6] (s7) {7. JSON response rendered: verdict, meters, cue detail};
+\node[step, below=0.4cm of s7] (s8) {8. User downloads report or starts a new scan};
+
+\draw[arr] (s1) -- (s2);
+\draw[arr] (s2) -- (s3);
+\draw[arr] (s3) -- (s4);
+\draw[arr] (s4) -- (s5);
+\draw[arr] (s5) -- (s6);
+\draw[arr] (s6) -- (s7);
+\draw[arr] (s7) -- (s8);
+\end{tikzpicture}
+\caption{End-to-end usage flow, from image selection to report export.}
+\label{fig:usage}
+\end{figure}
+
+If validation fails at step 2 (unsupported type or oversized file), the user
+sees an inline error and no request is sent. If the backend cannot decode the
+uploaded bytes as an image, step 4 returns HTTP~400 and the client surfaces
+that message directly rather than a generic failure. A loading state (spinner
+and disabled controls) covers the interval between steps 4 and 7, which
+completes in well under one second for a typical screenshot-sized image in
+our testing.
+
+\section{Datasets}
+\label{sec:datasets}
+
+\subsection{Synthetic Corpus}
+In the absence of any public labeled screenshot-forgery dataset
+(Section~\ref{sec:gap}), a synthetic corpus generator
+(\code{tools/calibrate.py}) produces paired authentic/tampered chat- and
+bank-statement-style images across four tamper types: (i) a textured region
+edited and recompressed at a different JPEG quality before being pasted back
+and the whole image re-saved -- the classical scenario
+Section~\ref{sec:cues}.A--B targets; (ii) copy-move duplication of a textured
+block; (iii) a low-texture ``sloppy'' flat overwrite, the hardest case for
+compression-artifact cues; and (iv) an editing-tool EXIF fingerprint left on
+an otherwise untouched image. This corpus's paired structure (same
+underlying content, with vs. without the tamper) makes it possible to
+measure whether a cue's score reliably moves in the correct direction for a
+specific tamper type, rather than merely whether real and fake images differ
+on average -- a distinction Section~\ref{sec:results} shows can be misleading
+when the two classes also differ in unrelated ways (e.g.\ an extra
+compression generation).
+
+\subsection{Real Dataset: ``Find it again!''~Receipt Forgery Dataset}
+The trained classifier (Section~\ref{sec:classification}) uses Mart\'{i}nez
+Torn\'{e}s~et~al.'s dataset~\cite{martineztornes2023receipt}: 988 scanned
+receipt images derived from SROIE~\cite{huang2019icdar}, split into 577
+train / 192 validation / 218 test examples, of which 163 total ($\approx$16\%)
+carry realistic forgeries with ground-truth region annotations. This is real
+labeled forgery data, unlike the synthetic corpus above, but it is scanned
+paper receipts rather than digitally rendered screenshots -- a domain gap
+discussed candidly in Section~\ref{sec:discussion}. The training script
+extracts the same seven cue scores the served API computes for every image
+and trains the RandomForest directly on them.
+
+\section{Experimental Results}
+\label{sec:results}
+
+\subsection{Synthetic-Corpus Calibration: Per-Cue Reliability}
+Rather than compare score distributions across unrelated real/fake samples --
+which conflates the tamper's effect with incidental differences in content
+and compression history between samples -- we measured, for each of 25
+paired authentic/tampered images, how often the tampered version scored
+higher than its own authentic pair (``win rate''). Table~\ref{tab:calibration}
+reports this per cue.
+
+\begin{table}[t]
+\centering
+\caption{Paired win-rate per cue across four synthetic tamper types ($n=25$).}
+\label{tab:calibration}
+\small
+\begin{tabular}{@{}lc@{}}
+\toprule
+\textbf{Cue} & \textbf{Win rate (tampered $>$ authentic)} \\
+\midrule
+ELA & 6 / 25 \\
+JPEG Ghost & 11 / 25 \\
+Quantization tables & 0 / 25 \\
+Noise consistency & 8 / 25 \\
+Copy-move & 7 / 25 \\
+Metadata & 6 / 25 (100\% within EXIF-tamper subset) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The low win-rates for ELA, JPEG Ghost, and noise consistency -- well below
+what the literature in Section~\ref{sec:related} reports for photographic
+content -- are the empirical basis for the content-domain-mismatch argument
+made throughout this paper, and directly motivated (a) excluding JPEG Ghost
+from the final score and (b) weighting metadata and document-text far more
+heavily than the pixel-level cues in the trained classifier.
+
+\subsection{Real-Dataset Results: Heuristic vs. Trained Classifier}
+On the ``Find it again!'' test split (218 receipts, 35 forged), the original
+hand-weighted heuristic combiner was compared against the trained
+RandomForest classifier. Table~\ref{tab:results} reports the results.
+
+\begin{table}[t]
+\centering
+\caption{Held-out test-set performance ($n=218$, 35 forged).}
+\label{tab:results}
+\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Metric} & \textbf{Heuristic} & \textbf{RandomForest} \\
+\midrule
+Precision & 42.3\% & \textbf{100\%} (0 false pos.) \\
+Recall & 31.4\% & 28.6\% \\
+F1 & 0.361 & \textbf{0.444} \\
+Accuracy & 82.1\% & 88.5\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The trained model's zero false positives is a meaningful result given the
+framing in Section~\ref{sec:intro}: in a workflow where a flagged document
+routes to manual review, a high-precision, lower-recall classifier minimizes
+wasted investigator time and the reputational risk of wrongly challenging a
+genuine customer's document, at the cost of still missing roughly 71\% of the
+real forgeries in this test set. Neither figure should be read as a claim of
+solved detection; Section~\ref{sec:discussion} discusses this recall ceiling
+directly.
+
+\subsection{Case Study: A Real-World False Negative and Its Fix}
+\label{sec:case-study}
+During manual testing, a bank-statement screenshot generated by a known
+fake-statement-generator site -- carrying that site's own watermark and
+placeholder customer data (``John Doe,'' account number ``123456789'') --
+scored $\text{fake\_score}=0.235$ (``Likely Authentic'') from the composite
+classifier alone, despite the document-text cue
+(Section~\ref{sec:cue-ocr}) itself scoring $1.0$ on the same image. The
+composite score under-weighted this single conclusive signal because two
+moderately elevated but individually inconclusive pixel-level cues (ELA and
+noise consistency, both plausibly explained by the document's own text
+density rather than tampering) pulled the blended score down. Applying the
+high-confidence override (Eq.~\ref{eq:override}) corrected the verdict to
+``Possible Fake'' with $\text{override\_reason}=\text{text\_score}$, without
+needing to re-weight the unreliable pixel cues. This single case is the
+concrete motivation for the override architecture and is retained here as a
+worked example rather than a synthetic illustration.
+
+\subsection{Cross-Domain Validation}
+Because the trained classifier was trained on scanned receipts
+(Section~\ref{sec:datasets}) but deployed against chat/bank-statement
+screenshots, its own predicted probability was checked directly against this
+project's screenshot test images rather than assumed to transfer. On the
+watermarked bank-statement screenshot from Section~\ref{sec:case-study}, the
+trained model's own probability was 0.235 -- the override, not the model's
+cross-domain transfer, is what corrected the verdict. This is reported
+plainly as a limitation rather than elided: the model measurably does not
+fully transfer across the domain gap identified in
+Section~\ref{sec:related-docs}, which is precisely why the override layer is
+a permanent part of the architecture rather than a stopgap.
+
+\section{Discussion and Limitations}
+\label{sec:discussion}
+
+\begin{itemize}
+\item \textbf{Domain mismatch, not implementation error}, explains most
+pixel-cue weakness. Sections~\ref{sec:related} and \ref{sec:results} together
+show that ELA, JPEG Ghost, and noise consistency all under-perform their
+literature-reported accuracy specifically on flat, text-dense, vector-rendered
+UI content -- exactly the content type absent from the photographic and
+scanned-document benchmarks those techniques were developed against.
+\item \textbf{The recall ceiling (28.6\% on real data) is a genuine,
+unsolved limitation}, not merely a conservative design choice: roughly seven
+in ten real forgeries in the held-out test set are missed by the trained
+classifier's own signal, before the override layer (which only helps when
+metadata or document-text independently fires).
+\item \textbf{No deep-learning component.} Section~\ref{sec:related}
+documents the field's shift toward end-to-end learned detectors precisely
+because they outperform hand-crafted cues when sufficient labeled data
+exists; this project deliberately did not pursue that path, given the
+absence of labeled screenshot-forgery data large enough to train one without
+high overfitting risk.
+\item \textbf{Training/deployment domain gap.} The only real, non-synthetic
+labeled forgery data available is scanned receipts, not screenshots -- a
+direct consequence of the same privacy/legal constraint on real
+financial-document data that the identity-document literature documents for
+its own adjacent domain.
+\item \textbf{Copy-move false-positive risk remains non-zero} for dense,
+regularly repeated UI; the compactness gate narrows but does not eliminate
+this risk, consistent with Christlein~et~al.'s finding~\cite{christlein2012evaluation}
+that no single copy-move method dominates every scenario.
+\item \textbf{OCR reliability depends on image resolution and legibility}; a
+blurry photograph of a printed statement may not OCR cleanly enough to catch
+a watermark that a clean digital screenshot would.
+\end{itemize}
+
+\section{Conclusion and Future Work}
+\label{sec:conclusion}
+
+This paper presented a forensic pipeline for a document class -- chat and
+bank-statement screenshots -- that the academic literature does not directly
+address, despite extensive and mature work on adjacent problems. The system
+combines seven cues spanning classical JPEG/compression forensics, copy-move
+detection, metadata analysis, and a novel OCR-based document-text cue,
+combined via a RandomForest trained on the closest available real labeled
+data and protected by a high-confidence override layer motivated by a
+genuine documented detection failure. Measured results show real progress --
+zero false positives and improved F1 over the original hand-weighted
+heuristic on held-out real data -- alongside equally real, openly reported
+limitations: weak pixel-level cue transfer to this content domain, a recall
+ceiling under 30\%, and an unresolved training/deployment domain gap.
+
+Three directions follow directly from the gaps this paper documents. First,
+constructing a larger, more varied synthetic screenshot-forgery corpus that
+more closely matches the receipt dataset's diversity of tamper types could
+narrow the domain gap without requiring real, privacy-sensitive screenshot
+data. Second, the deep-learning direction reviewed in
+Section~\ref{sec:related} -- in particular a noise-stream architecture in the
+spirit of RGB-N~\cite{zhou2018learning} -- becomes viable once such a corpus
+exists at sufficient scale. Third, given that this project's single most
+reliable cue reads document text rather than pixels, extending it beyond
+watermark/placeholder pattern-matching toward semantic consistency checks
+(e.g.\ does the stated bank's name and address consistently appear across the
+document) is a promising, comparatively low-cost next step directly
+motivated by the case study in Section~\ref{sec:case-study}.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
