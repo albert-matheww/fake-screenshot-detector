@@ -40,7 +40,17 @@ export default function AnalysisResults({ result, originalPreviewUrl, onReset })
 
   const { fake_score, verdict, ela_image, details, meta, override_reason } = result;
   const isFake = result.is_fake;
-  const OVERRIDE_LABELS = { metadata_score: "Metadata / EXIF", text_score: "Document text (OCR)" };
+  const OVERRIDE_LABELS = {
+    metadata_score: "Metadata / EXIF",
+    text_score: "Document text (OCR)",
+    arithmetic_score: "Amount consistency",
+  };
+  const CONTENT_TYPE_LABELS = {
+    financial_document: "Financial document (bank/payment/receipt-style)",
+    social_or_chat: "Social post or chat",
+    photo: "Photo / low-text image",
+    unknown: "Unclassified",
+  };
 
   const cues = [
     {
@@ -49,6 +59,13 @@ export default function AnalysisResults({ result, originalPreviewUrl, onReset })
       note: details?.document_text?.matched_flags?.length
         ? details.document_text.matched_flags.join("; ")
         : (details?.document_text?.note ?? "No generator watermarks or placeholder data detected in the text."),
+    },
+    {
+      label: "Amount consistency — contradictory totals",
+      score: details?.amount_consistency?.score,
+      note: details?.amount_consistency?.matched_flags?.length
+        ? details.amount_consistency.matched_flags.join("; ")
+        : "No Total/Subtotal contradiction detected in the document's own printed numbers.",
     },
     {
       label: "Error Level Analysis (ELA)",
@@ -86,6 +103,25 @@ export default function AnalysisResults({ result, originalPreviewUrl, onReset })
       note: details?.metadata?.suspicious_flags?.length
         ? details.metadata.suspicious_flags.join("; ")
         : "No suspicious metadata flags.",
+    },
+    {
+      label: "Chrome/status-bar duplication",
+      score: details?.chrome_consistency?.score,
+      note: details?.chrome_consistency?.duplicate_readings?.length
+        ? `Status-bar reading repeated in the body: ${details.chrome_consistency.duplicate_readings.join(", ")}.`
+        : (details?.chrome_consistency?.note ?? "Not applicable to this image."),
+    },
+    {
+      label: "Font rendering consistency — informational, not scored",
+      score: details?.font_consistency?.score,
+      note: (details?.font_consistency?.note ?? "")
+        || "Not yet validated as reliable — see README. Shown for transparency only.",
+    },
+    {
+      label: "Edge/resampling sharpness — informational, not scored",
+      score: details?.edge_sharpness?.score,
+      note: (details?.edge_sharpness?.note ?? "")
+        || "Tested and found unreliable on flat UI content — see README. Excluded from fake_score.",
     },
   ];
 
@@ -159,7 +195,9 @@ export default function AnalysisResults({ result, originalPreviewUrl, onReset })
 
       {meta && (
         <p className="meta-line">
-          Model: {meta.model} · Processed in {meta.processing_ms} ms · SHA-256: {meta.sha256?.slice(0, 16)}…
+          Model: {meta.model} · Content type: {CONTENT_TYPE_LABELS[meta.content_type] ?? meta.content_type}
+          {" "}(threshold {pct(meta.effective_threshold)}) · Processed in {meta.processing_ms} ms · SHA-256:{" "}
+          {meta.sha256?.slice(0, 16)}…
         </p>
       )}
 

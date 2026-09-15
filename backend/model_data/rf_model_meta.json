@@ -7,5 +7,22 @@
     "clone_score",
     "metadata_score",
     "text_score"
-  ]
+  ],
+  "model_description": "randomforest-v2 (trained on findit2 + casia2 + imd2020 \u2014 see README's 'Trained model' section for composition and caveats)",
+  "dataset_composition": {
+    "findit2": {
+      "total": 987,
+      "forged": 162
+    },
+    "casia2": {
+      "total": 3000,
+      "forged": 1500
+    },
+    "imd2020": {
+      "total": 2424,
+      "forged": 2010
+    }
+  },
+  "casia_cap_per_class": 1500,
+  "seed": 0
 }

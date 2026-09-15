@@ -3,7 +3,14 @@ import sys
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
+
+# A real, legible size for OCR-dependent tests below — PIL's bare default
+# (ImageDraw.text(..., fill=...) with no font=) renders a tiny bitmap font
+# Tesseract reads unreliably (e.g. "9:41" comes back as "oat"), which isn't
+# specific to these tests but matters more here than in the longer/fuzzier
+# substring-matched strings check_document_text's tests use.
+_TEST_FONT = ImageFont.load_default(size=20)
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -17,6 +24,11 @@ from forensic import (
     check_quantization_tables,
     estimate_noise_inconsistency,
     detect_clone_regions,
+    check_font_consistency,
+    check_edge_sharpness_consistency,
+    check_chrome_consistency,
+    check_amount_consistency,
+    classify_content_type,
     analyze_image_bytes,
 )
 from model_loader import predict_fake, predict_fake_heuristic
@@ -66,8 +78,8 @@ def test_check_document_text_flags_generator_watermark():
     d.text((20, 140), "BankStatements.net", fill="black")
 
     result = check_document_text(img)
-    if result.get("note", "").startswith("OCR not available"):
-        return  # environment has no tesseract binary; nothing to assert
+    if result.get("note", "").startswith(("OCR not available", "OCR failed")):
+        return  # pytesseract package or system tesseract binary missing; nothing to assert
     assert result["score"] > 0.0
     assert len(result["matched_flags"]) >= 1
 
@@ -167,6 +179,14 @@ def test_analyze_image_bytes_end_to_end_authentic(authentic_image_bytes):
     assert "noise" in result["details"]
     assert "clone_detection" in result["details"]
     assert "document_text" in result["details"]
+    assert "font_consistency" in result["details"]
+    assert "edge_sharpness" in result["details"]
+    assert "chrome_consistency" in result["details"]
+    assert "amount_consistency" in result["details"]
+    for key in ("font_score", "edge_score", "chrome_score", "arithmetic_score"):
+        assert 0.0 <= result["features"][key] <= 1.0
+    assert result["meta"]["content_type"] in {"financial_document", "social_or_chat", "photo", "unknown"}
+    assert 0.0 <= result["meta"]["effective_threshold"] <= 1.0
     assert len(result["meta"]["sha256"]) == 64
 
 
@@ -225,11 +245,107 @@ def test_generator_watermark_document_is_flagged_despite_clean_pixels():
     raw_bytes = buf.getvalue()
 
     result = analyze_image_bytes(raw_bytes, Config)
-    if result["details"]["document_text"].get("note", "").startswith("OCR not available"):
-        return  # environment has no tesseract binary; nothing to assert
+    note = result["details"]["document_text"].get("note", "")
+    if note.startswith(("OCR not available", "OCR failed")):
+        return  # pytesseract package or system tesseract binary missing; nothing to assert
 
     assert result["details"]["document_text"]["score"] > 0.0
     assert result["is_fake"] is True
+
+
+def test_font_consistency_bounded(authentic_image):
+    # NOTE: like JPEG Ghost, check_font_consistency's docstring documents
+    # that direct testing could not confirm it fires on a genuine rendering
+    # mismatch — this test only checks it stays well-formed, not that it's
+    # directionally correct. See forensic.py for what was tried.
+    result = check_font_consistency(authentic_image)
+    assert 0.0 <= result["score"] <= 1.0
+
+
+def test_edge_sharpness_consistency_bounded(authentic_image):
+    # NOTE: check_edge_sharpness_consistency's docstring documents that this
+    # cue was tested and found to saturate on ordinary screenshot content
+    # regardless of tampering — excluded from fake_score for that reason.
+    # This test only checks it stays well-formed.
+    result = check_edge_sharpness_consistency(authentic_image)
+    assert 0.0 <= result["score"] <= 1.0
+
+
+def test_chrome_consistency_flags_duplicated_status_bar_clock():
+    img = Image.new("RGB", (390, 844), "white")
+    d = ImageDraw.Draw(img)
+    d.text((16, 10), "9:41", fill="black", font=_TEST_FONT)       # status-bar reading
+    d.text((40, 400), "Sent at 9:41", fill="black", font=_TEST_FONT)  # exact duplicate elsewhere
+    result = check_chrome_consistency(img)
+    if not result.get("applicable", True) or result.get("note", "").startswith("OCR not available"):
+        return  # tesseract missing; nothing to assert
+    assert result["score"] > 0.0
+    assert "9:41" in result["duplicate_readings"]
+
+
+def test_chrome_consistency_ignores_different_legitimate_time():
+    img = Image.new("RGB", (390, 844), "white")
+    d = ImageDraw.Draw(img)
+    d.text((16, 10), "9:41", fill="black", font=_TEST_FONT)
+    d.text((40, 400), "Transaction time 3:15 PM", fill="black", font=_TEST_FONT)  # different, real time
+    result = check_chrome_consistency(img)
+    if not result.get("applicable", True) or result.get("note", "").startswith("OCR not available"):
+        return
+    assert result["score"] == 0.0
+
+
+def test_amount_consistency_flags_total_less_than_subtotal():
+    img = Image.new("RGB", (400, 200), "white")
+    d = ImageDraw.Draw(img)
+    d.text((20, 20), "Subtotal $120.00", fill="black", font=_TEST_FONT)
+    d.text((20, 50), "Tax $9.60", fill="black", font=_TEST_FONT)
+    d.text((20, 90), "Total $45.00", fill="black", font=_TEST_FONT)  # mathematically impossible
+    result = check_amount_consistency(img)
+    if result.get("note", "").startswith("OCR not available"):
+        return
+    assert result["score"] > 0.0
+    assert len(result["matched_flags"]) >= 1
+
+
+def test_amount_consistency_consistent_totals_not_flagged():
+    img = Image.new("RGB", (400, 200), "white")
+    d = ImageDraw.Draw(img)
+    d.text((20, 20), "Subtotal $120.00", fill="black", font=_TEST_FONT)
+    d.text((20, 50), "Tax $9.60", fill="black", font=_TEST_FONT)
+    d.text((20, 90), "Total $129.60", fill="black", font=_TEST_FONT)
+    result = check_amount_consistency(img)
+    if result.get("note", "").startswith("OCR not available"):
+        return
+    assert result["score"] == 0.0
+    assert result["matched_flags"] == []
+
+
+def test_classify_content_type_financial_document():
+    img = Image.new("RGB", (400, 300), "white")
+    d = ImageDraw.Draw(img)
+    d.text((20, 20), "Subtotal $120.00", fill="black", font=_TEST_FONT)
+    d.text((20, 50), "Total $129.60", fill="black", font=_TEST_FONT)
+    d.text((20, 80), "Account Balance $4,502.10", fill="black", font=_TEST_FONT)
+    result = classify_content_type(img)
+    if result == "photo":
+        return  # tesseract missing; nothing to assert
+    assert result == "financial_document"
+
+
+def test_classify_content_type_social():
+    img = Image.new("RGB", (390, 844), "white")
+    d = ImageDraw.Draw(img)
+    d.text((20, 20), "@someuser123", fill="black", font=_TEST_FONT)
+    d.text((20, 50), "Just posted something", fill="black", font=_TEST_FONT)
+    result = classify_content_type(img)
+    if result == "photo":
+        return
+    assert result == "social_or_chat"
+
+
+def test_classify_content_type_photo_when_no_text():
+    img = Image.new("RGB", (400, 300), (120, 130, 140))
+    assert classify_content_type(img) == "photo"
 
 
 def _flat_image_with_patch(size=(300, 300), patch_size=48, patch_pos=(24, 24),

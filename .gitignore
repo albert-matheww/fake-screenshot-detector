@@ -6,3 +6,10 @@ dist/
 .DS_Store
 *.log
 vite.config.js.timestamp-*
+
+# Local Claude Code tool config (dev-server launch configs for whatever
+# projects happen to be open on this machine — not part of this project)
+.claude/
+
+# Office lock files (created while a .pptx/.docx is open in PowerPoint/Word)
+~$*

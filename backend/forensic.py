@@ -3,8 +3,13 @@
 Implements Error Level Analysis (ELA) plus complementary cues described in
 the design doc: EXIF/metadata inspection, JPEG quantization-table checks,
 block-noise-consistency analysis, and a lightweight copy-move (clone)
-detector. Each cue returns a bounded 0-1 "score" (higher = more suspicious)
-plus the raw evidence used to compute it, so results stay explainable.
+detector — all techniques from photograph forensics. On top of those,
+"Screenshot-specific rendering cues" below adds signal classes specific to
+*rendered UI* rather than photographs: text-rendering (font/anti-aliasing)
+consistency, resampling/edge-sharpness consistency, duplicated-device-chrome
+detection, and printed-number arithmetic consistency. Each cue returns a
+bounded 0-1 "score" (higher = more suspicious) plus the raw evidence used to
+compute it, so results stay explainable.
 
 `analyze_image_bytes` is the single entry point used by the Flask API: it
 runs every cue and hands the resulting feature vector to
@@ -16,7 +21,7 @@ import io
 import math
 import re
 import time
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from PIL import Image, ImageChops, ImageFilter, ExifTags
@@ -92,6 +97,54 @@ def _local_outlier_mask(values: np.ndarray, neighborhood: int = 3, z_thresh: flo
             z = (center_val - median) / (1.4826 * mad)
             mask[i, j] = z > z_thresh
     return mask
+
+
+def _ocr_data(image: Image.Image) -> Dict[str, Any]:
+    """Runs Tesseract once and returns plain text, per-word bounding boxes,
+    and per-line groupings — enough for check_document_text,
+    check_font_consistency, check_chrome_consistency, and
+    check_amount_consistency to all share a single OCR pass instead of
+    running Tesseract redundantly, since it's one of the more expensive
+    steps in this pipeline. Every one of those cues also accepts a plain
+    `image` and computes this internally if not given one, so each stays
+    independently callable/testable like every other cue in this module —
+    only analyze_image_bytes bothers to share a single call.
+    """
+    if pytesseract is None:
+        return {"text": "", "words": [], "lines": [], "available": False}
+    try:
+        data = pytesseract.image_to_data(image.convert("RGB"), output_type=pytesseract.Output.DICT)
+    except Exception:
+        return {"text": "", "words": [], "lines": [], "available": False}
+
+    words: List[Dict[str, Any]] = []
+    texts: List[str] = []
+    line_order: List[Tuple[int, int, int]] = []
+    line_words: Dict[Tuple[int, int, int], List[str]] = {}
+
+    for i in range(len(data.get("text", []))):
+        text = data["text"][i].strip()
+        try:
+            conf = float(data["conf"][i])
+        except (TypeError, ValueError):
+            conf = -1.0
+        if not text or conf < 0:
+            continue  # Tesseract emits empty/-1-conf rows for structural (block/line) entries
+
+        words.append({
+            "text": text, "left": int(data["left"][i]), "top": int(data["top"][i]),
+            "width": int(data["width"][i]), "height": int(data["height"][i]), "conf": conf,
+        })
+        texts.append(text)
+
+        line_key = (data["block_num"][i], data["par_num"][i], data["line_num"][i])
+        if line_key not in line_words:
+            line_words[line_key] = []
+            line_order.append(line_key)
+        line_words[line_key].append(text)
+
+    lines = [" ".join(line_words[k]) for k in line_order]
+    return {"text": " ".join(texts), "words": words, "lines": lines, "available": True}
 
 
 # ---------------------------------------------------------------------------
@@ -368,7 +421,7 @@ _PLACEHOLDER_NAMES = ["john doe", "jane doe", "john smith", "test user", "sample
 _PLACEHOLDER_NUMBER_RE = re.compile(r"(\d)\1{5,}|123456789|987654321")
 
 
-def check_document_text(image: Image.Image) -> Dict[str, Any]:
+def check_document_text(image: Image.Image, ocr_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """OCR the image and check its actual text content for tampering signals
     that pixel-level forensics (ELA, noise, clone detection) cannot see at
     all: a known fake-statement-generator's own watermark, or an obviously
@@ -378,14 +431,12 @@ def check_document_text(image: Image.Image) -> Dict[str, Any]:
     say "John Doe" — but a purely pixel-based pipeline has no way to notice
     them, regardless of how much compression-artifact analysis it does.
     """
-    if pytesseract is None:
+    if ocr_data is None:
+        ocr_data = _ocr_data(image)
+    if not ocr_data.get("available"):
         return {"score": 0.0, "note": "OCR not available in this environment.", "matched_flags": []}
 
-    try:
-        text = pytesseract.image_to_string(image.convert("RGB"))
-    except Exception as exc:
-        return {"score": 0.0, "note": f"OCR failed: {exc}", "matched_flags": []}
-
+    text = ocr_data["text"]
     lower = text.lower()
     flags: List[str] = []
 
@@ -408,6 +459,326 @@ def check_document_text(image: Image.Image) -> Dict[str, Any]:
         "score": round(score, 4),
         "matched_flags": flags,
         "extracted_text_length": len(text.strip()),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Screenshot-specific rendering cues
+#
+# Every cue above this point comes from photograph forensics (ELA, JPEG
+# Ghost, quantization, noise) or is agnostic to content type (EXIF, OCR
+# text matching). Screenshots are *rendered UI*, not photographs, which
+# opens up signal classes those techniques were never designed to see: how
+# consistently the text itself was rasterized, whether a region was
+# resampled at a different scale than its surroundings, whether a document's
+# own printed numbers contradict each other, and whether device chrome
+# looks duplicated. These are newer and less battle-tested than the cues
+# above — see each docstring for how they're deliberately scoped to avoid
+# false-positive-prone assumptions, and see calibrate.py for measured
+# reliability before trusting any of them in fake_score.
+# ---------------------------------------------------------------------------
+
+def check_font_consistency(image: Image.Image, ocr_data: Optional[Dict[str, Any]] = None,
+                            min_words: int = 6) -> Dict[str, Any]:
+    """Flags text whose rendering (anti-aliasing / edge softness) is
+    inconsistent with the rest of the document's text — the signature of
+    text pasted in from a different rendering source (a different OS, a
+    screenshot tool, or a photo editor) than whatever rendered the rest of
+    the screen. The pixel-level cues elsewhere in this module look at
+    compression/noise artifacts; this looks at how the *glyphs themselves*
+    were drawn, a signal specific to rendered text that has no equivalent
+    in photograph forensics.
+
+    Unlike the block-grid cues (ELA, noise, edge-sharpness), OCR'd text
+    regions are sparse and irregularly placed, so there's no dense spatial
+    grid to build a *local* neighborhood baseline from (see
+    _local_outlier_mask's docstring for why that matters elsewhere) —
+    instead each region is compared against the robust median of every
+    OTHER text region in the same image, the closest available equivalent
+    baseline when regions aren't on a grid.
+
+    STATUS: implemented but NOT validated — unlike check_amount_consistency
+    and check_chrome_consistency below, direct testing could not confirm
+    this cue actually fires on a genuine mismatch. A deliberately
+    constructed test image (normal text next to a hard-thresholded,
+    anti-aliasing-free copy of the same text) produced near-identical
+    "sharpness" values for both, well under the outlier threshold — either
+    Pillow's bundled default font doesn't carry enough anti-aliasing at
+    typical sizes for gradient-based sharpness to distinguish, or the
+    edge-steepness/contrast metric itself isn't sensitive enough. On real
+    corpus data it also never fires (no false positives, but no evidence of
+    true positives either). Computed and reported for transparency, same as
+    ghost_score, but do not treat a nonzero value here as trustworthy until
+    it's validated against genuinely different rendering sources (e.g. text
+    rasterized by two different real font engines, not a synthetic proxy).
+    """
+    if ocr_data is None:
+        ocr_data = _ocr_data(image)
+    if not ocr_data.get("available") or len(ocr_data.get("words", [])) < min_words:
+        return {"score": 0.0, "note": "Not enough OCR'd text to compare font rendering.", "region_count": 0}
+
+    gray = np.array(image.convert("L"), dtype=np.float32)
+    h, w = gray.shape
+
+    sharpness: List[float] = []
+    for word in ocr_data["words"]:
+        if len(word["text"]) < 2:
+            continue  # single characters are too small to measure reliably
+        x0, y0 = max(0, word["left"] - 2), max(0, word["top"] - 2)
+        x1, y1 = min(w, word["left"] + word["width"] + 2), min(h, word["top"] + word["height"] + 2)
+        if x1 - x0 < 6 or y1 - y0 < 6:
+            continue
+        region = gray[y0:y1, x0:x1]
+
+        # Edge steepness normalized by the region's own ink/background
+        # contrast, so a naturally low-contrast region (e.g. light-gray
+        # text) isn't penalized relative to a high-contrast one — only the
+        # *shape* of the transition (hard vs. anti-aliased) should matter.
+        contrast = float(region.max() - region.min())
+        if contrast < 10:
+            continue  # too flat to have measurable text edges (likely an OCR false positive)
+        gx = np.abs(np.diff(region, axis=1))
+        gy = np.abs(np.diff(region, axis=0))
+        edge_energy = (float(gx.mean()) if gx.size else 0.0) + (float(gy.mean()) if gy.size else 0.0)
+        sharpness.append(edge_energy / contrast)
+
+    if len(sharpness) < min_words:
+        return {"score": 0.0, "note": "Not enough measurable text regions to compare font rendering.",
+                "region_count": len(sharpness)}
+
+    values = np.array(sharpness)
+    median = np.median(values)
+    mad = np.median(np.abs(values - median)) or 1e-6
+    z = (values - median) / (1.4826 * mad)
+    outliers = z > 4.5
+
+    outlier_ratio = float(outliers.mean())
+    max_z = float(z.max())
+    # A single wildly-inconsistent region matters more than a low ratio
+    # across many regions — most screenshots only have a handful of
+    # distinct text blocks, so this saturates on absolute deviation rather
+    # than requiring many outliers before it fires at all.
+    score = min(1.0, max(0.0, (max_z - 4.5) / 6.0) * 0.7 + outlier_ratio * 0.5)
+    return {
+        "region_count": len(sharpness),
+        "outlier_region_count": int(outliers.sum()),
+        "outlier_ratio": round(outlier_ratio, 4),
+        "max_z_score": round(max_z, 4),
+        "score": round(score, 4),
+    }
+
+
+def check_edge_sharpness_consistency(image: Image.Image, block_size: int = 16) -> Dict[str, Any]:
+    """Flags a block whose UI-edge sharpness (how steep the transition is
+    across a strong straight edge — a button border, a divider, a card
+    outline) is a local outlier relative to its neighborhood.
+
+    This is a deliberately narrower, implementable version of "does this
+    region's content align with the rest of the UI" than literal pixel-grid/
+    DPI-snap detection: different UI elements in a real screenshot
+    legitimately don't all share one pixel grid, so grid-alignment isn't a
+    reliable invariant across arbitrary UI frameworks. *Resampling blur* is
+    a real, meaningful signal instead — a region pasted in at a different
+    scale than its surroundings picks up interpolation blur that a
+    natively-rendered, unscaled region doesn't have, and that shows up as a
+    local dip in edge steepness. Same local-neighborhood rationale as
+    ela_feature_score/estimate_noise_inconsistency (see
+    _local_outlier_mask).
+
+    STATUS: tested and found NOT reliable on this content type — same fate
+    as ghost_score, for a related reason. Direct testing against real
+    screenshot content (not just the synthetic corpus) showed this cue
+    saturates near the top of its range (~0.84-0.95) on ordinary,
+    untampered screenshots across every category tried, and does not
+    increase — it slightly *decreased* in one direct test — when a genuine
+    resampled/blurred patch is pasted in. Root cause: flat UI content
+    legitimately has widely varying local edge sharpness block-to-block
+    (a vector-rendered card border next to a soft drop-shadow next to
+    dense small text), so "local outlier in edge sharpness" fires on
+    ordinary layout structure almost everywhere, not just on tampering —
+    a more severe version of the same flat-UI weakness ELA and JPEG Ghost
+    already have (see README's "Known limitations"). A percentile-based
+    fix (measuring the block's strongest edges rather than its mean, to
+    remove the edge-density confound) was tried and did not resolve it.
+    Kept computed and shown for transparency, exactly like ghost_score;
+    excluded from fake_score, and should not be trusted without a
+    fundamentally different approach (e.g. explicit periodic-artifact
+    detection for resampling, rather than local sharpness variance).
+    """
+    gray = np.array(image.convert("L"), dtype=np.float32)
+    h, w = gray.shape
+    gx = np.abs(np.diff(gray, axis=1, append=gray[:, -1:]))
+    gy = np.abs(np.diff(gray, axis=0, append=gray[-1:, :]))
+    edge = gx + gy
+
+    bh, bw = h // block_size, w // block_size
+    if bh < 5 or bw < 5:
+        return {"score": 0.0, "note": "Image too small for edge-sharpness analysis."}
+
+    cropped_edge = edge[: bh * block_size, : bw * block_size]
+    cropped_gray = gray[: bh * block_size, : bw * block_size]
+    gray_blocks = cropped_gray.reshape(bh, block_size, bw, block_size)
+    # transpose before collapsing the per-block pixels into one axis — a
+    # plain .reshape(bh, bw, -1) here would NOT group each spatial block's
+    # own pixels together (reshape reinterprets the flat buffer, it doesn't
+    # reorder axes), silently computing the percentile over scrambled data.
+    edge_blocks = cropped_edge.reshape(bh, block_size, bw, block_size).transpose(0, 2, 1, 3) \
+        .reshape(bh, bw, block_size * block_size)
+
+    # The 90th-percentile edge magnitude in a block (how steep its
+    # *strongest* edges are), not the block mean: averaging over every
+    # pixel conflates edge sharpness with edge *density* (a text-dense
+    # block has many edge pixels diluting the mean differently than a
+    # single card border does), which isn't what this cue is trying to
+    # measure and made it fire almost everywhere on real screenshots
+    # during smoke-testing — a block-density confound, not a real signal.
+    block_edge_p90 = np.percentile(edge_blocks, 90, axis=2)
+    block_contrast = gray_blocks.max(axis=(1, 3)) - gray_blocks.min(axis=(1, 3))
+
+    # Only blocks with a real edge in them are informative — a flat block
+    # has no edge to measure sharpness on (same rationale as the clone
+    # detector skipping near-uniform blocks).
+    informative = block_contrast > 20
+    if int(informative.sum()) < 10:
+        return {"score": 0.0, "note": "Not enough textured/edged blocks for edge-sharpness analysis."}
+
+    sharpness = np.where(informative, block_edge_p90 / np.maximum(block_contrast, 1e-6), np.nan)
+    fill_value = float(np.nanmedian(sharpness))
+    filled = np.where(informative, sharpness, fill_value)
+
+    outlier_mask = _local_outlier_mask(filled) & informative
+    cluster_size = _largest_connected_component(outlier_mask)
+    outlier_ratio = float(outlier_mask.sum()) / max(1, int(informative.sum()))
+
+    cluster_term = min(1.0, cluster_size / 4.0)
+    score = min(1.0, (cluster_term * 0.8) + (outlier_ratio * 0.3))
+    return {
+        "informative_block_ratio": round(float(informative.mean()), 4),
+        "outlier_block_ratio": round(outlier_ratio, 4),
+        "largest_cluster_size": int(cluster_size),
+        "score": round(score, 4),
+    }
+
+
+_TIME_PATTERN = re.compile(r"\b([01]?\d|2[0-3]):[0-5]\d\b")
+
+
+def check_chrome_consistency(image: Image.Image, ocr_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Flags the status-bar clock reading being repeated verbatim elsewhere
+    in a phone-shaped screenshot — the signature of a screenshot-of-a-
+    screenshot or a composite with two layers of device chrome, both real,
+    low-effort ways to fake a screenshot.
+
+    Deliberately narrow, twice over. First: without the submitter declaring
+    which platform a screenshot claims to be from, there's no ground truth
+    to validate a clock/battery/carrier readout *against* (this project's
+    general stance on not forcing signal where there isn't a reliable
+    invariant to check — see README's "Known limitations"), so this checks
+    for literal duplication, not "wrong-looking" chrome. Second, and found
+    empirically during this cue's own calibration: an earlier version
+    flagged *any* H:MM-shaped text found outside the top strip, which
+    false-positives constantly — most receipt/payment screenshots
+    legitimately print their own transaction timestamp in the body, and
+    that's a real time, just not the status bar's. Only an EXACT match
+    between the top-strip reading and a reading elsewhere is a genuine
+    invariant: a real transaction timestamp is essentially never the exact
+    same minute as when the screenshot itself was taken, but a duplicated
+    chrome layer reproduces the identical string.
+    """
+    if ocr_data is None:
+        ocr_data = _ocr_data(image)
+    w, h = image.size
+    if h < w * 1.2:
+        return {"score": 0.0, "applicable": False, "note": "Not a phone-shaped screenshot; chrome check skipped."}
+    if not ocr_data.get("available"):
+        return {"score": 0.0, "applicable": False, "note": "OCR not available."}
+
+    top_strip_height = max(24, int(h * 0.06))
+    top_matches: List[str] = []
+    other_matches: List[str] = []
+    for word in ocr_data["words"]:
+        m = _TIME_PATTERN.search(word["text"])
+        if not m:
+            continue
+        (top_matches if word["top"] < top_strip_height else other_matches).append(m.group(0))
+
+    duplicates = sorted(set(top_matches) & set(other_matches))
+    if not duplicates:
+        return {
+            "score": 0.0, "applicable": True, "top_strip_reading": top_matches[:1],
+            "note": "No exact duplicate of the status-bar reading found elsewhere in the image.",
+        }
+    return {
+        "score": 0.6, "applicable": True, "top_strip_reading": top_matches[:1],
+        "duplicate_readings": duplicates,
+        "note": "The status-bar clock reading is repeated verbatim elsewhere in the image — possible "
+                "duplicated/composited device chrome (e.g. a screenshot of a screenshot).",
+    }
+
+
+_AMOUNT_RE = re.compile(r"\$\s?([\d][\d,]*\.\d{2})")
+
+
+def _line_amount(line: str) -> Optional[float]:
+    m = _AMOUNT_RE.search(line)
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(",", ""))
+    except ValueError:
+        return None
+
+
+def check_amount_consistency(image: Image.Image, ocr_data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Flags a document whose own printed numbers contradict each other —
+    the one arithmetic invariant that's unambiguous regardless of layout: a
+    "Subtotal"/"Total" pair where the total is LESS than the subtotal
+    (impossible for any real order/statement, since tax/shipping/fees can
+    only add to it), or the same total-style label printed twice with two
+    materially different amounts. Pixel-level cues can't see this at all;
+    like check_document_text, this reads what the document actually *says*.
+
+    Deliberately narrow, for the same reason check_document_text's
+    watermark list is a fixed set rather than a fuzzy match: a broader
+    "does the itemized list sum to the total" check would false-positive
+    constantly on real receipts (discounts, multiple tax lines, rounding,
+    loyalty credits — none of which this pipeline can enumerate reliably),
+    so this only fires on a contradiction with no legitimate explanation, at
+    the cost of missing subtler tampering that doesn't leave one.
+    """
+    if ocr_data is None:
+        ocr_data = _ocr_data(image)
+    if not ocr_data.get("available"):
+        return {"score": 0.0, "note": "OCR not available in this environment.", "matched_flags": []}
+
+    totals: List[float] = []
+    subtotals: List[float] = []
+    for line in ocr_data.get("lines", []):
+        amount = _line_amount(line)
+        if amount is None:
+            continue
+        lower = line.lower()
+        if "subtotal" in lower:
+            subtotals.append(amount)
+        elif "total" in lower or "balance" in lower:
+            totals.append(amount)
+
+    flags: List[str] = []
+    if subtotals and totals and max(totals) < max(subtotals) - 0.01:
+        flags.append(
+            f"Total (${max(totals):.2f}) is less than Subtotal (${max(subtotals):.2f}) — "
+            "not possible for a real order/statement."
+        )
+    unique_totals = sorted(set(round(v, 2) for v in totals))
+    if len(unique_totals) > 1:
+        flags.append(f"Multiple different Total/Balance amounts printed in the same document: {unique_totals}")
+
+    score = min(1.0, 0.9 * len(flags)) if flags else 0.0
+    return {
+        "score": round(score, 4),
+        "matched_flags": flags,
+        "totals_found": totals,
+        "subtotals_found": subtotals,
     }
 
 
@@ -623,6 +994,68 @@ def detect_clone_regions(image: Image.Image, block_size: int = 24, stride: int =
 
 
 # ---------------------------------------------------------------------------
+# Content-type classification (for per-domain thresholds, not scoring)
+# ---------------------------------------------------------------------------
+
+def classify_content_type(image: Image.Image, ocr_data: Optional[Dict[str, Any]] = None) -> str:
+    """Buckets an image into a coarse content type using simple, explainable
+    rules over its OCR'd text and shape — not a trained classifier — so a
+    single global fake_score threshold isn't forced across visually
+    incompatible domains. Directly motivated by this project's own measured
+    finding (see README's "Trained model" per-source breakdown): the same
+    threshold that gives CASIA's general photos 100% recall gives findit2's
+    dense receipts only 28% precision, because one global cutoff can't suit
+    both a nearly-textless photo and a dense financial document equally
+    well.
+
+    Deliberately simple and rule-based rather than a second trained model: a
+    wrong bucket here only shifts which *threshold* applies (see
+    config.CONTENT_TYPE_THRESHOLDS and analyze_image_bytes below) — it never
+    changes fake_score itself or swaps in different cue weights — so a
+    misclassification degrades gracefully to "uses the default threshold"
+    rather than corrupting the underlying verdict.
+
+    Buckets:
+      financial_document  Dense $-amount content with balance/total/
+                          transaction-style language — bank statements,
+                          payment receipts, crypto wallets, e-commerce
+                          orders, paper receipts (findit2).
+      social_or_chat      An @handle pattern, or a phone-shaped image with
+                          light, informal text — social posts, message
+                          threads.
+      photo               Little to no legible text — general photographs
+                          (CASIA/IMD2020-style content), where this
+                          pipeline's pixel-forensics cues are closest to the
+                          conditions they were originally validated under.
+      unknown             Doesn't clearly match any of the above; uses the
+                          global default threshold.
+    """
+    if ocr_data is None:
+        ocr_data = _ocr_data(image)
+    text = ocr_data.get("text", "")
+    lower = text.lower()
+    word_count = len(ocr_data.get("words", []))
+    w, h = image.size
+
+    if word_count < 5:
+        return "photo"
+
+    financial_kw = any(kw in lower for kw in
+                        ("balance", "total", "subtotal", "transaction", "payment",
+                         "order", "amount", "account"))
+    if text.count("$") >= 2 and financial_kw:
+        return "financial_document"
+
+    has_handle = bool(re.search(r"@\w{2,}", text))
+    social_kw = any(kw in lower for kw in ("likes", "replies", "reposts", "comments", "shares"))
+    phone_shaped = h > w * 1.3
+    if has_handle or social_kw or (phone_shaped and word_count < 60):
+        return "social_or_chat"
+
+    return "unknown"
+
+
+# ---------------------------------------------------------------------------
 # Orchestration
 # ---------------------------------------------------------------------------
 
@@ -647,10 +1080,16 @@ def analyze_image_bytes(raw_bytes: bytes, config) -> Dict[str, Any]:
 
     # Cues that depend on the original file's own compression history (or,
     # for OCR, on maximum available text legibility) must run before any
-    # resizing/re-encoding.
+    # resizing/re-encoding. OCR runs exactly once here (_ocr_data) and its
+    # result is shared by every text-derived cue below, rather than each
+    # running its own Tesseract pass.
     quant = check_quantization_tables(image)
     metadata = check_metadata(image)
-    doc_text = check_document_text(image)
+    ocr_data = _ocr_data(image)
+    doc_text = check_document_text(image, ocr_data)
+    font_consistency = check_font_consistency(image, ocr_data)
+    chrome = check_chrome_consistency(image, ocr_data)
+    amount_consistency = check_amount_consistency(image, ocr_data)
 
     analysis_image = _resize_for_analysis(image, config.ANALYSIS_MAX_DIM)
     ela_image, diff_arr = compute_ela(analysis_image, quality=config.ELA_QUALITY)
@@ -658,6 +1097,7 @@ def analyze_image_bytes(raw_bytes: bytes, config) -> Dict[str, Any]:
     ghost = compute_jpeg_ghost(analysis_image)
     noise = estimate_noise_inconsistency(analysis_image)
     clone = detect_clone_regions(analysis_image)
+    edge_sharpness = check_edge_sharpness_consistency(analysis_image)
 
     features = {
         "ela_score": ela_features["score"],
@@ -667,8 +1107,26 @@ def analyze_image_bytes(raw_bytes: bytes, config) -> Dict[str, Any]:
         "clone_score": clone["score"],
         "metadata_score": metadata["score"],
         "text_score": doc_text["score"],
+        # New screenshot-specific cues (see "Screenshot-specific rendering
+        # cues" section above): computed and reported like ghost_score, but
+        # NOT in config.WEIGHTS and not seen by the currently-bundled
+        # trained model (it only reads the seven keys above — see
+        # model_loader.predict_fake and rf_model_meta.json's feature_keys)
+        # until calibration testing validates them, same bar ghost_score
+        # itself didn't clear. Kept visible for transparency/debugging.
+        "font_score": font_consistency["score"],
+        "edge_score": edge_sharpness.get("score", 0.0),
+        "chrome_score": chrome["score"],
+        "arithmetic_score": amount_consistency["score"],
     }
-    prediction = predict_fake(features, config.WEIGHTS, config.FAKE_THRESHOLD,
+    # Per-domain threshold (see classify_content_type's docstring): looked
+    # up, not re-derived per request, so a misclassification degrades to
+    # "uses the global default" rather than anything more surprising.
+    content_type = classify_content_type(image, ocr_data)
+    threshold_overrides = getattr(config, "CONTENT_TYPE_THRESHOLDS", {}) or {}
+    effective_threshold = threshold_overrides.get(content_type) or config.FAKE_THRESHOLD
+
+    prediction = predict_fake(features, config.WEIGHTS, effective_threshold,
                                overrides=getattr(config, "OVERRIDE_CUES", None))
 
     buf = io.BytesIO()
@@ -692,11 +1150,17 @@ def analyze_image_bytes(raw_bytes: bytes, config) -> Dict[str, Any]:
             "noise": noise,
             "clone_detection": clone,
             "document_text": doc_text,
+            "font_consistency": font_consistency,
+            "edge_sharpness": edge_sharpness,
+            "chrome_consistency": chrome,
+            "amount_consistency": amount_consistency,
         },
         "meta": {
             "original_format": original_format,
             "sha256": sha256,
             "processing_ms": elapsed_ms,
+            "content_type": content_type,
+            "effective_threshold": effective_threshold,
             "model": prediction["model_name"],
         },
     }

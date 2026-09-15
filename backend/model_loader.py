@@ -18,6 +18,7 @@ _MODEL_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_dat
 _MODEL = None
 _MODEL_FEATURE_KEYS = None
 _MODEL_LOAD_ERROR = None
+_MODEL_DESCRIPTION = None
 
 try:
     import joblib
@@ -26,15 +27,16 @@ try:
     _meta_path = os.path.join(_MODEL_DIR, "rf_model_meta.json")
     if os.path.exists(_model_path) and os.path.exists(_meta_path):
         with open(_meta_path) as _f:
-            _MODEL_FEATURE_KEYS = json.load(_f)["feature_keys"]
+            _meta = json.load(_f)
+        _MODEL_FEATURE_KEYS = _meta["feature_keys"]
+        _MODEL_DESCRIPTION = _meta.get("model_description")
         _MODEL = joblib.load(_model_path)
 except Exception as exc:
     _MODEL = None
     _MODEL_LOAD_ERROR = str(exc)
 
 MODEL_NAME = (
-    "randomforest-v1 (trained on the real, labeled 'Find it again!' receipt-forgery "
-    "dataset, ICDAR 2023)"
+    (_MODEL_DESCRIPTION or "randomforest (trained model; see rf_model_meta.json for details)")
     if _MODEL is not None else
     "heuristic-v0 (rule-based weighted average; not yet trained on labeled data)"
 ) + " + high-confidence overrides"

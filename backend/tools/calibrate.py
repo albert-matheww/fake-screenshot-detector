@@ -141,7 +141,8 @@ def make_tampered_from(authentic_bytes, seed):
 def main():
     n = 25
     tamper_names = {0: "patch-recompress", 1: "copy-move", 2: "flat-edit", 3: "exif-only"}
-    cues = ["ela_score", "ghost_score", "quant_score", "noise_score", "clone_score", "metadata_score"]
+    cues = ["ela_score", "ghost_score", "quant_score", "noise_score", "clone_score", "metadata_score",
+            "font_score", "edge_score", "chrome_score", "arithmetic_score"]
 
     rows = []
     for i in range(n):
