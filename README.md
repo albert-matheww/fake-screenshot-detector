@@ -263,13 +263,20 @@ explicitly **not** built here, and would need real work to add:
 
 Backend (requires the `tesseract-ocr` system package for the document-text
 cue — `apt-get install tesseract-ocr` / `brew install tesseract`; without it,
-that cue degrades gracefully to a 0 score rather than failing the request):
+that cue degrades gracefully to a 0 score rather than failing the request).
+Run these from the project root, in their own terminal:
 ```bash
 cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python app.py            # serves on http://localhost:5000
 ```
+Port 5000 is taken by macOS's AirPlay Receiver/ControlCenter on many Macs
+(the same conflict noted under Docker Compose below) — `python app.py` will
+fail with "Address already in use" if so. Either disable AirPlay Receiver in
+System Settings, or override the port: `PORT=5001 python app.py` (then also
+set `VITE_API_PROXY_TARGET=http://localhost:5001` before `npm run dev`
+below, since the frontend's dev proxy otherwise assumes port 5000).
 
 Run backend tests:
 ```bash
@@ -277,7 +284,8 @@ cd backend
 pytest tests/ -v
 ```
 
-Frontend:
+Frontend — open a **second terminal**, `cd` to the project root again (not
+into `backend/`), then:
 ```bash
 cd frontend
 npm install
