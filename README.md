@@ -477,27 +477,36 @@ between retrains.
 ### Synthetic screenshot corpus
 
 `backend/tools/synthesize_dataset.py` procedurally generates a labeled,
-paired authentic/tampered corpus across **eight screenshot categories** —
+paired authentic/tampered corpus across **ten screenshot categories** —
 `chat`, `bank`, `payment`, `social`, `ecommerce`, `email`, `notification`,
-`crypto` — specifically to narrow the "no screenshot-specific labeled
-dataset" gap above (see that file's docstring for the full design). Each
-authentic render uses real, OCR-legible text (`ImageDraw.text` + Pillow's
-bundled scalable font, no system-font dependency, so it works identically
-on macOS and the `python:3.10-slim` backend image), independently rolls a
-light or dark color palette, and `chat` sometimes renders as a group thread
-(multi-name header, per-message sender labels) instead of 1:1. Each
-authentic image gets one paired tamper drawn from six types:
-patch-recompress, copy-move, flat-overwrite, an editing-tool EXIF tag, a
-generator-watermark/placeholder-data injection (reuses
-`forensic._GENERATOR_WATERMARKS`/`_PLACEHOLDER_NAMES` directly, so it
-always matches what `check_document_text` actually looks for), and a
-combined patch+EXIF case. Authentic images also sometimes get a second,
-content-preserving resave pass (simulating re-sharing through another app)
-so the model isn't taught that recompression alone means "fake". Known
-scope limit, stated in the tool's own docstring: every category still
-shares one rendering engine, so this corpus narrows the "no screenshot
-dataset" gap, it does not close it — see "Suggested next steps" below for
-what closing it further would take.
+`crypto`, `sms`, `trading` — specifically to narrow the "no
+screenshot-specific labeled dataset" gap above (see that file's docstring
+for the full design). `sms` (OTP/verification-code fraud) and `trading`
+(fake proof-of-investment-returns fraud) were added to cover two common
+real-world screenshot-fraud patterns the original eight didn't represent.
+Each authentic render uses real, OCR-legible text (`ImageDraw.text` +
+Pillow's bundled scalable font, no system-font dependency, so it works
+identically on macOS and the `python:3.10-slim` backend image),
+independently rolls a light or dark color palette, and `chat` sometimes
+renders as a group thread (multi-name header, per-message sender labels)
+instead of 1:1. Each authentic image gets one paired tamper drawn from
+**seven types**: patch-recompress, copy-move, flat-overwrite, an
+editing-tool EXIF tag, a generator-watermark/placeholder-data injection
+(reuses `forensic._GENERATOR_WATERMARKS`/`_PLACEHOLDER_NAMES` directly, so
+it always matches what `check_document_text` actually looks for), a
+combined patch+EXIF case, and **smooth-inpaint** — new content blended
+into a background color sampled from the region itself plus noise matched
+to the local region's magnitude, no differential recompression, no
+duplicated pixels, no EXIF stamp. Modeled directly on 2026
+forgery-detection research (AIForge-Doc) showing modern AI-inpainting
+edits defeat exactly the signals this project's compression/noise cues
+rely on — included so the corpus honestly tests that blind spot rather
+than only tamper styles the pipeline already handles well. Authentic
+images also sometimes get a second, content-preserving resave pass
+(simulating re-sharing through another app) so the model isn't taught
+that recompression alone means "fake". Known scope limit, stated in the
+tool's own docstring: every category still shares one rendering engine, so
+this corpus narrows the "no screenshot dataset" gap, it does not close it.
 
 ```bash
 python3 tools/synthesize_dataset.py --out /data/synthetic --count 150
@@ -506,47 +515,52 @@ python3 tools/train_model.py --synthetic /data/synthetic \
   --findit2 /data/findit2 --casia2 /data/casia2 --imd2020 /data/imd2020
 ```
 
-**Measured, reproducible on a synthetic-only demo retrain** (2,400 images,
-150/category across all 8 categories, `--synthetic` alone, held-out test
-split n=368): precision 99.0%, recall 54.4%, F1 0.702 — consistent with the
-5-category version of this same experiment (98.4%/53.9%/0.697), a good sign
-the pipeline's behavior doesn't degrade as categories are added. Near-zero
-false positives on authentic synthetic screenshots; only about half of
-tampered ones caught, split unevenly by tamper type (metadata- and
-text-based tampers are caught reliably; patch-recompress and copy-move are
-the weak spots, consistent with "Known limitations" above). Per-category
-F1 ranges narrowly (0.51–0.72 test set) — no single new category (email,
-notification, crypto) stood out as dramatically easier or harder than the
-original five. `metadata_score` (0.517) and `text_score` (0.229) still
-dominate feature importance; of the four new cues, `edge_score` picked up
-some importance (0.060) despite direct testing finding it doesn't
-discriminate reliably (see "What's implemented" above) — treat that
-specific number with skepticism rather than as validation, since one
-training run's importance score isn't the same evidence as a direct
-true-positive/true-negative test. `chrome_score`/`arithmetic_score` scored
-**zero** importance in this run for an explainable reason, not because
-they don't work: none of the six tamper types above happen to construct a
-duplicated-clock or contradictory-total scenario, so those two features
-have no variance in this training set for the model to learn from yet — a
-concrete, named gap for a future tamper type to close (see "Suggested next
-steps").
+**Attempted: pooling this corpus with IMD2020 into the production model —
+result: not deployed, and the reason why is the most useful finding here.**
+CASIA v2.0 (see "Trained model" above) is currently undownloadable — its
+original host is offline and the maintainer's repo now requires an email
+request rather than a public link — so a retrain right now can only pool
+IMD2020 + this synthetic corpus, dropping CASIA2's 1,500 authentic
+general-photo examples entirely. Three retrains were run to test whether
+that loss actually mattered:
 
-**This synthetic corpus has not been pooled into the bundled production
-model** (`backend/model_data/rf_model.joblib` is still findit2+casia2+imd2020
-only, and `rf_model_meta.json`'s `feature_keys` still lists the original
-seven — the four new cues are computed and returned by the API for every
-request regardless, just not yet seen by the trained model's own
-probability estimate) — that's a deliberate choice, not an oversight.
-Procedurally generated data risks teaching the model to recognize *this
-generator's own* rendering quirks rather than universal tampering signal,
-which would be invisible in an evaluation against more of the same
-generator's output. Doing this responsibly means validating on real
-screenshots (even a small hand-collected set — see "Real-world validation"
-below) before trusting a synthetic-inclusive model, and capping synthetic
-data's share of the pooled training set rather than letting it dominate.
-Treat `--synthetic` as a way to close specific, named gaps (a category or
-tamper type real datasets don't cover) alongside real data, not a
-replacement for it.
+| Attempt | Synthetic authentic:real authentic ratio | IMD2020 authentic correctly identified |
+|---|---|---|
+| Full corpus (300/category) | ~7:1 | 1/63 |
+| Reduced corpus (50/category) | ~1.2:1 | 5/63 |
+| Reduced corpus + 10-50x `sample_weight` on real examples | ~1.2:1 (reweighted) | peaked at 22/63, plateaued at 25x, *dropped* at 50x |
+
+All three catastrophically misclassify real authentic photos as fake —
+92-97% of them, in every configuration, including deliberate attempts to
+counteract it with per-source sample weighting. The plateau-then-decline at
+higher weights is the tell: this isn't a volume or weighting problem
+(which would keep improving as the real-source weight increased), it's an
+information problem. With CASIA2 gone, only ~290 real authentic training
+examples exist for the model to learn "what does authentic photo noise/
+compression look like" from — no amount of reweighting the *same* ~290
+examples manufactures the diversity that 1,500 additional real authentic
+photos provided. Concretely: **CASIA2 (or an equivalent-scale, diverse
+real-photo-authentic dataset) is a requirement for safely pooling IMD2020
+or this synthetic corpus into the production model, not an optional
+enhancement** — this was assumed but unverified before; it's now measured.
+The bundled model remains
+findit2+casia2+imd2020-only (7 features) until that's resolved.
+
+On the synthetic corpus alone, precision stayed strong across every
+category (94-100%, near-zero false positives on authentic synthetic
+screenshots — consistent with earlier demo-retrain results), while recall
+sat around 31-50% — split by tamper type, not by category: `metadata_score`
+(EXIF detection) dominates feature importance across all three runs
+(18-33%), and only the two EXIF-stamping tamper types are reliably caught.
+The other five, including the new `smooth-inpaint` type, are mostly missed
+— an honest, first-hand confirmation of the same finding external research
+surfaced (see "Suggested next steps" below): compression/noise-based
+forensics genuinely struggle against edits that don't leave those specific
+traces. `chrome_score`/`arithmetic_score` scored **zero** importance again
+in all three runs, for the same reason documented previously — none of the
+seven tamper types (the new `smooth-inpaint` included) happen to construct
+a duplicated-clock or contradictory-total scenario, so a tamper type that
+specifically does remains an open, named gap.
 
 ### Real-world validation
 
@@ -582,12 +596,20 @@ Concrete, scoped follow-ups this session's work surfaced — named here
 rather than left implicit, so "what's next" doesn't have to be
 re-derived from scratch:
 
+- **Restore CASIA2 (or an equivalent-scale, diverse real-photo-authentic
+  dataset) before pooling IMD2020/synthetic data into the production
+  model.** No longer a hypothesis — three independent retrain attempts
+  (see "Synthetic screenshot corpus" above) confirmed the model
+  misclassifies 92-97% of real authentic photos as fake without it, and
+  the failure mode doesn't respond to rebalancing or reweighting. CASIA2's
+  original host is offline; the maintainer's repo
+  (github.com/namtpham/casia2groundtruth) states "email me if you need it."
 - **A tamper type that exercises `chrome_score`/`arithmetic_score` during
   training.** Both cues are validated (direct true-positive/true-negative
-  tests pass) but scored zero feature importance in the retrain above
-  because none of the six existing tamper types construct a duplicated-
-  clock or contradictory-total scenario — add a 7th tamper type that does,
-  so the trained model can actually learn to use them.
+  tests pass) but scored zero feature importance in every retrain so far,
+  including with the new `smooth-inpaint` type — none of the seven existing
+  tamper types construct a duplicated-clock or contradictory-total
+  scenario. An 8th tamper type built specifically for this is still open.
 - **A genuine cross-renderer test for `font_score`.** This session's
   attempt to validate it used Pillow's own font hard-thresholded as a proxy
   for "different rendering source", which didn't produce a measurable
@@ -607,11 +629,12 @@ re-derived from scratch:
 - **A real, hand-collected validation set** — see "Real-world validation"
   directly above; this is the highest-leverage single gap remaining, since
   every other number in this README is a substitute for it.
-- **New categories/layout diversity in `synthesize_dataset.py`** —
-  localization, additional aspect ratios, and a genuinely held-out
-  rendering-style split (train on one visual variant per category, evaluate
-  on a distinct one) to measure generalization rather than only
-  content-random splits, were scoped but not built this round.
+- **Further layout diversity in `synthesize_dataset.py`** — now at ten
+  categories (added `sms` and `trading` this round); localization,
+  additional aspect ratios, and a genuinely held-out rendering-style split
+  (train on one visual variant per category, evaluate on a distinct one) to
+  measure generalization rather than only content-random splits are still
+  open.
 
 ## Project structure
 

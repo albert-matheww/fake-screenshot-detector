@@ -31,6 +31,15 @@ fraud/misinformation targets):
                 "you received $500" alert)
   crypto        wallet balance + holdings list — the same proof-of-payment
                 fraud pattern as `payment`, for crypto-specific claims
+  sms           carrier SMS thread from a short sender ID (bank/delivery/
+                verification code) rather than a named contact — the
+                "fake OTP/verification-code screenshot" pattern used in
+                account-recovery and social-engineering fraud, distinct
+                from `chat`'s two-way named conversation
+  trading       stock/brokerage portfolio (tickers, share counts, %
+                gain/loss) — the "fake proof of investment returns"
+                pattern used in investment scams, distinct from `crypto`'s
+                plain coin-balance format
 
 Every category also independently rolls a light/dark color palette
 (`_palette`) each render, so the corpus isn't uniformly light-mode-only —
@@ -57,6 +66,21 @@ calibrate.py's make_tampered_from):
                        duplicated, so this stays in sync with it)
   5 patch+exif         combines 0 and 3 — the most realistic single case
                        (actually edited a number in an editor and exported)
+  6 smooth-inpaint     new content blended into a background color sampled
+                       from the region itself (not a flat fill) plus noise
+                       matched to the local region's own magnitude, at the
+                       same JPEG quality as the rest of the image — no
+                       differential recompression, no duplicated source
+                       pixels, no EXIF stamp. Modeled directly on 2026
+                       forgery-detection research (AIForge-Doc) showing
+                       modern AI-inpainting edits defeat exactly these
+                       traditional signals (ela_score, ghost_score,
+                       quant_score, clone_score, metadata_score all lose
+                       their signal at once). Included so this corpus — and
+                       this project's own measured accuracy on it — honestly
+                       reflects that known blind spot instead of only
+                       testing tamper styles the pipeline already handles
+                       well.
 
 Authentic images (label=0) vary JPEG quality/size and sometimes get a
 second, harmless resave pass (simulating re-sharing through another app).
@@ -103,6 +127,7 @@ from forensic import _GENERATOR_WATERMARKS, _PLACEHOLDER_NAMES  # noqa: E402
 TAMPER_NAMES: Dict[int, str] = {
     0: "patch-recompress", 1: "copy-move", 2: "flat-overwrite",
     3: "exif-tool", 4: "watermark-inject", 5: "patch+exif",
+    6: "smooth-inpaint",
 }
 _EDITING_TOOLS = ["Adobe Photoshop 25.0", "GIMP 2.10", "Pixelmator Pro", "Affinity Photo 2"]
 
@@ -137,6 +162,16 @@ _NOTIF_BODIES = ["You have a new message from a contact", "You received a paymen
                   "Your package is out for delivery", "A new device signed in to your account",
                   "Your balance dropped below your alert threshold"]
 _COINS = [("BTC", 20000, 70000), ("ETH", 1500, 4000), ("SOL", 20, 200), ("USDC", 0.99, 1.01)]
+_SMS_SENDERS = ["AMAZON", "BANK-ALERT", "VERIFY", "72540", "88022", "DELIVERY"]
+_SMS_TEMPLATES = [
+    "Your verification code is {code}. Do not share this with anyone.",
+    "Your one-time code: {code}. Expires in 10 minutes.",
+    "{code} is your login code. Never share this code with anyone.",
+    "Your package will arrive today between 2-4pm.",
+    "Reply STOP to unsubscribe from these alerts.",
+]
+_TICKERS = [("AAPL", 140, 240), ("MSFT", 300, 470), ("GOOGL", 100, 190), ("AMZN", 120, 230),
+            ("TSLA", 150, 350), ("NVDA", 400, 950), ("SPY", 420, 600)]
 _FIRST_NAMES = ["Alex", "Jordan", "Sam", "Taylor", "Morgan", "Casey", "Riley", "Jamie", "Priya", "Wei"]
 _LAST_NAMES = ["Carter", "Bennett", "Reyes", "Nguyen", "Patel", "Okafor", "Silva", "Kim", "Novak", "Haddad"]
 _PHONE_SIZES = [(390, 844), (412, 915), (414, 896), (400, 760)]
@@ -400,6 +435,78 @@ def render_crypto(rng: random.Random) -> Image.Image:
     return img
 
 
+def render_sms(rng: random.Random) -> Image.Image:
+    w, h = rng.choice(_PHONE_SIZES)
+    dark = rng.random() < 0.3
+    pal = _palette(dark)
+    img = Image.new("RGB", (w, h), pal["bg"])
+    d = ImageDraw.Draw(img)
+    _status_bar(d, w, pal)
+    sender = rng.choice(_SMS_SENDERS)
+    d.text((w // 2, 60), sender, fill=pal["text"], font=_font(16), anchor="mm")
+    d.text((w // 2, 82), "Text Message", fill=pal["subtext"], font=_font(11), anchor="mm")
+
+    y = 120
+    for _ in range(rng.randint(2, 4)):
+        template = rng.choice(_SMS_TEMPLATES)
+        text = template.format(code=rng.randint(100000, 999999)) if "{code}" in template else template
+        # Pillow's default font has no built-in wrap helper: split on a
+        # fixed character budget so multi-line bubbles stay OCR-legible.
+        words, lines, cur = text.split(), [], ""
+        for word in words:
+            if len(cur) + len(word) + 1 > 34:
+                lines.append(cur)
+                cur = word
+            else:
+                cur = f"{cur} {word}".strip()
+        if cur:
+            lines.append(cur)
+        bw_ = min(280, w - 60)
+        bh_ = 22 + 18 * len(lines)
+        d.rounded_rectangle([16, y, 16 + bw_, y + bh_], radius=14, fill=pal["bubble_in"])
+        for li, line in enumerate(lines):
+            d.text((28, y + 8 + li * 18), line, fill=pal["text"], font=_font(12))
+        d.text((16, y + bh_ + 4), f"{rng.randint(1,12)}:{rng.randint(0,59):02d} {rng.choice(['AM','PM'])}",
+               fill=pal["subtext"], font=_font(10))
+        y += bh_ + 34
+        if y > h - 100:
+            break
+    return img
+
+
+def render_trading(rng: random.Random) -> Image.Image:
+    w, h = rng.choice(_PHONE_SIZES)
+    dark = rng.random() < 0.4
+    pal = _palette(dark)
+    img = Image.new("RGB", (w, h), pal["bg"])
+    d = ImageDraw.Draw(img)
+    _status_bar(d, w, pal)
+    d.text((20, 48), "Portfolio", fill=pal["text"], font=_font(16))
+    total = rng.uniform(2000, 150000)
+    day_change_pct = rng.uniform(-8, 12)
+    change_color = (40, 180, 90) if day_change_pct >= 0 else (220, 70, 70)
+    d.text((20, 74), f"${total:,.2f}", fill=pal["text"], font=_font(28))
+    sign = "+" if day_change_pct >= 0 else ""
+    d.text((20, 108), f"{sign}{day_change_pct:.2f}% today", fill=change_color, font=_font(13))
+
+    y = 150
+    for symbol, lo, hi in rng.sample(_TICKERS, k=rng.randint(3, 5)):
+        d.rounded_rectangle([16, y, w - 16, y + 54], radius=10, fill=pal["surface"], outline=pal["border"])
+        shares = rng.uniform(1, 40)
+        price = rng.uniform(lo, hi)
+        pct = rng.uniform(-6, 8)
+        pct_color = (40, 180, 90) if pct >= 0 else (220, 70, 70)
+        d.text((28, y + 10), symbol, fill=pal["text"], font=_font(14))
+        d.text((28, y + 30), f"{shares:.2f} shares", fill=pal["subtext"], font=_font(11))
+        d.text((w - 120, y + 12), f"${shares * price:,.2f}", fill=pal["text"], font=_font(14))
+        sign2 = "+" if pct >= 0 else ""
+        d.text((w - 120, y + 32), f"{sign2}{pct:.2f}%", fill=pct_color, font=_font(12))
+        y += 62
+        if y > h - 70:
+            break
+    return img
+
+
 RENDERERS = {
     "chat": render_chat,
     "bank": render_bank,
@@ -409,6 +516,8 @@ RENDERERS = {
     "email": render_email,
     "notification": render_notification,
     "crypto": render_crypto,
+    "sms": render_sms,
+    "trading": render_trading,
 }
 
 
@@ -452,6 +561,24 @@ def apply_tamper(img: Image.Image, tamper_type: int, rng: random.Random) -> Imag
         d = ImageDraw.Draw(tampered)
         marker = rng.choice(_GENERATOR_WATERMARKS + _PLACEHOLDER_NAMES + ["123456789"])
         d.text((12, h - 26), marker, fill=(150, 150, 150), font=_font(13))
+
+    elif tamper_type == 6:
+        rw, rh = min(150, w // 3), min(40, h // 14)
+        rx = rng.randint(0, max(1, w - rw))
+        ry = rng.randint(h // 4, max(h // 4 + 1, h - rh))
+        region_arr = np.array(tampered.crop((rx, ry, rx + rw, ry + rh))).astype(np.float32)
+        noise_std = max(float(region_arr.std()), 2.0)
+        bg_sample = tuple(int(c) for c in region_arr.reshape(-1, 3).mean(axis=0))
+
+        patch = Image.new("RGB", (rw, rh), bg_sample)
+        pd = ImageDraw.Draw(patch)
+        text_color = (245, 245, 245) if sum(bg_sample) < 380 else (15, 15, 15)
+        pd.text((6, 8), rng.choice(_MERCHANTS + _FIRST_NAMES), fill=text_color, font=_font(13))
+
+        patch_arr = np.array(patch).astype(np.float32)
+        noise = np.random.RandomState(rng.randint(0, 2**31 - 1)).normal(0, noise_std * 0.6, patch_arr.shape)
+        patch_arr = np.clip(patch_arr + noise, 0, 255).astype("uint8")
+        tampered.paste(Image.fromarray(patch_arr), (rx, ry))
 
     # tamper_type == 3 (exif-tool): pixel content unchanged, tag stamped at save time.
     return tampered
