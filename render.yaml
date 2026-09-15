@@ -2,12 +2,16 @@
 # in one shot: in the Render dashboard, New > Blueprint > connect this repo.
 # Render auto-detects this file and provisions both services below.
 #
-# The frontend's VITE_API_HOST is wired to the backend service via a
-# cross-service reference (fromService) rather than hardcoded, so it stays
-# correct even if Render assigns a different subdomain than expected.
-# frontend/src/services/api.js builds the full https:// origin from that
-# bare hostname at build time (see that file for why: Vite bakes env vars
-# into the bundle at build time, not container start).
+# The frontend needs the backend's public URL baked in at build time (see
+# frontend/src/services/api.js for why: Vite inlines env vars at build
+# time, not container start). This was originally wired via a
+# cross-service reference (fromService, property: host) so it would stay
+# correct even if Render assigned a different subdomain — but that was
+# verified (by inspecting the built bundle after a real deploy) to
+# return the backend's bare private-network service name, not its public
+# onrender.com hostname, which produced an unreachable "https://
+# fake-screenshot-detector-backend" with no domain. Hardcoded below
+# instead, confirmed live at deploy time.
 services:
   - type: web
     name: fake-screenshot-detector-backend
@@ -30,8 +34,5 @@ services:
     dockerContext: ./frontend
     plan: free
     envVars:
-      - key: VITE_API_HOST
-        fromService:
-          type: web
-          name: fake-screenshot-detector-backend
-          property: host
+      - key: VITE_API_BASE_URL
+        value: https://fake-screenshot-detector-backend.onrender.com
