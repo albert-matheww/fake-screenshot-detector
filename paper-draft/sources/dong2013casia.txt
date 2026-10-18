@@ -1,0 +1,5 @@
+CASIA Image Tampering Detection Evaluation Database
+Dong, Jing, Wang, Wei, Tan, Tieniu (2013). 2013 IEEE China Summit and International Conference on Signal and Information Processing. doi:10.1109/chinasip.2013.6625374
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+Image forensics has now raised the anxiety of justice as increasing cases of abusing tampered images in newspapers and court for evidence are reported recently. With the goal of verifying image content authenticity, passive-blind image tampering detection is called for. More realistic open benchmark databases are also needed to assist the techniques. Recently, we collect a natural color image database with realistic tampering operations. The database is made publicly available for researchers to compare and evaluate their proposed tampering detection techniques. We call this database CASI-A Image Tampering Detection Evaluation Database. We describe the purpose, the design criterion, the organization and self-evaluation of this database in this paper.

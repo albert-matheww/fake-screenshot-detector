@@ -1,0 +1,134 @@
+---
+license: cc-by-4.0
+---
+# STFD Dataset
+
+This folder contains the **STFD (Screenshot Text Forgery Dataset)** used in the paper:
+
+**Learning to Locate the Text Forgery in Smartphone Screenshots**
+Zeqin Yu, Bin Li, Yuzhen Lin, Jinhua Zeng, Jishen Zeng
+ICASSP 2023
+
+Project page: https://github.com/ZeqinYu/STFL-Net
+
+The **STFD dataset** has been publicly released ([Google Drive](https://drive.google.com/file/d/12MvM1R4R2iE-KGZmB1BSAXqR1Wo1kPIj/view?usp=sharing) / [Baidu Netdisk](https://pan.baidu.com/s/1kMYMB8avIafrusl30EzXcA) (dwmg) / [Huggingface](https://huggingface.co/datasets/Zegkim/STFD)).
+Please send an email to **kimjyu@foxmail.com** using your **academic or institutional email address** to request the password for extracting the dataset.
+
+The email should include:
+
+* Your **name, affiliation, and homepage (if available)**
+* Your **supervisor's name, affiliation, and homepage (if available)**
+* A **brief description of your research purpose**
+
+STFD is designed for **text image forgery localization (T-IFL)** in smartphone screenshots.
+The dataset contains tampered screenshots and their corresponding **pixel-level forgery masks**.
+
+---
+
+
+### Screenshot Sources
+The screenshots were captured from real devices to reflect realistic usage scenarios.
+
+| Category | Description |
+|----------|-------------|
+| Systems | Android, HarmonyOS, iOS, Windows |
+| Scenes  | Chat, Social Media, Mobile Payment, E-commerce, Online Banking, Maps & Transportation, Web Browsing, System Interfaces, Documents|
+| Devices | Realme Q3 Pro, Oppo Reno1, Honor 9, Honor V30, Vivo X21s, Samsung Note20 Ultra, Vivo X60, Honor 30-1, Xiaomi 9, Honor V20, Nova 8, OnePlus 9, Huawei Mate30, Honor 30-2, Honor 20 Pro, iPhone 7, iPad Air 3, iPad 2020, iPhone 12, iPhone XS, iPhone 11, iPhone SE2, iPhone 14 Pro, MacBook Air 2015, MacBook Pro 2017, Win10 Dell Optiplex 7080, Win11 Xiaomi Air14, Win10 Xiaomi Air14 |
+| Format  | PNG / JPEG |
+|Tampering Types| Copy-Move, Splicing, Removal, Insertion, Replacement |
+
+### Tampering Examples
+#### Copy-Move
+Copy a text region and paste it to another location within the same image.
+| Example1 | Example2 |
+|---|---|
+| <img src="0ba51385ddc8ade89a53f4b5881abf9b.png" width="100%"> | <img src="fe591d44ebe6f6fb7d5558cd2b655e49.png" width="100%"> |
+
+#### Splicing
+Paste text regions from another image into the target image.
+| Example1 | Example2 |
+|---|---|
+| <img src="fcb556cba9a4ca85ed41a96ded1fa198.png" width="100%"> | <img src="c67e92a92e8bb4aa95541d6359f5e18e.png" width="100%"> |
+
+#### Removal
+Remove existing text and fill the region using inpainting.
+| Example1 | Example2 |
+|---|---|
+| <img src="e8439b9e91077c3e2a1a549dd0fdaa07.png" width="100%"> | <img src="fc539af84b2ff19904f18b457c6856e6.png" width="100%"> |
+
+
+#### Insertion
+Insert new text content into blank regions.
+| Example1 | Example2 |
+|---|---|
+| <img src="b9e25cfd9889269c1d60e10dda4539df.png" width="100%"> | <img src="e871a802328f0bbbf445fab592a319b1.png" width="100%"> |
+
+#### Replacement
+Replace original text with newly generated text.
+| Example1 | Example2 |
+|---|---|
+| <img src="a0f61f66a5ebe69526b79f6f2b6879ed.png" width="100%"> | <img src="1d7b444730be83cb2f0c2aae0a78c315.png" width="100%"> |
+
+---
+
+## Dataset Structure
+
+```
+STFD/
+├── 1_Copy-move/
+│   ├── tamper/   # tampered screenshots
+│   └── masks/    # binary forgery masks
+├── 2_Splicing/
+│   ├── tamper/
+│   └── masks/
+├── 3_Removal/
+│   ├── tamper/
+│   └── masks/
+├── 4_Insertion/
+│   ├── tamper/
+│   └── masks/
+└── 5_Replacement/
+    ├── tamper/
+    └── masks/
+```
+
+Each image in `tamper/` has a corresponding mask with the **same filename** in `masks/`.
+
+Example:
+
+```
+tamper/ffa3cedd4317633601c6fb82d94fc783.png
+masks/ffa3cedd4317633601c6fb82d94fc783.png
+```
+
+The mask is a **binary image**, where:
+
+* **0** = non-tampered region
+* **255** = tampered region
+
+---
+
+## Citation
+
+If you use this dataset in your research, please cite:
+
+```bibtex
+@inproceedings{yu2023learning,
+  title        = {Learning to Locate the Text Forgery in Smartphone Screenshots},
+  author       = {Yu, Zeqin and Li, Bin and Lin, Yuzhen and Zeng, Jinhua and Zeng, Jishen},
+  booktitle    = {ICASSP 2023–2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)},
+  pages        = {1--5},
+  year         = {2023},
+  organization = {IEEE}
+}
+```
+
+## License and Notice
+
+* This dataset is released for **academic research purposes only**.
+
+* All images are collected from **real-world scenarios** and have been manually screened to remove sensitive information.
+
+* If you believe that any image may contain unintended information leakage, please notify us so that we can remove it promptly. We kindly ask users **not to redistribute such images**.
+
+* For any concerns, please contact: **Zeqin Yu ([kimjyu@foxmail.com](mailto:kimjyu@foxmail.com))**.

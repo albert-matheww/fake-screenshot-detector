@@ -14,4 +14,5 @@ COPY . .
 ENV PORT=5000
 EXPOSE 5000
 
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "app:app"]
+# analysis of a large screenshot (OCR + per-word features) can take 10+ s
+CMD ["gunicorn", "-w", "2", "--timeout", "180", "-b", "0.0.0.0:5000", "app:app"]

@@ -1,0 +1,1554 @@
+                                                          D OC F ORGE -B ENCH: A Comprehensive Benchmark for
+                                                                 Document Forgery Detection and Analysis
+                                                               Zengqi Zhao1,∗             Weidi Xia2,∗               En Wei3,∗           Yan Zhang4,∗           Jane Mo5,∗
+                                                        Tiannan Zhang6,∗               Yuanqin Dai4,∗                Zexi Chen7,∗            Yiran Tao8,∗          Simiao Ren4,†
+                                                  1                                                        2                                       3
+                                                      University of North Carolina at Chapel Hill              University of California, Irvine        Washington University in St. Louis
+                                                                                 4               5                        6
+                                                                                     Scam.ai         Duke University          University of California, Davis
+                                                                                          7                               8
+                                                                                              New York University             Georgetown University
+
+
+
+
+arXiv:2603.01433v2 [cs.CV] 10 Mar 2026
+                                                                 ∗                                                           †
+                                                                     Equal contribution; order selected randomly.                Corresponding author: benren@scam.ai
+
+
+
+                                         Abstract                                                                            erating threshold. This is not a discrimination failure but a cal-
+                                                                                                                             ibration failure: score distributions shift systematically away
+                                         We present D OC F ORGE -B ENCH, the first unified zero-shot                         from the standard τ =0.5 decision boundary in the document
+                                         benchmark for document forgery detection, evaluating 14                             domain. We demonstrate this failure empirically across 14
+                                         methods across eight datasets spanning text tampering, re-                          methods and 8 document datasets, establish it as the dominant
+                                         ceipt forgery, and identity document manipulation. Un-                              bottleneck in zero-shot document forensics, and show that it
+                                         like fine-tuning-oriented evaluations such as ForensicHub [Du                       is quantitatively explained by the tampered-pixel base rate—
+                                         et al., 2025], D OC F ORGE -B ENCH applies all methods with                         documents typically have 0.3–4% forged pixels, an order of
+                                         their published pretrained weights and no domain adapta-                            magnitude below the 10–30% assumed by detectors trained on
+                                         tion—a deliberate design choice that reflects the realistic de-                     natural image benchmarks.
+                                         ployment scenario where practitioners lack labeled document                            The image forensics community has made substantial
+                                         training data. Our central finding is a pervasive calibra-                          progress in detecting manipulations in natural photographs.
+                                         tion failure invisible under single-threshold protocols: meth-                      Methods such as TruFor [Guillaro et al., 2023], MVSS-
+                                         ods achieve moderate Pixel-AUC (≥0.76) yet near-zero Pixel-                         Net [Chen et al., 2021], and CAT-Net [Kwon et al., 2022]
+                                         F1. This AUC–F1 gap is not a discrimination failure but a                           achieve strong performance on established benchmarks like
+                                         score-distribution shift: tampered regions occupy only 0.27–                        CASIA [Dong et al., 2013], Columbia [Hsu and Chang, 2006],
+                                         4.17% of pixels in document images—an order of magnitude                            and NIST Nimble Challenge [National Institute of Standards
+                                         less than in natural image benchmarks—making the standard                           and Technology, 2016]. However, these benchmarks and
+                                         τ =0.5 threshold catastrophically miscalibrated. Oracle-F1 is                       methods are designed for natural scenes—photographs of peo-
+                                         2–10× higher than fixed-threshold Pixel-F1, confirming that                         ple, objects, and landscapes—and do not adequately address
+                                         calibration, not representation, is the bottleneck. A controlled                    the unique characteristics of document images.
+                                         calibration experiment validates this: adapting a single thresh-
+                                                                                                                                Document forgery presents fundamentally different chal-
+                                         old on N =10 domain images recovers 39–55% of the Oracle-
+                                                                                                                             lenges compared to natural image manipulation:
+                                         F1 gap in representative evaluated high-AUC cases, demon-
+                                         strating that threshold adaptation—not retraining—is the key                        1. Structured content: Documents have rigid layouts with
+                                         missing step for practical deployment. Overall, no evaluated                            text, tables, logos, and stamps arranged in predictable pat-
+                                         method works reliably out-of-the-box on diverse document                                terns. Forgeries target semantic content (changing a name,
+                                         types, underscoring that document forgery detection remains                             amount, or date) rather than visual plausibility.
+                                         an unsolved problem. We further note that all eight datasets                        2. High-resolution text: Detecting character-level modifica-
+                                         predate the era of generative AI editing; benchmarks cover-                             tions requires fine-grained analysis at resolutions where in-
+                                         ing diffusion- and LLM-based document forgeries represent a                             dividual glyphs are distinguishable—a regime where most
+                                         critical open gap on the modern attack surface.                                         general forensic methods lose sensitivity.
+                                                                                                                             3. Extreme region imbalance: Document forgeries typically
+                                                                                                                                 modify a few characters or fields, leaving 95–99.7% of pix-
+                                         1    Introduction                                                                       els authentic. Natural image benchmarks assume 10–30%
+                                                                                                                                 tampered area [Dong et al., 2013, Hsu and Chang, 2006,
+                                         Document forgery detectors trained on natural images fail in a                          Wen et al., 2016]; document datasets range from 0.27%
+                                         specific and diagnostic way when applied to documents: they                             (ReceiptForgery) to 4.17% (FSTS-1.5k). This order-of-
+                                         correctly rank forged pixels above authentic ones—achieving                             magnitude difference invalidates the standard τ =0.5 deci-
+                                         AUC ≥0.76—yet produce near-zero pixel-F1 at any fixed op-                               sion threshold used by all published methods.
+
+
+                                                                                                                         1
+4. Diverse forgery types: A comprehensive system must han-                catastrophically miscalibrated—and that this is correctable
+    dle text replacement, receipt price manipulation, and face            via threshold adaptation on a small domain sample, without
+    swap in identity documents—each leaving distinct forensic             retraining.
+    traces.
+   Despite these differences, evaluations remain fragmented.
+Recent efforts like DocTamper [Qu et al., 2023a] address              2     Related Work
+text-level document tampering at scale, and ForensicHub [Du
+et al., 2025] (NeurIPS 2025) makes significant progress to-           2.1    Image Manipulation Detection
+ward unified evaluation across deepfake, image manipulation,          Image forgery detection has evolved from hand-crafted fea-
+AIGC, and document domains. However, ForensicHub eval-                ture methods to deep learning approaches. Early work ex-
+uates document methods under a fine-tuning protocol and               ploited statistical artifacts such as JPEG compression inconsis-
+reports only fixed-threshold F1—measuring adapted perfor-             tencies [Farid, 2009], Error Level Analysis (ELA), and noise
+mance but obscuring whether methods generalise out-of-the-            pattern analysis. The shift to deep learning began with meth-
+box, and masking the calibration failures that make practical         ods like ManTraNet [Wu et al., 2019], which learns to de-
+deployment hard. No benchmark focuses on document forgery             tect 385 manipulation types in an end-to-end fashion without
+with zero-shot frozen evaluation, threshold-independent met-          forgery-specific supervision.
+rics, and coverage of practically important document types               Recent methods leverage increasingly sophisticated archi-
+such as physical receipts and identity cards.                         tectures. MVSS-Net [Chen et al., 2021] introduces multi-
+                                                                      view (RGB + noise) and multi-scale supervision for boundary-
+Contributions. We address this gap with D OC F ORGE -                 aware detection.         CAT-Net [Kwon et al., 2022] traces
+B ENCH, offering:                                                     JPEG compression artifacts through dual-stream (RGB +
+1. Zero-shot document benchmark: The first unified zero-              DCT) analysis. PSCC-Net [Liu et al., 2022] employs pro-
+   shot benchmark specifically for document forgery detec-            gressive spatio-channel correlation for coarse-to-fine local-
+   tion, cataloging 20 methods and fully evaluating 14 with           ization. Transformer-based approaches, including Object-
+   publicly available pretrained weights and no domain fine-          Former [Wang et al., 2022a] and IML-ViT [Ma et al., 2023],
+   tuning across 8 datasets—covering text tampering, iden-            demonstrate that vision transformers can capture long-range
+   tity document forgery, and receipt manipulation. IMDL-             forensic dependencies. TruFor [Guillaro et al., 2023] com-
+   BenCo [SCU-ZJZ, 2024] focuses on natural image foren-              bines a learned noise fingerprint (Noiseprint++) with RGB fea-
+   sics; ForensicHub [Du et al., 2025] includes fine-tuned sce-       tures via cross-modal fusion, achieving state-of-the-art perfor-
+   narios and does not cover the full document dataset spec-          mance across multiple benchmarks.
+   trum evaluated here. Unlike both, D OC F ORGE -B ENCH as-
+   sesses all methods at frozen published weights, isolating
+                                                                      2.2    Document-Specific Forgery Detection
+   true out-of-the-box generalisation in the document domain.
+2. Calibration gap diagnosis: We report Pixel-AUC and                 Document forgery detection has received comparatively less
+   Oracle-F1 alongside fixed-threshold F1, exposing a perva-          attention from the deep learning community. Traditional ap-
+   sive calibration gap in which methods correctly rank tam-          proaches relied on font analysis, alignment checking, and
+   pered pixels (high AUC) but fail to identify a usable de-          compression artifact detection in scanned documents. The in-
+   cision threshold (near-zero F1). While it is well-known            troduction of DocTamper [Qu et al., 2023a] marked a signif-
+   in the segmentation literature that fixed-threshold F1 de-         icant advance, providing the first large-scale dataset (∼170K
+   grades under class imbalance [Lipton et al., 2014, Boyd            images) for text-level document tampering detection. The ac-
+   et al., 2013], our work provides the first empirical char-         companying baseline model uses a SegFormer-based architec-
+   acterisation of this effect across 14 methods in the doc-          ture trained specifically on document text manipulations.
+   ument forensics domain, quantifies the specific base-rate             More recent work has broadened the scope of document
+   mismatch (0.27–4.17% tampered pixels vs. 10–30% in nat-            forensics. DTD [Qu et al., 2023b] (CVPR 2023) uses
+   ural image benchmarks), and demonstrates practical recov-          a dual-stream ConvNeXt+Swin-V2 architecture with JPEG
+   ery via threshold adaptation—a failure mode that remains           DCT inputs and jointly introduced the DocTamper dataset;
+   invisible under single-threshold protocols.                        FFDN [Chen et al., 2024] (ECCV 2024) fuses ConvNeXt RGB
+3. Broader method and dataset coverage: Seven general                 features with a DWT frequency pyramid; CAFTB-Net [Song
+   forensic methods and seven document-specific methods               et al., 2024] (TOMM 2024) applies SegFormer-B5 for high-
+   (including ASCFormer and ADCD-Net absent from prior                frequency branch encoding; and TIFDM [Dong et al., 2024]
+   benchmarks) evaluated on four datasets not covered else-           (TCE 2024) applies a ResNet-50 decoder with forgery trace
+   where: ReceiptForgery, MixTamper, FSTS-1.5k, and Fan-              enhancement. ASCFormer [Luo et al., 2024] introduced the
+   tasyID.                                                            RealTextManipulation (RTM) benchmark and a transformer
+4. Mechanistic explanation of the gap: We show quantita-              segmentation model for real-world text tampering in scene and
+   tively that the AUC–F1 gap is driven by tampered-pixel             document images. The OSTF dataset [Qu et al., 2025] and
+   base rates (0.27–4.17%) that are between 3× and 100×               accompanying DAF model target online tampered scene-text
+   lower than in natural image benchmarks, making τ =0.5              images generated by nine forgery engines. ADCD-Net [Wong
+
+                                                                  2
+et al., 2025] achieves ICCV 2025 state of the art by combin-          area under the ROC curve swept over all thresholds and mea-
+ing JPEG DCT analysis with RGB features and OCR-derived               sures how well the model ranks tampered pixels above authen-
+character masks.                                                      tic ones, independent of calibration. A critical but underappre-
+   VLM-based approaches. Recent work fine-tunes large                 ciated distinction is whether F1 is computed at a fixed thresh-
+vision-language models for document forgery, including                old or at the per-image optimal threshold: the latter can inflate
+TextShield-R1 [Qu et al., 2026] and LogicLens [Zeng et al.,           scores by 20–30 percentage points over fixed-threshold evalu-
+2025]. These represent a promising direction but are outside          ation [SCU-ZJZ, 2024]. This inconsistency pervades the docu-
+the scope of D OC F ORGE -B ENCH, which focuses on methods            ment forgery literature—DTD [Qu et al., 2023b], FFDN [Chen
+that produce dense pixel-level localization masks. VLM-based          et al., 2024], and ADCD-Net [Wong et al., 2025] all re-
+approaches typically produce natural language descriptions or         port F1 at an optimized threshold, while ForensicHub [Du
+coarse bounding regions rather than binary spatial masks; eval-       et al., 2025] and IMDLBenCo [SCU-ZJZ, 2024] standardize
+uating them under our pixel-F1/AUC protocol would require             on τ =0.5. Additional pixel-level metrics include IoU (Jaccard
+non-trivial post-processing that introduces design choices be-        index; algebraically equivalent to F1/(2 − F1)), Matthews
+yond our zero-shot evaluation scope [Liang et al., 2025].             Correlation Coefficient (MCC; balances all four confusion-
+Pixel-level forensic localization with VLMs remains an open           matrix cells and is more robust under class imbalance [Guil-
+problem.                                                              laro et al., 2023]), and Average Precision (area under the
+   Identity document verification has developed as a parallel         Precision-Recall curve [Kwon et al., 2025]).
+line of work, with the MIDV dataset series [Bulatov et al.,
+2020] providing video and image data of identity documents.           Instance-level detection. When ground truth is expressed
+SIDTD [CVC Barcelona, 2023] offers synthetic identity doc-         as bounding boxes rather than pixel masks—as in Tampered-
+ument tampering with controlled forgery operations. The Fan-       IC13, OSTF [Qu et al., 2025], and ReceiptForgery [Mesquita
+tasyID dataset [Korshunov et al., 2025] targets KYC-scenario       et al., 2023]—evaluation follows the object detection tradi-
+identity document forgery with face swap and AI text replace-      tion. A predicted box is a true positive if its box-IoU with
+ment attacks. However, evaluation across these datasets re-        a ground-truth annotation meets a threshold (commonly 0.5 or
+mains fragmented, and no prior work unifies general image          the COCO standard of 0.5:0.05:0.95). Average Precision (AP)
+forensics and document-specific detection under a common           is then the area under the precision-recall curve over all confi-
+protocol.                                                          dence thresholds; mAP averages AP across forgery classes or
+                                                                   across the IoU sweep. OSTF introduces a structured 9×9 ma-
+                                                                   trix of forgery-engine × test-set configurations and reports the
+2.3 AI-Generated Content Detection                                 mean F1 (mF) across all 81 settings to capture cross-engine
+                                                                   generalization. Instance-level metrics are fundamentally in-
+The emergence of generative adversarial networks (GANs) compatible with pixel-level metrics unless boxes are filled to
+and diffusion models has created a new class of forgeries. CN- binary masks or masks are reduced to their bounding rectan-
+NDetection [Wang et al., 2020] demonstrated that a classifier gle, each conversion introducing information loss.
+trained on ProGAN images generalizes to other GAN archi-
+tectures. UnivFD [Ojha et al., 2023] showed that frozen CLIP
+                                                                      Image-level detection. For the binary question of whether
+features with a linear probe provide surprisingly strong cross-
+                                                                   an image has been tampered at all, the standard metric is
+generator detection. DIRE [Wang et al., 2023] exploits dif-
+                                                                   image-level AUC-ROC, used by TruFor [Guillaro et al., 2023],
+fusion model reconstruction error as a detection signal. Ren
+                                                                   MVSS-Net [Chen et al., 2021], and all AI-generated image de-
+et al. [2026b] provide a complementary zero-shot evaluation
+                                                                   tectors [Wang et al., 2020, Ojha et al., 2023, Wang et al., 2023].
+of open-source AIGC detectors, and Ren et al. [2025b] assess
+                                                                   CNNDetection and UnivFD instead report image-level Aver-
+whether multimodal LLMs can serve as deepfake detectors out
+                                                                   age Precision (mAP) because it is insensitive to the fraction
+of the box—both sharing our frozen-evaluation methodology.
+                                                                   of fake images in the test set. Identity document benchmarks
+                                                                   (FantasyID [Korshunov et al., 2025], SIDTD [CVC Barcelona,
+2.4 Evaluation Metrics and Protocols                               2023]) follow the ISO/IEC 30107-3 biometric standard, re-
+                                                                   porting APCER (attack error rate) and BPCER (bona fide error
+Evaluation of forgery detection methods spans three distinct rate) rather than forensics metrics.
+granularities, and the choice among them substantially affects
+reported numbers and inter-study comparability.                       Implications for this benchmark. The fragmentation
+   Pixel-level localization. The dominant paradigm in im- across metric conventions makes cross-paper comparison un-
+age manipulation detection treats forgery localization as bi- reliable. D OC F ORGE -B ENCH standardizes on two comple-
+nary segmentation: each pixel is labeled tampered or authen- mentary metrics applied uniformly to all 14 methods: Pixel-F1
+tic, and performance is measured against a pixel-level ground- at τ =0.5 (deployment-relevant localization) and Pixel-AUC
+truth mask. The two primary metrics are Pixel-F1 and Pixel- (calibration-independent ranking). Reporting both jointly is
+AUC. Pixel-F1 at a fixed threshold τ =0.5 is the harmonic the key diagnostic: a high AUC with near-zero F1 is the cali-
+mean of pixel-level precision and recall; it directly reflects de- bration gap that is our central empirical finding, invisible un-
+ployment performance without calibration. Pixel-AUC is the der single-threshold protocols.
+
+
+                                                                  3
+2.5    Existing Benchmarks and Surveys                                   tographs for visual deception, document forgeries target se-
+                                                                         mantic content—altering a name, date, amount, or identity
+Several surveys cover image forensics broadly [Verdoliva,                field to change the meaning of a legally or financially bind-
+2020], but document-specific surveys remain scarce. The                  ing artifact. We organise our benchmark around three oper-
+NIST Media Forensics Challenge provides standardized eval-               ationally distinct threat scenarios that motivate dataset selec-
+uation for general image manipulation but requires data                  tion.
+agreements and excludes document-specific tasks. IMDL-
+BenCo [SCU-ZJZ, 2024] offers a unified training/evaluation
+codebase for image manipulation detection but focuses on nat-            3.1    Text-Region Tampering
+ural images. In adjacent domains, Ren et al. [2025a] evalu-
+ate deepfake detectors under realistic conditions and Ren et al.         The most prevalent operational threat involves modifying
+[2026a] benchmark VLMs versus traditional architectures for              printed textual content within a document image. Forensically,
+age estimation—studies that, together with our work, form                this leaves artifacts in local font statistics, JPEG block bound-
+a broader effort to characterise out-of-the-box performance              aries, background texture consistency, and high-frequency
+across diverse forensic and biometric tasks.                             edge profiles at character boundaries. Detection requires fine-
+   The most closely related work is ForensicHub [Du et al.,              grained analysis at the character or word level, operating
+2025] (NeurIPS 2025), which provides a broad unified frame-              at resolutions where individual glyphs are distinguishable—
+work spanning deepfake, image manipulation, AI-generated                 a regime where methods trained on photograph manipulation
+content, and document detection across 23 datasets and 42                typically lose sensitivity.
+methods. Within its document component, ForensicHub eval-                   We evaluate this threat across six complementary datasets
+uates four methods (DTD, FFDN, CAFTB-Net, TIFDM) on                      spanning different document domains and imaging condi-
+five datasets under a fine-tuning protocol—models are trained            tions: DocTamper [Qu et al., 2023a] provides large-scale
+on DocTamper and then tested, measuring adapted perfor-                  synthetic diversity (∼170K images) across document layouts.
+mance. It also reports only fixed-threshold F1 (τ =0.5) and              T-SROIE [Zhang et al., 2022] captures receipt-context tam-
+IoU, without AUC or threshold-independent metrics.                       pering with realistic OCR backgrounds. RealTextManipu-
+   D OC F ORGE -B ENCH differs from ForensicHub in three key             lation [Liao et al., 2022] provides authentic forgeries col-
+ways. (1) Zero-shot frozen evaluation. We evaluate all meth-             lected in the wild, without synthesis artifacts. Tampered-
+ods with their published pretrained weights and no domain                IC13 [Wang et al., 2022b] covers in-the-wild scene-text im-
+fine-tuning, isolating out-of-the-box generalization. Fine-              ages (storefronts, signage) rather than document scans. FSTS-
+tuning on DocTamper substantially inflates in-domain num-                1.5k [Yu et al., 2025] provides a real-world evaluation derived
+bers and obscures whether a method genuinely generalizes to              from 16,750 human-annotated forgery instances, capturing the
+diverse document types. (2) Calibration analysis. By re-                 authentic distribution of text forgery parameters.
+porting Pixel-AUC alongside fixed-threshold F1, we reveal a
+pervasive calibration gap: methods can correctly rank tam-
+pered pixels (AUC ≥ 0.76) yet produce near-zero F1 because
+                                                                         3.2    Commercial Receipt Forgery
+their score distributions are not calibrated to a useful operating       A high-volume operational threat targets printed receipts: sub-
+threshold. This phenomenon—invisible under ForensicHub’s                 stituting price or quantity fields using common consumer tools
+single-threshold protocol—is one of our central findings. (3)            (GIMP, Paint), without access to the original document source
+Broader document coverage. We evaluate seven document-                   files. This scenario is common in expense reimbursement
+specific methods (adding ASCFormer and ADCD-Net absent                   fraud and procurement manipulation. The forensic challenge
+from ForensicHub), seven general forensic methods (adding                is that the manipulation may be small in spatial extent (a few
+ManTraNet and SAFIRE), and eight datasets (adding Receipt-               digits) against a complex printed background.
+Forgery, MixTamper, FSTS-1.5k, and FantasyID). The latter                   ReceiptForgery [Mesquita et al., 2023] (ICDAR 2023) di-
+two cover practically important document types—physical re-              rectly addresses this scenario: real smartphone photographs of
+ceipts and identity cards—not addressed by ForensicHub.                  printed receipts, with fields altered using standard image edi-
+Terminology note. Throughout this paper, zero-shot evalu-                tors. Ground truth is provided as bounding boxes rather than
+ation refers to applying any method with its published pre-              pixel masks, capturing the annotation cost realistic in opera-
+trained weights and no domain adaptation; we use out-of-                 tional settings. T-SROIE additionally contributes to this sce-
+distribution (OOD) to denote any (method, dataset) pair where            nario, as it is derived from the SROIE receipt recognition cor-
+the dataset was unseen during training.                                  pus.
+
+
+3     Document Forgery: Threat Models 3.3 Identity Document Forgery
+      and Benchmark Coverage          Identity documents (passports, national ID cards, driver’s li-
+                                                            cences) are high-value targets for forgery in KYC (Know Your
+Document forgery differs fundamentally from natural image Customer) and border-control scenarios. Modern attacks com-
+manipulation in its threat model. Rather than splicing pho- bine AI-powered face swapping (InsightFace, FaceDancer)
+
+
+                                                                     4
+with automated text field replacement (DiffSTE, TextDif-                RealTextManipulation [Liao et al., 2022] provides 9,000
+fuser2), producing attacks that are visually indistinguishable          real-world text manipulation images collected from the inter-
+from authentic documents at normal inspection distances.                net, with pixel-level semantic segmentation masks. Unlike
+   FantasyID [Korshunov et al., 2025] provides a controlled             synthetically generated benchmarks, this dataset captures au-
+evaluation environment using fantasy-design card templates              thentic forgeries with diverse backgrounds, text styles, and
+(not real government IDs) across 13 templates in 10 languages,          manipulation strategies. The official test split (3,197 images)
+with attacks captured under both smartphone and scanner con-            contains 1,203 tampered images and 1,994 authentic images
+ditions. The 78% attack rate in the test split reflects an adver-       (“good_*” prefix, empty masks); we evaluate on the tampered-
+sarial deployment scenario.                                             only subset (1,000 sampled after pre-filtering authentic im-
+                                                                        ages, which would otherwise yield NaN under our convention
+                                                                        and be excluded from the dataset mean).
+3.4    Scope and Coverage
+Table 1 maps each dataset to the threat scenarios above                 Tampered-IC13 [Wang et al., 2022b] is a scene-text tam-
+and summarises evaluation coverage. Together, these seven               pering dataset of 233 images derived from ICDAR 2013
+datasets span four dimensions of variation critical for robust          recognition data, where text regions were digitally modified.
+evaluation: (1) Realism: synthetic (DocTamper) vs. real-                Ground truth is provided as per-image bounding-box annota-
+world (RealTextManipulation, ReceiptForgery, FSTS-1.5k);                tions (not pixel masks), requiring rasterization for pixel-level
+(2) Annotation: pixel-level masks vs. bounding boxes (Re-               evaluation. It covers in-the-wild text-bearing images such as
+ceiptForgery, Tampered-IC13); (3) Document type: formal                 storefronts and signage. The test set contains 188 tampered
+documents, receipts, scene text, and identity cards; (4) Evalu-         and 45 authentic images (19.3% authentic rate); pixel-level
+ation scale: from 35 images (ReceiptForgery forged test set)            metrics are computed over tampered images only (authentic
+to 1,488 (FSTS-1.5k full set); see the Eval. Images column in           images yield empty ground-truth masks and are excluded via
+Table 1 for complete evaluation sizes.                                  the NaN convention).
+   We do not evaluate AI-generated document content (GANs,
+diffusion models), LLM-generated text detection, or phys-
+                                                             Receipt Forgery [Mesquita et al., 2023] (L3i / ICDAR 2023
+ical print-scan-reprint attacks in the current release of
+                                                             Competition) contains 988 receipt photographs (577 train /
+D OC F ORGE -B ENCH. These represent important open chal-
+                                                             193 val / 218 test), of which 163 across all splits are forged;
+lenges; AIGC-based document forgery is discussed as a crit-
+                                                             the test split contains 35 forged images out of 218 (16% pos-
+ical open direction in Section 10, and the evaluation toolkit
+                                                             itive rate). Forgeries were produced with common image edi-
+is designed to support such extensions without architectural
+                                                             tors (GIMP, Paint) by replacing printed price or quantity fields.
+changes.
+                                                             Annotations are VGG-format rectangular bounding boxes em-
+                                                             bedded in a CSV manifest; pixel masks are rasterized from
+4 Datasets                                                   bounding boxes for localization evaluation. Of the 218 test im-
+                                                             ages, 183 are authentic (empty masks) and are excluded from
+We catalog the datasets used in D OC F ORGE -B ENCH, orga- pixel-level metric computation via the NaN convention; met-
+nized by forgery domain. Table 1 provides a unified summary. rics are aggregated over the 35 forged images only. Due to
+                                                             the small positive test set (n=35), per-method results on this
+                                                             dataset carry higher variance and should be interpreted with
+4.1 Document-Specific Tampering Datasets                     caution.
+DocTamper       [Qu et al., 2023a] is the largest document
+tampering dataset, containing approximately 170,000 tam-                MixTamper [Anonymous, 2024] is a multi-label document
+pered document images with pixel-level ground truth masks.              tampering dataset containing approximately 30,200 images
+Forgery types include text replacement, insertion, and dele-            with five tampering categories: copy-move, splicing, text-
+tion across diverse document layouts. Images are generated              generating, smearing, and erasing. Ground truth is provided
+through an automated pipeline that manipulates text regions             as RGB color-coded masks where each channel indicates a
+in scanned documents using varied fonts, backgrounds, and               distinct tampering type; binary evaluation maps any non-zero
+degradation levels. We use the official test split and sample           pixel to tampered. This any-channel binarization may in-
+1,000 images for tractable evaluation.                                  flate recall for methods sensitive to only one tampering type;
+                                                                        method ranking on MixTamper should be interpreted with
+T-SROIE [Zhang et al., 2022] (Tampered-SROIE) extends                   this simplification in mind. Images are uniformly cropped
+the ICDAR 2019 SROIE receipt dataset with realistic text re-            to 512 × 512 pixels and sourced from the StaVer and SCUT-
+gion tampering. Each of the 360 test receipts contains tam-             EnsExam corpora. We use the 6,817-image test split and sam-
+pered text regions annotated as COCO polygon masks. The                 ple 1,000 for tractable evaluation.
+dataset captures fine-grained text manipulation in a realistic re-
+ceipt OCR context, making it complementary to the synthetic FSTS-1.5k [Yu et al., 2025] is a real-world text image
+DocTamper.                                                         forgery evaluation set of 1,488 images with pixel-level binary
+
+
+                                                                    5
+masks, introduced alongside the FSTS data synthesis frame-              ManTraNet [Wu et al., 2019] (CVPR 2019) is an end-to-
+work (NeurIPS 2025 Datasets & Benchmarks). FSTS-1.5k is                 end manipulation tracing network trained on 385 synthetic ma-
+constructed from 16,750 human annotations of real-world text            nipulation types. It uses a VGG-based feature extractor fol-
+tampering patterns, making it the first benchmark to model the          lowed by an LSTM-based anomaly detection module, requir-
+realistic distribution of text forgery parameters. Unlike syn-          ing no manipulation-specific labels.
+thetically generated alternatives, FSTS-1.5k captures authen-
+tic forgery traces across diverse imaging conditions, fonts, and
+tampering styles. We use the full 1,488-image evaluation set. MVSS-Net [Chen et al., 2021] (ICCV 2021) employs multi-
+                                                              view (noise view + RGB view) and multi-scale supervision
+                                                              with an edge-supervised branch for boundary-aware forgery
+FantasyID [Korshunov et al., 2025] is an ID-document detection.
+forgery dataset containing fantasy-design identity cards (not
+real IDs) with 13 templates across 10 languages. The pub-
+licly available archive (CC-BY 4.0, Zenodo) contains both CAT-Net [Kwon et al., 2022] (IJCV 2022) traces JPEG
+train (1,266 bonafide, 2,532 attack) and test (600 bonafide, compression artifacts through a dual-stream architecture pro-
+2,173 attack; 78% attack rate) splits captured under multiple cessing both RGB and DCT coefficient inputs. It is particu-
+device conditions (smartphone, scanner). Manipulations in- larly effective for JPEG-based splicing detection. We evaluate
+clude face swaps (InsightFace, FaceDancer) and AI text re- CAT-Net using its official pretrained weights obtained from
+placement (DiffSTE, TextDiffuser2). This dataset targets the the authors, running inference in a dedicated PyTorch conda
+KYC/identity verification scenario.                           environment with CUDA 12.1.
+
+
+Additional catalogued datasets. We additionally cata-                   PSCC-Net [Liu et al., 2022] (TCSVT 2022) implements
+log the following datasets relevant to document and im-                 progressive spatio-channel correlation for hierarchical fea-
+age forensics but not directly evaluated in this benchmark:             ture integration, producing coarse-to-fine manipulation masks.
+OSTF [Qu et al., 2025] (access-restricted); SIDTD [CVC                  PSCC-Net is evaluated using its pre-trained checkpoint with-
+Barcelona, 2023], MIDV-LAIT [Arlazarov et al., 2022],                   out fine-tuning; its published score (F1=0.712 on CA-
+and MIDV-2020 [Bulatov et al., 2020] (identity docu-                    SIA [Dong et al., 2013]) requires domain-specific fine-tuning
+ment datasets with limited forgery coverage); and the stan-             unavailable in our zero-shot protocol.
+dard image forensics corpora CASIA [Dong et al., 2013],
+Columbia [Hsu and Chang, 2006], COVERAGE [Wen et al.,
+                                                                        IML-ViT [Ma et al., 2023] (arXiv 2023) demonstrates that
+2016], IMD2020 [Novozamsky et al., 2020], NIST NC16 [Na-
+                                                                        a plain Vision Transformer, without specialized forensic mod-
+tional Institute of Standards and Technology, 2016], CoMo-
+                                                                        ules, can achieve competitive manipulation localization by
+FoD [Tralic et al., 2013], and DEFACTO [Mahfoudi et al.,
+                                                                        leveraging global self-attention for patch-consistency analysis.
+2019].
+
+                                                              SAFIRE [Kwon et al., 2025] (AAAI 2025) extends the
+5     Methods                                                 Segment Anything Model (SAM) for image forgery localiza-
+                                                              tion via multi-source partitioning. SAFIRE adapts SAM’s
+We catalog 14 methods organized by their specificity to the promptable segmentation to the forensics domain, enabling
+document domain and the type of output they produce. Ta- fine-grained detection of forged regions across diverse image
+ble 2 summarizes all methods. All methods are evaluated with types without forgery-type-specific supervision.
+publicly available pretrained weights. Below we describe each
+category.
+                                                                        5.2   Document-Specific Tampering Detection
+5.1    Image Manipulation Detection and Local- These methods are designed or trained specifically on docu-
+       ization                                 ment imagery and target text-level manipulation artifacts. We
+                                                          evaluate four ForensicHub [Du et al., 2025] document-domain
+These methods take an image as input and produce a pixel- models alongside three independently developed methods.
+level manipulation confidence map.
+                                                                        DocTamper (model)           [Qu et al., 2023a] (2023) is a
+TruFor [Guillaro et al., 2023] (CVPR 2023) combines a                   SegFormer/Mask2Former-based model pretrained on the Doc-
+learned noise fingerprint (Noiseprint++) with RGB features              Tamper dataset (∼170K document images). It is specifically
+through a cross-modal transformer fusion architecture. It pro-          designed for text-level document tampering, detecting charac-
+vides both pixel-level localization and an image-level integrity        ter and word-level modifications. To avoid ambiguity, we refer
+score. TruFor represents the current state of the art in general-       to this method as the “DocTamper model” throughout the pa-
+purpose image forensics.                                                per to distinguish it from the DocTamper dataset.
+
+                                                                    6
+Table 1: Overview of the eight document datasets evaluated in D OC F ORGE -B ENCH. The Eval. Images column shows the
+number of images used in our evaluation (see footnote for sampling details). ∗ Receipt Forgery and Tampered-IC13 provide
+bounding-box annotations; pixel masks are rasterized for localization evaluation.
+
+ Dataset             Domain           Year    Dataset Size          Eval. Images                   Forgery Types                GT Masks   Used
+ DocTamper          Document       2023         ∼170K 1,000 (sampled)†                Text replace/insert/delete                   ✓       Both
+ T-SROIE            Receipt        2022             360                360                  Text tampering                         ✓       Both
+ RealTextManip. Real-world         2022              9K 1,000 (sampled)†                   Text manipulation                       ✓       Both
+ Tampered-IC13 Scene text          2015             233      188 tampered                  Text replacement                      BBox∗     Both
+ Receipt Forgery Receipt           2023             988          35 forged                 Price/qty forgery                     BBox∗     Both
+ MixTamper          Document       2024          ∼30K 1,000 (sampled)† Copy-move, splice, gen., smear, erase                     ✓(RGB)    Both
+ FSTS-1.5k          Real-world     2025           1,488              1,488                 Text manipulation                       ✓       Both
+ FantasyID          Identity doc. 2025            6,571    2,773 tampered              Face swap, text replace                     ✓       Both
+ †
+   Datasets with (sampled) draw 1,000 images at random (seed 42) from the full test split for tractable evaluation.
+
+
+DTD [Qu et al., 2023b] (CVPR 2023) is the dual-stream                   use of OCR-derived character-region masks as spatial atten-
+Tampered Text Detector that introduced the DocTamper                    tion priors, guiding the model to focus on text-bearing areas.
+benchmark. DTD combines a ConvNeXt-based visual path                    Pristine prototype estimation further distinguishes authentic
+(VPH) with a Swin-Transformer-V2 path for complementary                 background texture from manipulated regions.
+frequency and spatial analysis, achieving state-of-the-art pixel-
+level F1 on DocTamper.                                                  Training data and in-domain evaluation. All methods
+                                                                        are evaluated with their official pretrained weights with-
+FFDN       [Chen et al., 2024] (ECCV 2024) proposes                     out fine-tuning. The general forensics methods (TruFor,
+a frequency-feature decomposition network for document                  ManTraNet, MVSS-Net, CAT-Net, PSCC-Net, IML-ViT,
+forgery detection. FFDN fuses a ConvNeXt backbone with                  SAFIRE) were trained exclusively on natural photographic
+a DWT-based frequency-pyramid network (FPH) that extracts               imagery—CASIA [Dong et al., 2013], FantasticReality [Kniaz
+DCT coefficient features, enabling explicit modeling of JPEG            et al., 2019], IMD2020 [Novozamsky et al., 2020], tam-
+compression artifacts in forged regions.                                pCOCO, RAISE, MS COCO, camera-model datasets (VI-
+                                                                        SION, Dresden, KCMI), and proprietary synthetic databases.
+                                                                        None saw any document images; all eight benchmark datasets
+CAFTB-Net       [Song et al., 2024] (ACM TOMM 2024)
+                                                                        are fully out-of-distribution for them. Among document-
+introduces a cross-attention two-branch network for docu-
+                                                                        specific methods, DocTamper (model), DTD, FFDN, CAFTB-
+ment forgery localization. One branch processes RGB fea-
+                                                                        Net, and ADCD-Net were each trained on the DocTamperV1
+tures via ResNetV2; the other processes high-frequency cues
+                                                                        training split (∼120,000 images)—their DocTamper test re-
+via a SegFormer-B5 encoder. Cross-attention fusion mod-
+                                                                        sults are therefore in-domain, while all other datasets remain
+ules (CAFM) aggregate complementary evidence from both
+                                                                        cross-domain. ASCFormer was trained on the RTM train-
+streams.
+                                                                        ing split only (5,803 images); its RTM test results are in-
+                                                                        domain. TIFDM was trained on a private, undisclosed cor-
+TIFDM [Dong et al., 2024] (IEEE TCE 2024) addresses                     pus by the original authors [Dong et al., 2024]; its DocTamper
+robust text image tampering localization via forgery trace en-          performance (F1=0.742) substantially exceeds a from-scratch
+hancement and multiscale attention. TIFDM uses a ResNet-50              DocTamper baseline, which may indicate in-domain training
+backbone with a multiscale FPN decoder, applying a Forgery              overlap, though this cannot be confirmed. All seven non-
+Trace Enhancement module to amplify subtle editing artifacts            DocTamper datasets are definitively cross-domain for TIFDM.
+before localization.
+
+ASCFormer [Luo et al., 2024] (Pattern Recognition 2024) 6 Experimental Setup
+is a transformer-based segmentation network introduced
+alongside the RealTextManipulation (RTM) dataset. It uses 6.1 Evaluation Protocol
+an adaptive scene-context attention mechanism to localize ma- All methods are evaluated exclusively with their official pre-
+nipulated text regions in natural scene images and documents, trained weights and no domain adaptation or fine-tuning of
+trained end-to-end with the MMSeg framework.                  any kind. This is a deliberate design choice: it reflects the re-
+                                                              alistic deployment scenario where a practitioner adopts an off-
+ADCD-Net [Wong et al., 2025] (ICCV 2025) combines the-shelf forgery detector without access to labeled document
+RGB features with JPEG DCT coefficient analysis in a dual- training data, and it isolates true out-of-the-box generalisation
+stream Restormer-based architecture. A key innovation is the free from the confound of domain-specific fine-tuning. Meth-
+
+
+                                                                    7
+                               Table 2: Overview of methods catalogued in D OC F ORGE -B ENCH.
+
+           #     Method                  Year      Venue      Category                Framework       I/O
+           General image forensics
+           1     TruFor                  2023     CVPR        Image forensics          PyTorch        Image → mask + score
+           2     ManTraNet               2019     CVPR        Image forensics          Keras/TF       Image → heatmap
+           3     MVSS-Net                2021      ICCV       Image forensics          PyTorch        Image → mask + edge
+           4     CAT-Net                 2022      IJCV       JPEG forensics           PyTorch        JPEG → mask
+           5     PSCC-Net                2022     TCSVT       Image forensics          PyTorch        Image → mask + score
+           6     IML-ViT                 2023      arXiv      Image forensics          PyTorch        Image → mask
+           7     SAFIRE                  2025      AAAI       Image forensics          PyTorch        Image → mask
+           Document-specific methods
+            8    DocTamper (model)       2023     CVPR        Document                  PyTorch       Doc → mask
+            9    DTD (ForensicHub)       2023     CVPR        Document                  PyTorch       Doc+DCT → mask
+           10    FFDN                    2024     ECCV        Document                  PyTorch       Doc+DCT → mask
+           11    CAFTB-Net               2024     TOMM        Document                  PyTorch       Doc → mask
+           12    TIFDM                   2024       TCE       Document                  PyTorch       Doc → mask
+           13    ASCFormer               2024        PR       Document                  PyTorch       Doc → mask
+           14    ADCD-Net                2025      ICCV       Document                  PyTorch       Doc+DCT → mask
+
+
+ods that achieve strong results under fine-tuning protocols (e.g.        Image-level detection (future extension). Three datasets in
+ForensicHub [Du et al., 2025]) may perform very differently              D OC F ORGE -B ENCH—Tampered-IC13, ReceiptForgery, and
+in this frozen-weight setting; our benchmark characterises ex-           FantasyID—include authentic (untampered) images alongside
+actly that gap. All experiments use the official test splits where       forged ones, enabling image-level binary detection evaluation.
+available; methods trained on a given dataset (e.g. DocTamper-           For each method, an image-level score can be derived by ag-
+trained models evaluated on DocTamperV1-TestingSet, or AS-               gregating the predicted pixel map (e.g., maximum predicted
+CFormer evaluated on the RTM test split) use the held-out test           score, or mean of the top-1% of pixels). Image-level AUROC
+partition, not the training split. Training data provenance is           on these three datasets would directly address the practical
+detailed in Section 5.                                                   question of whether a document should be flagged for inspec-
+                                                                         tion. We defer this evaluation to a future extended version; the
+                                                                         prediction infrastructure is in place and the analysis script is
+                                                                         released alongside the benchmark toolkit.
+Metrics. We report four pixel-level metrics per method–
+dataset pair. Pixel-F1 is computed at fixed threshold τ =0.5
+per image; when both prediction and ground truth are empty               6.2   Experiments
+(authentic images), we set F1=NaN (zero_division conven-
+tion). Pixel-AUC is the per-image area under the ROC curve               Document-specific vs. general methods. We compare
+computed by scikit-learn’s roc_auc_score over all pixels;                seven document-specific methods (DocTamper, DTD, FFDN,
+images where all pixels share the same ground-truth label re-            CAFTB-Net, TIFDM, ASCFormer, ADCD-Net) against all
+turn NaN and are excluded from the dataset mean. Oracle-                 seven general methods (TruFor, ManTraNet, MVSS-Net,
+F1 (“Opt-F1”) for image i is maxτ F1 (i, τ )—the best achiev-            CAT-Net, PSCC-Net, IML-ViT, SAFIRE) on all eight docu-
+able F1 on that image at any threshold—averaged over im-                 ment datasets. For datasets with bounding-box annotations
+ages. This per-image optimum is an upper bound on any fixed-             only (ReceiptForgery, Tampered-IC13), predicted masks are
+threshold protocol; a single globally optimal threshold applied          evaluated against rasterized ground-truth boxes. Authentic im-
+uniformly to all images would yield lower values. We report              ages (empty GT masks) are excluded from pixel-level metric
+Oracle-F1 as a diagnostic ceiling, not a realisable operating            aggregation via the NaN convention. This experiment directly
+point: it quantifies the headroom remaining between the cur-             measures the zero-shot advantage of domain-specific training
+rent fixed-threshold Pixel-F1 and the best performance attain-           and whether recent document forensics advances outperform
+able via threshold adaptation alone. In practice, Oracle-F1 is           both DocTamper and general forensics methods.
+computed by scanning 50 linearly-spaced thresholds in (0, 1)
+per image and selecting the best. Pixel-IoU is intersection-             6.3   Implementation Details
+over-union at τ =0.5; images with zero tampered ground-truth
+pixels return NaN and are excluded from the mean. All four               All experiments are conducted using an NVIDIA GPU with at
+per-image values are averaged (ignoring NaN entries) to pro-             least 24 GB memory. Images are processed at each method’s
+duce the dataset-level metric.                                           native input resolution. For pixel-level evaluation, predic-
+
+
+                                                                     8
+tion masks are resized to match ground truth dimensions us-           forgery pixels fall outside this crop due to the distributed lay-
+ing bilinear interpolation. To maintain tractable evaluation on       out of identity card fields, so IML-ViT’s FantasyID score un-
+high-resolution datasets (T-SROIE receipt images can reach            derestimates its true capability on full-card evaluation). IML-
+4961×7016 px; FantasyID images average ∼3200×2000 px),                ViT’s FantasyID result is marked with § in Table 4. A tiled-
+both predictions and ground-truth masks are jointly down-             inference variant (overlapping 1024×1024 crops with mask
+sampled to at most 2 megapixels using area interpolation be-          stitching) is a natural extension that would recover meaning-
+fore metric computation. This cap does not apply to im-               ful localization on high-resolution documents; we report the
+ages already within 2 MP. Evaluation scripts use scikit-learn         single-crop result for protocol consistency. This resolution
+for metric computation. For datasets exceeding the 1,000-             heterogeneity constitutes a benchmark dimension in its own
+image sample cap (DocTamper: 30K images; RealTextMa-                  right: methods with larger effective receptive fields (TruFor at
+nipulation: 1,203 tampered images), images are selected us-           4096×4096) are systematically advantaged on high-resolution
+ing random.sample with seed 42, then sorted by filename               datasets (FantasyID, T-SROIE) compared to methods resizing
+for deterministic ordering. For ReceiptForgery, Pixel-IoU and         to 512×512 (MVSS-Net, PSCC-Net). The complete evalua-
+Pixel-AUC are computed only over the 35 forged test images            tion pipeline, including configs, scripts, and metric computa-
+(16% of the 218-image test split); the remaining 183 authen-          tion, is released as open-source at https://github.com/
+tic images produce NaN values under our convention and are            BensonRen/document_forgery_benchmark.
+excluded from the dataset mean.
+
+Method verification. To confirm correct weight loading
+                                                                      7    Evaluation Metrics
+and inference, we ran the seven general methods on es-
+                                                                      We evaluate all methods using two primary metrics that to-
+tablished manipulation benchmarks (CASIAv1 [Dong et al.,
+                                                                      gether characterize the deployment-relevant failure mode we
+2013] and IMD20 [Novozamsky et al., 2020]) and compared
+                                                                      observe in the document domain.
+against published values. TruFor reproduces CVPR 2023
+CASIAv1 performance (optimal-F1 0.789 vs. reported 0.715;
+                                                                      Pixel-F1 (primary, τ =0.5). The harmonic mean of pixel-
+Pixel-AUC 0.946 vs. 0.793). MVSS-Net achieves Pixel-AUC
+                                                                      level precision and recall at the fixed threshold τ = 0.5:
+0.845 on CASIAv1 vs. the reported 0.862 on CASIAv1+ (the
+2pp gap is attributable to train/test split differences between                                        2 |ŷ0.5 ∩ g|
+                                                                                         Pixel-F1 =                                (1)
+CASIAv1 and CASIAv1+ ). IML-ViT matches its arXiv num-                                                 |ŷ0.5 | + |g|
+bers (optimal-F1 0.776 vs. 0.761; Pixel-AUC 0.942 vs. 0.836).
+                                                                      where ŷ0.5 = 1[p̂ ≥ 0.5] is the binarized prediction and g is
+PSCC-Net’s Pixel-F1 of 0.152 on CASIAv1 is below the pa-
+                                                                      the binary ground-truth mask. Pixel-F1 at a fixed threshold
+per’s 0.712, which requires CASIA-v2 fine-tuning unavailable
+                                                                      reflects out-of-the-box deployment performance without any
+to us; its Pixel-AUC of 0.878 is consistent with pretrained
+                                                                      domain-specific calibration, making it the most practically rel-
+performance, and its IMD20 Pixel-F1 of 0.132 aligns with
+                                                                      evant metric for fraud detection applications where threshold
+the paper’s 0.203 pretrained result. CAT-Net achieves Pixel-
+                                                                      tuning on in-domain data may not be available.
+AUC 0.959 and optimal-F1 0.809 on CASIAv1 vs. the re-
+ported AUC 0.976 and F1 0.781 (IJCV 2022), a 1.7pp gap con-
+sistent with test-split differences. ManTraNet achieves AUC           Pixel-AUC (threshold-independent). Area under the ROC
+0.600 on CASIAv1; published references report 0.776–0.817             curve computed per-image over all pixels, then averaged:
+on the augmented CASIAv1+ split, and the gap on uncom-
+                                                                                                 Z 1                     
+pressed corpora (Columbia AUC 0.558) is attributable to its                  Pixel-AUC = Eimages       TPR(t) d FPR(t)         (2)
+                                                                                                       0
+JPEG artifact detector saturating on uncompressed TIF im-
+                                                               Pixel-AUC is threshold-independent and measures whether a
+ages. CASIAv1+ augments the test set with additional au-
+                                                               method ranks tampered pixels above authentic ones regardless
+thentic images and higher-quality forgeries, which inflate AUC
+                                                               of calibration. A high Pixel-AUC alongside a low Pixel-F1 is
+systematically; all methods evaluated on the unaugmented
+                                                               the diagnostic signature of the calibration gap: the model re-
+CASIAv1 test set show correspondingly lower AUC. These re-
+                                                               tains discriminative power but its score distribution shifts be-
+sults confirm that all seven general methods are correctly im-
+                                                               low 0.5 in the target domain.
+plemented and that observed cross-domain drops are intrinsic
+                                                                  We additionally report Pixel-IoU and Oracle-F1; full met-
+to the methods rather than implementation errors.
+                                                               ric definitions are in Appendix A. For large datasets ex-
+                                                               ceeding the sample cap, images are selected using Python’s
+Resolution handling. Methods vary in how they han- random.sample with a fixed seed of 42, then sorted by file-
+dle high-resolution inputs: TruFor processes images up to name for deterministic ordering.
+4096×4096 px natively; MVSS-Net and PSCC-Net resize to
+their training resolution (512×512 and 512×512 respectively)
+before inference; IML-ViT pads/crops images to 1024×1024 8 Results
+for inference (only the top-left 1024×1024 region is evalu-
+ated on images larger than this; for FantasyID, an analysis of Metrics are averaged over all images in each test split; best
+annotation bounding boxes shows that approximately 79% of results per metric per dataset are bolded. All metric defini-
+
+
+                                                                  9
+Table 3: Per-method summary: mean Pixel-F1 and Pixel-AUC ulation, and ReceiptForgery. This AUC–F1 gap reveals a
+across all seven datasets. σ = standard deviation of Pixel-F1 consistent failure mode: methods can rank tampered pix-
+across datasets (consistency).                                   els above background but cannot identify a correct decision
+                                                                 threshold in the document domain. ManTraNet is the excep-
+          Method         Mean F1      σ    Mean AUC              tion on Tampered-IC13 (F1 = 0.138, highest among all gen-
+          Document-specific                                      eral methods on that dataset), suggesting its anomaly-detection
+                                                                 approach responds to the coarser text boundary distortions
+          CAFTB-Net        0.34      0.33      0.85
+                                                                 present in IC13; PSCC-Net ranks second with F1 = 0.046. Or-
+          DocTamper        0.30      0.31      0.81
+                                                                 acle F1 (Fig. 3b) is substantially higher than fixed-threshold
+          ASCFormer        0.27      0.21      0.63
+          TIFDM            0.24      0.22      0.83              Pixel-F1 in most cells, confirming that performance is lim-
+          ADCD-Net         0.23      0.23      0.79              ited by calibration rather than discriminative power. Figure 3a
+          FFDN             0.17      0.22      0.84              ranks the seven datasets by the best-method F1 achieved on
+          DTD              0.16      0.21      0.83              each, revealing that DocTamper is the most tractable for cur-
+                                                                 rent methods while ReceiptForgery and RealTextManipulation
+          General image forensics
+                                                                 remain nearly unsolved.
+          TruFor           0.34      0.23      0.83
+                                                                    Table 3 ranks all 14 methods by mean Pixel-F1 and AUC
+          CAT-Net          0.33      0.25      0.82
+                                                                 across seven datasets; Fig. 2 visualises mean cross-domain
+          PSCC-Net         0.13      0.16      0.73
+          SAFIRE           0.10      0.12      0.58              performance and standard deviation, making the competitive
+          IML-ViT          0.08      0.10      0.67              overlap between general and document-specific methods im-
+          ManTraNet        0.07      0.06      0.58              mediately visible.
+          MVSS-Net         0.03      0.05      0.63                 The central finding is the asymmetry between in-domain
+                                                                 mastery and out-of-domain collapse. The DocTamper model
+                                                                 achieves F1 = 0.914 on its own test set (the highest in-domain
+tions and formulas are in Appendix A. A method is considered result; note that DTD, FFDN, CAFTB-Net, and TIFDM were
+to reliably generalise in this benchmark if it achieves Pixel- also trained on DocTamper training data, so their DocTam-
+F1 ≥ 0.3 on at least six of the eight datasets; no evaluated per results are likewise in-domain; these are marked in-
+method does so.                                                  domain in Appendix Table 4 and should not be compared
+                                                                 against cross-domain results) yet collapses to F1 = 0.045 on
+8.1 Document-Specific vs. General Methods                        T-SROIE—a 20× drop—while TruFor, a general method
+                                                                 with no document-specific training, achieves F1 = 0.664 on
+Appendix Table 4 compares seven document-specific meth- T-SROIE zero-shot. Domain-specific training on the wrong
+ods — DocTamper model [Qu et al., 2023a], DTD [Qu et al., distribution is catastrophically worse than no domain adapta-
+2023b], FFDN [Chen et al., 2024], CAFTB-Net [Song et al., tion at all. We attribute this to severe overfitting: the Doc-
+2024], TIFDM [Dong et al., 2024], ASCFormer [Luo et al., Tamper model learns rendering artifacts specific to ICDAR-
+2024], and ADCD-Net [Wong et al., 2025] — against seven derived composites that do not transfer across document
+general image forensic methods (TruFor, ManTraNet, MVSS- types or imaging conditions. Across the seven out-of-
+Net, CAT-Net, PSCC-Net, IML-ViT, SAFIRE) on all eight domain datasets (all except DocTamper), a general method
+document datasets: DocTamper (1,000 sampled images), T- (TruFor or CAT-Net) achieves the highest F1 on 2 of 7
+SROIE (360 tampered receipt images), RealTextManipulation datasets (MixTamper and FantasyID), while ASCFormer—the
+(1,000 sampled from the tampered-only subset), Tampered- most broadly capable document-specific method—leads on T-
+IC13 (188 tampered, 45 authentic), ReceiptForgery (35 forged, SROIE (F1 = 0.779, +11.5 pp over TruFor), RealTextManipu-
+183 authentic), FantasyID (2,773 test images), and FSTS-1.5k lation (F1 = 0.265), and ReceiptForgery (F1 = 0.260). CAFTB-
+(1,488 real-world tampered images). All methods are applied Net ranks second in-domain (F1 = 0.893) and leads on FSTS-
+zero-shot using official pretrained weights without fine-tuning. 1.5k (F1 = 0.671), making it the most reliable ForensicHub
+   Among general methods, TruFor leads across most datasets, method. Strikingly, at the benchmark mean (Table 3),
+achieving pixel-F1 of 0.664 on T-SROIE; its confidence-map CAFTB-Net (mean F1 = 0.34) and TruFor (mean F1 = 0.34)
+architecture exploiting chromatic aberration cues transfers bet- are statistically indistinguishable—the best document-specific
+ter than convolution-only detectors. We define reliable gen- method ties the best general forensics method. This parity
+eralization as achieving Pixel-F1 ≥ 0.3 on at least six of the challenges the assumption that document-domain training pro-
+eight datasets; no evaluated method meets this bar. The best vides universal zero-shot advantages; domain specialization
+method, TruFor, achieves F1 ≥ 0.3 on only three datasets (T- appears to shift performance across specific datasets rather
+SROIE: 0.664, MixTamper: 0.689, FSTS-1.5k: 0.522), col- than raising the overall mean. FFDN falls to F1 = 0.043 on
+lapsing to F1 < 0.2 on the remaining five. CAT-Net’s JPEG T-SROIE and 0.011 on RTM despite high AUC (0.904 and
+artifact specialization gives it a strong advantage on Doc- 0.743). Notably, FFDN maintains high AUC on T-SROIE
+Tamper (F1 = 0.672) and MixTamper (F1 = 0.695). Despite (0.904) and RTM (0.743), indicating it ranks tampered pix-
+high AUC values (≥0.66 for TruFor across all eight datasets), els above background but cannot calibrate a threshold — the
+Pixel-F1 remains near zero for DocTamper, RealTextManip- same AUC–F1 gap observed for general methods, now repli-
+
+
+                                                              10
+                      Primary Pixel-Level Metrics Doc-Specific vs. General Methods
+                          Pixel-F1 ( = 0.5)                                                               Pixel-AUC
+  DocTamper          0.91 0.05 0.03 0.18 0.01 0.11 0.47                      DocTamper          1.00 0.81 0.66 0.75 0.73 0.75 0.88
+    DTD_FH           0.68 0.02 0.02 0.14 0.00 0.04 0.24                        DTD_FH           0.99 0.87 0.73 0.86 0.81 0.85 0.73
+       FFDN          0.74 0.04 0.02 0.16 0.02 0.07 0.22                           FFDN          0.99 0.90 0.74 0.90 0.84 0.88 0.74
+
+ Doc-Specific                                                               Doc-Specific
+                                                          1.0                                                                        1.0
+      CAFTB          0.89 0.05 0.04 0.17 0.02 0.21 0.67                          CAFTB          1.00 0.81 0.70 0.84 0.79 0.80 0.88
+      TIFDM          0.74 0.05 0.04 0.16 0.02 0.30 0.32   0.8                    TIFDM          0.99 0.81 0.72 0.79 0.76 0.88 0.79   0.8
+  ASCFormer          0.18 0.78 0.26 0.02 0.26 0.22 0.13                      ASCFormer          0.58 0.92 0.63 0.51 0.61 0.61 0.56
+                                                          0.6                                                                        0.6
+
+                                                                                                                                       pixel_auc
+                     0.76 0.18 0.06 0.11 0.04 0.06 0.32                                         0.97 0.90 0.68 0.73 0.76 0.75 0.70
+                                                            pixel_f1
+   ADCDNet                                                                    ADCDNet
+      TruFor         0.15 0.66 0.09 0.11 0.20 0.30 0.52                          TruFor         0.76 0.98 0.66 0.78 0.74 0.83 0.92
+                                                          0.4                                                                        0.4
+  ManTraNet          0.05 0.02 0.03 0.14 0.02 0.04 0.14                      ManTraNet          0.59 0.47 0.53 0.56 0.62 0.48 0.63
+   MVSS-Net          0.01 0.00 0.00 0.06 0.00 0.00 0.02   0.2                 MVSS-Net          0.59 0.61 0.55 0.67 0.59 0.65 0.55   0.2
+ General                                                                    General
+    CAT-Net          0.67 0.27 0.04 0.04 0.23 0.15 0.51                        CAT-Net          0.98 0.86 0.62 0.62 0.78 0.84 0.88
+   PSCC-Net          0.13 0.00 0.00 0.05 0.01 0.05 0.32   0.0                 PSCC-Net          0.77 0.63 0.57 0.67 0.71 0.73 0.83   0.0
+     IML-ViT         0.07 0.02 0.03 0.04 0.01 0.02 0.13                         IML-ViT         0.69 0.54 0.59 0.77 0.57 0.58 0.73
+     SAFIRE          0.10 0.02 0.02 0.09 0.01 0.04 0.12                         SAFIRE          0.66 0.52 0.51 0.55 0.54 0.49 0.59
+                          er IE   M 13     pt ID     S                                              er IE   M 13     pt ID      S
+                     Ta mp -SRO RT IC Recei ntasy FST                                          Ta mp -SRO RT IC Recei ntasy FST
+                   c       T               Fa                                                 c      T               Fa
+                Do                                                                         Do
+
+Figure 1: Pixel-F1 (left) and Pixel-AUC (right) for all 14 evaluated methods—document-specific (above separator) and general
+forensic (below)—across eight document datasets. Pixel-AUC is consistently moderate to high while Pixel-F1 at fixed τ =0.5
+remains near zero for most (method, dataset) pairs. The pervasive AUC–F1 gap confirms calibration failure—not discriminative
+failure—as the dominant bottleneck: methods correctly rank tampered pixels above authentic ones but cannot identify a usable
+decision threshold in the document domain. ForensicHub methods (FFDN, CAFTB, TIFDM) achieve AUC > 0.90 on multiple
+datasets where Pixel-F1 is below 0.05, confirming the calibration gap is not resolved by document-specific training. Appendix
+Fig. 6 shows Pixel-IoU and Oracle F1.
+
+
+cated in a document-specific model. ADCD-Net achieves        plot: most (method, dataset) pairs lie well below the AUC = F1
+high AUC on T-SROIE (0.899) but its Pixel-F1 remains low     diagonal, confirming that calibration failure is the primary bot-
+(F1 = 0.176), suggesting it learns discriminative but poorly lo-
+                                                             tleneck across the document domain.
+calised features. ASCFormer leads document-specific meth-       Figure 5 shows Pixel-F1, Oracle F1, and Pixel-AUC aver-
+ods on T-SROIE AUC (0.924), yet its F1 at fixed threshold is aged across all eight datasets for every method. The three
+                                                             quantities cluster near three distinct levels: AUC ≈ 0.75–0.99,
+also limited by calibration. TruFor (a general method) leads on
+FantasyID (F1 = 0.296), outperforming all document-specific  Oracle F1 ≈ 0.15–0.55, and Pixel-F1 ≈ 0.02–0.35, confirming
+methods on that dataset, demonstrating that domain speci-    a two-stage gap: score-shift (AUC vs Oracle F1) and threshold
+ficity alone does not guarantee superior localization perfor-optimality (Oracle F1 vs fixed-threshold F1).
+mance. CAT-Net remains strong on DocTamper (F1 = 0.672),        Appendix Fig. 7 shows the distribution of Pixel-F1 scores
+confirming its JPEG artifact sensitivity transfers to document
+                                                             across the eight datasets for each method; the wide in-
+JPEG forgeries even in the cross-domain setting. ManTraNet   terquartile ranges confirm that no method generalises uni-
+is weaker overall (median F1 < 0.09 across datasets) but its formly across document types. Appendix Fig. 8 traces each
+inclusion completes the general-method picture. See Ap-      method’s Pixel-F1 profile across all eight datasets (sorted by
+pendix Table 4 for the full cross-domain results including   best-method difficulty), revealing complementary strengths:
+DTD, CAFTB-Net, TIFDM.                                       ASCFormer excels on T-SROIE while collapsing on DocTam-
+                                                             per; CAT-Net is strong on JPEG-rich datasets (DocTamper)
+  Figure 4a quantifies the domain transfer gap for all seven but weak on RTM.
+document-specific methods, showing in-domain DocTamper          Appendix Table 5 lists the Pixel-AUC and Oracle F1 values
+F1, best out-of-domain F1, and mean out-of-domain F1 side for cross-domain datasets.
+by side. Figure 4b visualizes the AUC–F1 gap as a scatter
+
+
+                                                                       11
+                                                              Cross-domain performance (5 held-out datasets)
+
+ DocTamper                                                                                     DocTamper
+   DTD (FH)                                                                                      DTD (FH)
+       FFDN                                                                                          FFDN
+ CAFTB-Net                                                                                     CAFTB-Net
+      TIFDM                                                                                         TIFDM
+ ASCFormer                                                                                     ASCFormer
+  ADCD-Net                                                                                      ADCD-Net
+      TruFor                                                                                        TruFor
+  MVSS-Net                                                                                      MVSS-Net
+  PSCC-Net                                                                                      PSCC-Net
+     IML-ViT                                                                                       IML-ViT
+ ManTraNet                                                                                     ManTraNet
+    CAT-Net                                                                                       CAT-Net
+     SAFIRE                                                               Document-specific        SAFIRE
+                                                                          General forensics
+           0.0              0.1         0.2          0.3         0.4           0.5   0.6                 0.0           0.2         0.4          0.6         0.8
+                                               Mean Pixel-F1                                                                      Mean Pixel-AUC
+
+Figure 2: Mean cross-domain Pixel-F1 (left) and Pixel-AUC (right) for all 14 methods across the four cross-domain datasets
+(RealTextManipulation, Tampered-IC13, ReceiptForgery, FSTS-1.5k). Error bars show standard deviation. The dashed vertical
+line marks the mean across all general methods. Despite document-specific training, CAFTB-Net is the only doc-specific
+method that clearly outperforms both TruFor and CAT-Net on F1; on AUC, the two method families overlap substantially,
+confirming that calibration—not feature discrimination—distinguishes the groups.
+
+
+
+
+                                                                                                      Calibration Recovery: Fixed-Threshold vs. Oracle F1
+ Dataset Difficulty: Best-Method Pixel-F1 (all 14 methods)
+                                                                                                       SAFIRE
+               IC13               DocTamper (0.18)
+                                                                                                       IML-ViT
+           Receipt                   ASCFormer (0.26)
+                                                                                                     PSCC-Net
+               RTM                   ASCFormer (0.26)
+
+                                                                                                       CAT-Net
+        FantasyID                     TIFDM (0.30)
+
+                                                                                                     MVSS-Net
+               FSTS                                     CAFTB (0.67)
+
+
+          T-SROIE                                           ASCFormer (0.78)
+                                                                                                    ManTraNet
+                                                                                                                                              Pixel-F1 @ =0.5
+                                          Best-method F1                                                TruFor                                Oracle-F1 gain
+       DocTamper                                               DocTamper (0.91)
+                                                                                                                                              Pixel-AUC
+                                          Mean F1 (all 14 methods)
+                      0.0     0.2       0.4      0.6       0.8     1.0                                           0.0    0.2       0.4      0.6      0.8     1.0
+                                          Pixel-F1                                                                      Pixel-F1 (mean across 8 datasets)
+
+(a) (a) Dataset difficulty: best-method and mean Pixel-F1 across all                               (b) (b) Calibration recovery potential per method (mean across 8
+14 methods, sorted by best-method F1 (descending). MixTamper                                       datasets). Dark bars: Pixel-F1 at fixed τ =0.5. Light bar extension:
+and DocTamper are most tractable; ReceiptForgery, RealTextMa-                                      Oracle F1 gain. Red diamonds: Pixel-AUC. The large gap between
+nipulation, and Tampered-IC13 are hardest.                                                         fixed-threshold F1 and Oracle F1 confirms that score-range shift,
+                                                                                                   not feature discrimination, is the dominant failure mode.
+
+
+
+
+                                                                                              12
+                                                                                                                                                                                                                                     AUC F1 Gap: Calibration Failure in the Document Domain
+                                                                                                                                                                                                                        1.0           Method family
+                                                                                                                                                                                                                                    General image forensics
+                                                                                                                                                                                                                                    Document-specific
+
+                                                                                                                                                                                                                        0.8
+
+
+
+
+                                                                                                                                                                                                     Pixel-F1 @ = 0.5
+                                                                                                                                                                                                                        0.6
+
+
+                                 Domain Transfer Gap: In-Domain vs. Out-of-Domain Performance
+                                                                                                                                                             In-domain (DocTamper)
+                                                                                                                                                                                                                        0.4
+           1.0       0.91                                                                                                                                    Best OOD
+                                                                                                       0.89                                                  Mean OOD (7 datasets)
+           0.8                                                                                                               0.74                        0.78          0.76
+                                                                                0.74
+                                                         0.68                                                 0.67
+                                                                                                                                                                                                                                                                                            DocTamper     TruFor
+Pixel-F1
+           0.6                                                                                                                                                                                                          0.2                                                                 DTD           ManTraNet
+                                0.47                                                                                                                                                                                                                                                        FFDN          MVSS-Net
+           0.4                                                                                                                      0.32                                      0.32
+                                                                                                                                                                                                                                                                    Calibration failure zoneCAFTB-Net     CAT-Net
+                                                                 0.24                                                                                           0.28                                                                                                  (high AUC, low F1) TIFDM            PSCC-Net
+                                                                                       0.22                          0.19
+           0.2                                 0.14                                                                                        0.15   0.18
+                                                                                                                                                                                     0.13
+                                                                                                                                                                                                                                                                                            ASCFormer     IML-ViT
+                                                                        0.08                  0.09                                                                                                                      0.0                                                                 ADCD-Net      SAFIRE
+           0.0
+                                                                                                               t                                                                                                              0.3         0.4         0.5     0.6          0.7          0.8         0.9         1.0
+                     ampe
+                                   r                         DTD               FFDN                  B-Ne                   TIFD
+                                                                                                                                M               orme
+                                                                                                                                                         r                -Net
+                 DocT                                                                           CAFT                                        ASCF                   ADCD                                                                                        Pixel-AUC
+
+(a) (a) Domain transfer gap for document-specific methods. Each                                                                                                                                      (b) (b) AUC–F1 scatter for all 112 (method, dataset) pairs. Circles
+method shows three bars: in-domain Pixel-F1 on DocTamper (red),                                                                                                                                      = general forensics, squares = document-specific. The dashed diag-
+best out-of-domain F1 (orange), and mean out-of-domain F1 (grey).                                                                                                                                    onal marks AUC = F1 (perfect calibration); the red-shaded region is
+The DocTamper model’s in-domain F1 of 0.914 collapses to a mean                                                                                                                                      the calibration failure zone. Nearly all points fall below the diago-
+of 0.171 across the remaining seven datasets.                                                                                                                                                        nal.
+
+
+
+
+                                                                                 Calibration Failure: AUC >> Oracle-F1 >> Pixel-F1 for Every Method
+                                                                                                                                                                                            Doc-specific | General                                                      Pixel-F1 @ =0.5
+
+
+
+
+                      Score (mean across 8 datasets)
+                                                       1.0                                                                                                                                                                                                              Oracle-F1
+                                                                                                                                                                                                                                                                        Pixel-AUC
+                                                       0.8
+
+                                                       0.6
+
+                                                       0.4
+
+                                                       0.2
+
+                                                       0.0
+                                                                               per              DT
+                                                                                                     D                  DN B-Net IFDM rmer D-Net ruFor raNet S-Net T-Net C-Net L-ViT FIRE
+                                                                 am                                                FF       FT   T       o       T anT        S   CA PSC      IM    SA
+                                                              ocT                                                        CA            CF ADC              MV
+                                                             D                                                                      AS              M
+
+Figure 5: Calibration failure across all 14 methods: Pixel-F1 @ τ =0.5 (dark blue), Oracle F1 at best threshold (light blue),
+and Pixel-AUC (green), all averaged across the eight document datasets. The consistent ordering AUC ≫ Oracle F1 > Pixel-
+F1 holds for every method, confirming that score-distribution shift—not feature discrimination—is the primary bottleneck. A
+dashed vertical line separates document-specific (left) from general methods (right).
+
+
+
+
+                                                                                                                                                                                                13
+ 9     Analysis and Discussion
+ 9.1    The Document Domain Gap
+ Our experiments provide quantitative evidence for a signifi-
+ cant domain gap between natural image forensics and docu-
+ ment forensics. General-purpose methods designed for natu-
+ ral scene manipulations face several challenges when applied
+ to documents:
+ • Resolution mismatch: Most general methods operate at
+    256×256 or 512×512 resolution, which is insufficient
+    for detecting character-level modifications in documents
+    scanned at 300+ DPI.
+ • Feature distribution shift: Methods relying on natural
+    image statistics (e.g., noise patterns from camera sensors,
+    lighting inconsistencies) find few useful signals in syn-
+    thetic/scanned documents.
+ • Forgery scale: Document forgeries often affect small text
+    regions, producing highly imbalanced prediction masks
+    where the forged area is a tiny fraction of the image.
+     Throughout this section, cross-domain refers to any
+ (method, dataset) pair where the dataset was not part of the
+ method’s training distribution; this is distinct from in-domain
+ evaluation (same train/test distribution) and from the broader
+ zero-shot framing applied to all experiments in this bench-
+ mark.
+     Our results show that the DocTamper model achieves the
+ highest pixel-F1 on its own test set (F1 = 0.914), yet this strong
+ in-domain performance collapses on other datasets (F1 = 0.045
+ on T-SROIE, 0.013 on RTM, 0.002 on ReceiptForgery). We at-
+ tribute this sharp in-domain/out-of-domain gap to overfitting:
+ the model learns rendering artifacts specific to ICDAR-derived
+ composites that do not generalize across document types or
+ imaging conditions.
+     FFDN (ForensicHub, ECCV 2024) achieves F1 = 0.736 on
+ DocTamper but near-zero F1 on T-SROIE (0.043) and RTM
+ (0.011). Crucially, FFDN’s AUC remains high on these out-
+ of-distribution datasets (0.904 and 0.743 respectively). This
+ AUC–F1 gap — first observed in general methods and here
+ replicated in a domain-specific model — has a precise root
+ cause that must be distinguished from feature discrimination
+ failure.
+
+ Score distribution shift, not feature collapse. Two distinct
+ failure modes can produce near-zero F1@τ =0.5: (i) Feature
+ discrimination failure: the model cannot separate tampered
+ from authentic pixels at any threshold (low AUC). (ii) Score
+ distribution shift: the model retains discriminative power but
+ the entire prediction score range migrates below τ =0.5 in the
+ target domain (high AUC, near-zero F1). High AUC (≥0.76
+ for TruFor on six datasets; ≥0.90 for FFDN/CAFTB/TIFDM
+ on several out-of-domain datasets) conclusively rules out (i)
+ as the primary bottleneck. Oracle F1 being 2–10× higher than
+ fixed-threshold Pixel-F1 further confirms that a better thresh-
+ old recovers much of the discriminative power. The AUC–
+ F1 gap is therefore evidence of (ii): when a model trained on
+ source-domain JPEG forgeries encounters target-domain doc-
+
+
+14
+uments, its score outputs may be systematically compressed            ering 55% of the Oracle-F1 gap. PSCC-Net on DocTamper
+or shifted below 0.5 even though relative rankings are pre-           improves from 0.024 to 0.110 (4.5×, 39% of gap). FFDN
+served. This distinction carries a practical implication: post-       on T-SROIE improves from 0.043 to 0.102 (2.4×, 51% of
+hoc threshold calibration on a small document-domain valida-          gap). Critically, N =10 domain images already provides most
+tion set is sufficient to recover a large fraction of the Oracle F1   of this gain (averaged over 20 random draws of 10 images):
+gap without retraining. We verify this empirically below.             for PSCC-Net/FSTS-1.5k, N =10 achieves 0.255 versus 0.319
+                                                                      with N =200, indicating that calibration data requirements are
+                                                                      minimal. For the pairs where calibration improves perfor-
+Pixel-AUC as a diagnostic tool. Pixel-AUC plays a cen-
+                                                                      mance, the calibrated threshold τ ∗ falls in the range 0.02–0.15,
+tral diagnostic role in our benchmark. Unlike Pixel-F1, which
+                                                                      confirming that the score distribution has shifted well below
+conflates calibration quality with discriminative power, Pixel-
+                                                                      the standard τ =0.5 boundary in the document domain.
+AUC measures only whether the model correctly ranks tam-
+                                                                         Not all pairs benefit: methods already well-calibrated at
+pered pixels above authentic ones, regardless of absolute score
+                                                                      τ =0.5 (high fixed-threshold F1 close to Oracle F1) see cali-
+scale. High Pixel-AUC across methods and datasets—TruFor
+                                                                      bration decrease performance, because the threshold is already
+exceeds 0.76 on all eight datasets; FFDN exceeds 0.90 on sev-
+                                                                      near-optimal. CAFTB on T-SROIE similarly degrades, with
+eral out-of-domain datasets; CAT-Net reaches 0.98 on JPEG-
+                                                                      the calibrated threshold collapsing to τ ∗ =0.995—evidence
+heavy datasets—confirms that cross-domain feature discrim-
+                                                                      that CAFTB’s score distribution on T-SROIE is degenerate
+ination is largely preserved even without document-specific
+                                                                      (near-constant high scores for all pixels) rather than merely
+training. These high Pixel-AUC values coexisting with near-
+                                                                      shifted. These negative cases confirm the diagnostic value
+zero Pixel-F1 scores constitute the defining signature of score-
+                                                                      of our two failure-mode distinction: calibration repairs score-
+distribution-shift failure: the model retains discriminative rep-
+                                                                      shift failures but cannot help when discrimination is degener-
+resentations but its output scores are systematically com-
+                                                                      ate.
+pressed below the deployment threshold of 0.5. This makes
+Pixel-AUC an indispensable diagnostic alongside Pixel-F1: a              The eight pairs above were selected to span the top quartile
+method with high AUC and low F1 represents a calibration-             of AUC–F1 gap, where calibration recovery is most likely to
+fixable system, whereas low AUC indicates a fundamentally             be feasible, plus two negative controls (TruFor/MixTamper
+broken representation that cannot be recovered without retrain-       and CAFTB/T-SROIE) chosen as an already-calibrated and
+ing. The AUC–F1 scatter (Fig. 4b) visualises this dichotomy           a degenerate-score regime respectively. We note that this
+across all (method, dataset) pairs.                                   case-study experiment covers 8 of the 112 (method, dataset)
+                                                                      pairs; systematic calibration recovery across all pairs is
+                                                                      deferred to future work. The observed 39–55% recovery
+On the calibration ceiling. Oracle-F1 is a per-image opti-            in high-AUC pairs establishes proof of concept—complete
+mum: it selects the best threshold independently for each im-         characterisation will require re-running inference with stored
+age and therefore represents an unachievable upper bound for          predictions, which is a scripted extension of the existing
+any single deployed threshold. The calibration experiment cal-        evaluation pipeline (available at https://github.
+ibrates a single global threshold—a tighter, practically achiev-      com/BensonRen/document_forgery_benchmark).
+able ceiling. Recovery percentages reported relative to Oracle-       These results confirm that calibration recovery is selective:
+F1 are therefore conservative: the fraction of the achievable         effective for methods with discriminative but uncalibrated
+calibration gap recovered is higher than the percentages above        scores, and harmful or neutral for degenerate-score regimes.
+suggest. A Global-Opt-F1 metric—the best mean F1 achiev-                 This contrasts with feature collapse, which would require
+able with a single threshold applied uniformly to all images—         domain adaptation of the backbone itself.
+would provide the correct ceiling for calibration experiments;
+we defer its systematic computation to the extended analysis
+                                                                 Quantitative explanation: tampered-pixel base rate. The
+pipeline.
+                                                                 general principle that fixed-threshold F1 degrades under class
+                                                                 imbalance is known in the segmentation and information-
+Empirical calibration experiment. To quantify calibration retrieval literature [Lipton et al., 2014, Boyd et al., 2013]. Our
+recovery, we ran a controlled experiment on eight representa- contribution is to provide the first empirical characterisation
+tive (method, dataset) pairs. For each pair, we store per-image of this effect across 14 methods in the document forensics
+score histograms (256-bin positive/negative pixel counts), then domain, to quantify the specific base-rate arithmetic that ex-
+simulate calibrating a single global threshold on N ∈ {10, plains the mismatch, and to demonstrate practical recovery via
+25, 50, 100, 200} randomly sampled domain images and eval- threshold adaptation. Analysis of our per-image annotation
+uating on the remaining test set. The N images are drawn statistics reveals a quantitative explanation for why τ =0.5 is
+uniformly at random from the test set without replacement; catastrophically miscalibrated for document data. In natural
+results are averaged over 20 independent draws to reduce sam- image forensics benchmarks (CASIA, Columbia), tampered
+pling variance. The results are summarised below.                regions typically span 10–30% of the image [Dong et al., 2013,
+   For methods exhibiting score-shift failure, calibration is Hsu and Chang, 2006, Wen et al., 2016]. In our document
+highly effective. PSCC-Net on FSTS-1.5k improves from datasets, the median tampered-pixel fraction among forged im-
+Pixel-F1 = 0.104 to 0.319 with N =200 images (3.1×), recov- ages is 0.27% (ReceiptForgery), 0.45% (MixTamper), 0.71%
+
+
+                                                                  15
+(DocTamper), 0.97% (T-SROIE), and 2.88–4.17% for Fanta-               ferent traces than the JPEG-composite and copy-move
+syID and FSTS-1.5k. A method that flags k% of pixels as               attacks covered by existing benchmarks. No evaluated
+forged achieves precision ≈ r/k where r is the tampered               method works reliably out-of-the-box today; extending
+base rate. At τ =0.5, most methods flag 10–30% of pixels,             evaluation to AI-generated forgeries is a critical open pri-
+yielding precision <0.1 on datasets where r<1%, regardless            ority for the field. The D OC F ORGE -B ENCH evaluation
+of AUC. In practice, at τ =0.5, methods such as TruFor flag           toolkit is directly extensible to such datasets; we encour-
+approximately 15–25% of pixels as tampered on document                age the community to contribute AIGC-forgery document
+datasets, while the true tampered fraction is 0.27–0.97%; the         benchmarks evaluated under our zero-shot protocol.
+resulting precision collapses to <0.05 even when recall (tam-
+pered pixel coverage) remains moderate (0.3–0.6). This pre-
+cision collapse, not recall failure, is the dominant mechanism     10     Conclusion
+behind near-zero F1. This arithmetic explains why datasets
+with smaller tampered fractions (ReceiptForgery, DocTamper,        We presented D OC F ORGE -B ENCH, the first unified zero-
+T-SROIE) exhibit larger AUC–F1 gaps: the Bayes-optimal             shot benchmark for document forgery detection, evaluat-
+threshold is τ ∗ ≪ 0.5, and any method trained on balanced         ing 14 methods across eight datasets under a strict out-of-
+or 10–30%-tampered data will be miscalibrated by an order          the-box protocol—published pretrained weights, no domain
+of magnitude in the document domain. Crucially, this is cor-       adaptation—distinguishing it from fine-tuning-oriented evalu-
+rectable without retraining: fitting a threshold on N domain       ations such as ForensicHub [Du et al., 2025]. Our central find-
+samples directly estimates τ ∗ .                                   ing is a pervasive calibration failure: methods retain discrimi-
+                                                                   native power (Pixel-AUC ≥ 0.76) but collapse at the standard
+   Among all document-specific methods, CAFTB-Net
+                                                                   τ =0.5 threshold due to the extreme class imbalance of doc-
+achieves the second-highest in-domain F1 (0.893) and the best
+                                                                   ument forgeries. Domain-specific training does not resolve
+FSTS-1.5k F1 (0.671), making it the most broadly capable
+                                                                   this; post-hoc threshold adaptation on as few as ten domain
+ForensicHub method.
+                                                                   images does. We release the full toolkit to support repro-
+   ASCFormer achieves the best cross-dataset generalization
+                                                                   ducible evaluation and hope this work catalyzes progress in
+among document-specific methods, with F1 = 0.779 on T-
+                                                                   document forensic analysis. Taken together, our results show
+SROIE and F1 = 0.103 on RTM. TruFor (general) outperforms
+                                                                   that no evaluated method works reliably out-of-the-box on di-
+all document-specific methods on FantasyID (F1 = 0.296), un-
+                                                                   verse document types—document forgery detection remains
+derscoring that domain-specific training does not guarantee
+                                                                   an unsolved problem. We further note that all eight datasets in
+cross-domain superiority. Full results for all ForensicHub
+                                                                   D OC F ORGE -B ENCH predate the era of generative AI editing.
+methods (DTD, FFDN, CAFTB-Net, TIFDM) across all seven
+                                                                   Diffusion-model and instruction-following text editors (Stable
+datasets appear in Table 4.
+                                                                   Diffusion inpainting, DALL-E, AnyText) produce forgeries
+                                                                   with fundamentally different forensic traces than the JPEG-
+9.2   Open Problems and Future Directions                          composite and copy-move attacks that existing detectors were
+                                                                   designed to find. A modest pilot evaluation—50 AI-edited
+Based on our analysis, we identify several open problems:          document images run through the 14 methods benchmarked
+1. Calibration-aware architectures: Current methods treat          here—would be sufficient to establish whether any method
+   threshold selection as a post-hoc step, but end-to-end cali-    generalises to this attack surface; our benchmark toolkit is al-
+   bration—either through domain-adaptive score normaliza-         ready equipped to run such an evaluation. We anticipate near-
+   tion or uncertainty-aware prediction heads—could close          zero F1 for all methods, defining the next open frontier for the
+   the AUC–F1 gap without requiring labeled domain data.           field.
+2. Unified multi-modal detection: No existing method han-
+   dles all document forgery modalities (visual, textual, struc-
+   tural) in a single framework. Foundation models and mul-        Acknowledgements
+   timodal LLMs (ForgeryGPT, FakeShield) may enable uni-
+   fied detection with explainability, but rigorous benchmark-     We thank Yiyi Zhang for valuable discussions and feedback
+   ing on standardized document datasets remains lacking.          on earlier drafts of this work.
+3. Broader document coverage: Current benchmarks are bi-
+   ased toward English and Chinese documents in image for-
+   mat. Extending to multilingual scripts, PDF-native foren-       References
+   sics, print-scan resilience, and temporal document analysis
+                                                                   Anonymous. MixTamper: A multi-label document tampering
+   (contract revision tracking) are all essentially unexplored
+                                                                     dataset with diverse manipulation types, 2024. Multi-label
+   directions.
+                                                                     document forgery dataset with copy-move, splicing, text-
+4. Generative AI attack surface: All eight datasets in
+                                                                     generating, smearing, and erasing categories.
+   D OC F ORGE -B ENCH predate the current era of diffusion-
+   model and LLM-based editing. Forgeries generated by             Vladimir V. Arlazarov et al. MIDV-LAIT: A large-scale an-
+   tools such as Stable Diffusion inpainting, DALL-E, or             notated identity document dataset with tampered images.
+   instruction-following text editors leave fundamentally dif-       arXiv preprint, 2022.
+
+                                                               16
+Kendrick Boyd, Kevin H. Eng, and C. David Page. Area under        Information Processing Systems (NeurIPS), pages 215–226,
+   the precision-recall curve: Point estimates and confidence     2019.
+   intervals. In Machine Learning and Knowledge Discov-
+   ery in Databases (ECML PKDD), pages 451–466. Springer, Pavel Korshunov, Sébastien Marcel, and Vidit Vidit. Fanta-
+   2013.                                                          syID: A dataset for detecting digital manipulations of ID-
+                                                                  documents. In International Joint Conference on Biomet-
+Konstantin Bulatov, Vladimir V. Arlazarov, Timofey Chernov,       rics (IJCB), 2025. arXiv:2507.20808. Dataset: https:
+   Oleg Slavin, and Dmitry Nikolaev. MIDV-2020: A compre-         //www.idiap.ch/paper/fantasyid.
+   hensive benchmark dataset for identity document analysis.
+   In Computer Optics, volume 44, 2020.                         Myung-Joon Kwon, Se-Ho Nam, In-Jae Yu, Heung-Kyu Lee,
+                                                                  and Changick Kim. CAT-Net: Compression artifact trac-
+Xinru Chen, Chengbo Dong, Jiaqi Ji, Juan Cao, and Xirong          ing network for detection and localization of image splic-
+   Li. Image manipulation detection by multi-view multi-scale     ing. International Journal of Computer Vision (IJCV), 130:
+   supervision. In Proceedings of the IEEE/CVF International      2684–2706, 2022.
+   Conference on Computer Vision (ICCV), 2021.
+                                                                Myung-Joon Kwon et al. SAFIRE: Segment any forged image
+Zhongxi Chen, Shen Chen, Taiping Yao, Ke Sun, Shouhong            region. In Proceedings of the AAAI Conference on Artifi-
+   Ding, and Rongrong Ji. Enhancing tampered text detec-          cial Intelligence, 2025. Extends SAM (Segment Anything
+   tion through frequency feature fusion and decomposition.       Model) for image forgery localisation, with multi-source
+   In Proceedings of the European Conference on Computer          partitioning capability. GitHub: mjkwon2021/SAFIRE.
+   Vision (ECCV), 2024. Introduces FFDN.
+                                                                Zisheng Liang et al. Can multi-modal (reasoning) LLMs de-
+CVC Barcelona. SIDTD: Synthetic identity document tamper-         tect document manipulation?, 2025. arXiv:2508.11021.
+   ing detection dataset. https://tc11.cvc.uab.es/
+   datasets/SIDTD_1, 2023.                                      Minghui Liao et al. Real-world text manipulation detection
+                                                                  dataset. arXiv preprint, 2022. 9,000 real-world text manip-
+Jing Dong, Wei Wang, and Tieniu Tan. CASIA image tamper-          ulation images with pixel-level segmentation masks.
+   ing detection evaluation database. IEEE China Summit and
+   International Conference on Signal and Information Pro- Zachary C. Lipton, Charles Elkan, and Balakrishnan
+   cessing, 2013.                                                 Naryanaswamy. Optimal thresholding of classifiers to max-
+                                                                  imize F1 measure. In Machine Learning and Knowledge
+Li Dong, Weipeng Liang, and Rangding Wang. Robust text            Discovery in Databases (ECML PKDD), pages 225–239.
+   image tampering localization via forgery traces enhance-       Springer, 2014.
+   ment and multiscale attention. IEEE Transactions on Con-
+   sumer Electronics, 2024. Introduces TIFDM (ResNet50 Xiaohong Liu, Yaojie Liu, Jun Chen, and Xiaoming Liu.
+   + multiscale decoder); implemented open-source in Foren-       PSCC-Net: Progressive spatio-channel correlation network
+   sicHub. Checkpoint: tifdm-9.pth.                               for image manipulation detection and localization. IEEE
+                                                                  Transactions on Circuits and Systems for Video Technology
+Shen Du et al. ForensicHub: A unified benchmark and               (TCSVT), 32(11):7505–7517, 2022.
+   codebase for all-domain fake image detection and localiza-
+   tion. In Advances in Neural Information Processing Sys- Yiming Luo, Minghui Liao, Ruibin Ma, Jiaxin Deng, and Xi-
+   tems (NeurIPS) Datasets & Benchmarks Track, 2025. Code:        ang Bai. Toward real text manipulation detection: New
+   https://github.com/scu-zjz/ForensicHub.                        dataset and new solution. In Pattern Recognition, volume
+                                                                  155, page 110828. Elsevier, 2024. doi: 10.1016/j.patcog.
+Hany Farid. Image forgery detection. IEEE Signal Processing       2024.110828.
+   Magazine, 26(2):16–25, 2009.
+                                                                Xiaochen Ma, Bo Huang, Shanshan Jiang, Bo Du, and Yun
+Fabrizio Guillaro, Davide Cozzolino, Avneesh Sud, Nicholas        Zheng. IML-ViT: Image manipulation localization by vi-
+   Dufour, and Luisa Verdoliva. TruFor: Leveraging all-round      sion transformer. arXiv preprint arXiv:2307.14863, 2023.
+   clues for trustworthy image forgery detection and localiza-
+   tion. In Proceedings of the IEEE/CVF Conference on Com- Gaël Mahfoudi, Badr Tajini, Florent Retraint, Frédéric
+   puter Vision and Pattern Recognition (CVPR), 2023.             Morain-Nicolier, Jean Luc Dugelay, and Patrice Marc. DE-
+                                                                  FACTO: Image and face manipulation dataset. European
+Yu-Feng Hsu and Shih-Fu Chang. Detecting image splicing           Signal Processing Conference (EUSIPCO), 2019.
+   using geometry invariants and camera characteristics con-
+   sistency. In IEEE International Conference on Multimedia Pierre Mesquita, Antoine Doucet, and Christophe Rigaud.
+   and Expo, 2006.                                                ICDAR 2023 competition on receipt forgery detec-
+                                                                  tion. ICDAR 2023 Competition, 2023. L3i Laboratory,
+Vladimir V. Kniaz, Vladimir A. Knyaz, and Fabio Remondino.        University of La Rochelle. 988 receipt photographs
+   The point where reality meets fantasy: Mixed adversarial       (577 train / 193 val / 218 test); 163 forged images;
+   generators for image splice detection. In Advances in Neural   VGG-format bbox annotations. Forgeries produced
+
+
+                                                             17
+  with GIMP/Paint on price and quantity fields. Dataset: SCU-ZJZ. IMDLBenCo: Image manipulation detection and
+  https://github.com/l3i-la-rochelle/                      localization benchmark codebase. https://github.
+  receipt-forgery-detection.                               com/scu-zjz/IMDLBenCo, 2024.
+
+National     Institute  of    Standards      and     Technol- Yalin Song, Wenbin Jiang, Huiru Shao, Mingkun Fu, Yaowei
+  ogy.        NIST nimble challenge 2016 evaluation.            Wang, and Heng Qi. Cross-attention based two-branch net-
+  https://www.nist.gov/itl/iad/mig/                             works for document image forgery localization in the meta-
+  nimble-challenge-2017-evaluation, 2016.                       verse. ACM Transactions on Multimedia Computing, Com-
+                                                                munications and Applications, 2024. Introduces CAFTB-
+Adam Novozamsky, Babak Mahdian, and Stanislav Saic.             Net; implemented open-source in ForensicHub.
+  IMD2020: A large-scale annotated dataset tailored for de-
+  tecting manipulated images. IEEE Winter Applications of Dijana Tralic, Ivan Zupancic, Sonja Grgic, and Mislav Gr-
+  Computer Vision Workshops, 2020.                              gic. CoMoFoD—new database for copy-move forgery de-
+                                                                tection. ELMAR, 2013.
+Utkarsh Ojha, Yuheng Li, Jingwan Lu, Alexei A. Efros,
+  Yong Jae Lee, Eli Shechtman, and Richard Zhang. Towards Luisa Verdoliva. Media forensics and deepfakes: An overview.
+  universal fake image detectors that generalize across gener-  IEEE Journal of Selected Topics in Signal Processing, 14
+  ative models. In Proceedings of the IEEE/CVF Conference       (5):910–932, 2020.
+  on Computer Vision and Pattern Recognition (CVPR), 2023. Junyi Wang, Weijia Wu, Zihan Cao, Wenqing Chen, and Jiebo
+                                                                  Luo. ObjectFormer for image manipulation detection and
+Chenfan Qu, Chongyu Liu, Yuliang Liu, Xinhong Chen, Dezhi
+                                                                  localization. In Proceedings of the IEEE/CVF Confer-
+  Peng, Fengjun Guo, and Xiang Bai. DocTamper: A large-
+                                                                  ence on Computer Vision and Pattern Recognition (CVPR),
+  scale document tampering dataset for document tampering
+                                                                  2022a.
+  localization. arXiv preprint arXiv:2311.18818, 2023a.
+                                                               Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+Chenfan Qu, Yuliang Liu, Xing Liu, Lingyun Zhu, Fengjun          Owens, and Alexei A. Efros. CNN-generated images are
+  Guo, and Lianwen Jin. Towards robust tampered text de-         surprisingly easy to spot...for now. In Proceedings of the
+  tection in document image: New dataset and new solution.       IEEE/CVF Conference on Computer Vision and Pattern
+  In Proceedings of the IEEE/CVF Conference on Computer          Recognition (CVPR), 2020.
+  Vision and Pattern Recognition (CVPR), 2023b. Introduces
+  DTD model and DocTamper dataset.                             Tianle Wang, Chao Ma, Jing Li, Jiaming Liu, Xiaoyu Sun, and
+                                                                 Jian Yang. Forgery detection in the wild: Investigating the
+Chenfan Qu, Chongyu Liu, et al. Revisiting tampered scene        role of context. In Proceedings of the IEEE/CVF Confer-
+  text detection in the era of generative AI. In Proceedings     ence on Computer Vision and Pattern Recognition Work-
+  of the AAAI Conference on Artificial Intelligence, 2025. In-   shops (CVPRW), 2022b. Introduces the Tampered-IC13
+  troduces OSTF dataset. Code: https://github.com/               dataset: 233 scene-text images from ICDAR 2013 with dig-
+  qcf-568/OSTF.                                                  itally modified text regions. Ground truth as bounding-box
+                                                                 annotations.
+Chenfan Qu et al. TextShield-R1: Reinforced reasoning
+  for tampered text detection. https://github.com/ Zhendong Wang, Jianmin Bao, Wengang Zhou, Weilun Li, and
+  qcf-568/TextShield, 2026. AAAI 2026. Qwen2.5-                  Houqiang Li. DIRE for diffusion-generated image detec-
+  VL-7B fine-tuned with GRPO for tampered text detection         tion. In Proceedings of the IEEE/CVF International Con-
+  and bbox localization.                                         ference on Computer Vision (ICCV), 2023.
+Simiao Ren et al. Do deepfake detectors work in reality? Bihan Wen, Ye Zhu, Ramanathan Subramanian, Tian-Tsong
+  In Proceedings of the 4th Workshop on Security Implica-  Ng, Xuanjing Shen, and Stefan Winkler. COVERAGE—a
+  tions of Deepfakes and Cheapfakes (ACM MM), 2025a.       novel database for copy-move forgery detection. IEEE In-
+  arXiv:2502.10920. DOI: 10.1145/3709022.3736545.          ternational Conference on Image Processing (ICIP), 2016.
+
+Simiao Ren et al. Can multi-modal (reasoning) LLMs work as Ka Him Wong et al. ADCD-Net: Robust document im-
+  deepfake detectors?, 2025b. arXiv:2503.20084.                  age forgery localization via adaptive DCT feature and hi-
+                                                                 erarchical content disentanglement. In Proceedings of the
+Simiao Ren et al. Out of the box age estimation through facial   IEEE/CVF International Conference on Computer Vision
+  imagery: A comprehensive benchmark of vision-language          (ICCV), 2025. arXiv:2507.16397.
+  models vs. out-of-the-box traditional architectures, 2026a.
+  arXiv:2602.07815.                                            Yue Wu, Wael AbdAlmageed, and Premkumar Natarajan.
+                                                                 ManTra-Net: Manipulation tracing network for detection
+Simiao Ren et al. How well are open sourced AI-generated         and localization of image forgeries with anomalous features.
+  image detection models out-of-the-box: A comprehensive         In Proceedings of the IEEE/CVF Conference on Computer
+  benchmark study, 2026b. arXiv:2602.07814.                      Vision and Pattern Recognition (CVPR), 2019.
+
+
+                                                             18
+Zeqin Yu, Haotao Xie, Jian Zhang, Jiangqun Ni, Wenkang Pixel-IoU (Jaccard index, τ =0.5).
+  Su, and Jiwu Huang. Toward real-world text image
+  forgery localization: Structured and interpretable data                                 |ŷ0.5 ∩ g|
+                                                                                  IoU =                                (4)
+  synthesis. In Advances in Neural Information Process-                                   |ŷ0.5 ∪ g|
+  ing Systems (Datasets and Benchmarks Track), 2025.
+                                                             Measures overlap between predicted and ground-truth regions.
+  arXiv:2511.12658.
+                                                             IoU = F1/(2 − F1), so it is strictly lower than Pixel-F1. Re-
+Fanwei Zeng, Changtao Miao, Jing Huang, Zhiya Tan, Shutao turns NaN for images where the ground-truth mask has zero
+  Gong, Xiaoming Yu, Yang Wang, Huazhe Tan, Weibin Yao, tampered pixels (authentic images); NaN values are excluded
+  and Jianshu Li. LogicLens: Visual-logical co-reasoning for from the dataset mean. We report IoU to allow comparison
+  text-centric forgery analysis, 2025. arXiv:2512.21482.     with prior work.
+
+Chengquan Zhang et al.        Tampered SROIE: A dataset Pixel-AUC (threshold-independent).
+  for receipt text tampering detection.       arXiv preprint                    Z 1
+  arXiv:2202.01999, 2022. Based on the ICDAR 2019 SROIE           Pixel-AUC =       TPR(t) d FPR(t)                            (5)
+  receipt dataset with tampered text annotations.                                0
+
+                                                                   Area under the ROC curve computed per-image over all pix-
+                                                                   els (scikit-learn roc_auc_score on the flattened prediction
+                                                                   map vs. binary ground truth); per-image AUC values are av-
+Author Contact Information                                         eraged. Images where all ground-truth pixels share the same
+                                                                   label are excluded. Pixel-AUC measures whether a method
+ Author            Email                                           correctly ranks tampered pixels above authentic ones, regard-
+ Zengqi Zhao       zengqi@ad.unc.edu                               less of calibration. A high Pixel-AUC alongside a low Pixel-F1
+ Weidi Xia         weidix1@uci.edu                                 reveals the calibration failure mode we observe cross-domain.
+ En Wei            en@wustl.edu
+ Yan Zhang         yanzhang@scam.ai                                Oracle F1 (upper bound).
+ Jane Mo           jane.mo@duke.edu
+ Tiannan Zhang     tnzhang@ucdavis.edu                                            Opt-F1 = max Pixel-F1(τ )                    (6)
+                                                                                              τ ∈(0,1)
+ Yuanqin Dai       albert@get-reality.com
+ Zexi Chen         zc2610@nyu.edu                                  Per-image optimal threshold search over 50 linearly-spaced
+ Simiao Ren        benren@scam.ai                                  thresholds in (0, 1); the best F1 at any threshold for that im-
+ Yiran Tao         yt606@georgetown.edu                            age is recorded and averaged across all images. Returns NaN
+                                                                   for images with empty ground-truth masks (authentic images);
+                                                                   NaN values are excluded from the dataset mean. Oracle-F1
+A     Evaluation Metrics: Full Definitions                         represents the best achievable F1 with oracle threshold selec-
+                                                                   tion and quantifies calibration error — how much performance
+A.1    Pixel-Level Localization Metrics                            is lost because the model cannot choose a good threshold at
+                                                                   deployment time.
+Let p̂ ∈ [0, 1]H×W be a predicted soft mask and g ∈
+{0, 1}H×W the binary ground-truth mask (1 = tampered
+pixel). Binary predictions at threshold τ are ŷτ = 1[p̂ ≥ τ ].    A.2    Secondary Pixel-Level Metrics
+                                                                   Figure 6 shows Pixel-IoU and Oracle F1 for all 14 methods
+Pixel-F1 (primary metric, τ =0.5).                                 across the eight document datasets, complementing the pri-
+                                                                   mary Pixel-F1 and Pixel-AUC panels in Fig. 1.
+                                2 |ŷ0.5 ∩ g|
+                   Pixel-F1 =                               (3)
+                                |ŷ0.5 | + |g|                     A.3    Full Results Tables
+Harmonic mean of pixel-level precision and recall at a fixed       Tables 4 and 5 list complete Pixel-F1 and Pixel-AUC / Or-
+threshold of 0.5. Returns NaN for images where the ground-         acle F1 values for all 14 methods across all eight document
+truth mask has zero tampered pixels (authentic images); NaN        datasets.
+values are excluded from the dataset mean, matching the NaN
+convention used by Pixel-IoU and Pixel-AUC. This is our pri-
+                                                                   A.4    Per-Method Performance Distributions
+mary metric because it reflects out-of-the-box deployment per-
+formance: no threshold tuning is assumed. Document forg-           Figures 7 and 8 show the spread and profile of Pixel-F1 for
+eries (small text changes) produce highly class-imbalanced         each of the 14 evaluated methods across the eight document
+masks, so Pixel-F1 can be near zero even when AUC is mod-          datasets, highlighting the lack of uniform generalisation across
+erate — the AUC–F1 gap we characterize in Section 8.               document types.
+
+
+                                                                  19
+                    Secondary Pixel-Level Metrics Doc-Specific vs. General Methods
+                         Pixel-IoU ( = 0.5)                                                                             Oracle F1
+  DocTamper          0.87 0.02 0.02 0.12 0.01 0.08 0.39                               DocTamper               0.94 0.08 0.07 0.31 0.04 0.17 0.63
+    DTD_FH           0.63 0.01 0.02 0.10 0.00 0.02 0.19                                 DTD_FH                0.79 0.11 0.09 0.34 0.05 0.22 0.35
+       FFDN          0.68 0.03 0.02 0.11 0.01 0.04 0.17                                    FFDN               0.81 0.15 0.09 0.35 0.09 0.31 0.34
+
+ Doc-Specific                                                                        Doc-Specific
+                                                                 1.0                                                                                1.0
+      CAFTB          0.85 0.03 0.02 0.12 0.01 0.14 0.59                                   CAFTB               0.91 0.06 0.05 0.21 0.03 0.25 0.69
+      TIFDM          0.68 0.02 0.02 0.11 0.01 0.19 0.25          0.8                      TIFDM               0.81 0.08 0.07 0.28 0.04 0.35 0.42    0.8
+  ASCFormer          0.15 0.66 0.21 0.01 0.19 0.20 0.10                               ASCFormer               0.18 0.78 0.27 0.02 0.26 0.23 0.13
+                                                                 0.6                                                                                0.6
+                                                                    pixel_iou                                                                         optimal_f1
+   ADCDNet           0.70 0.13 0.04 0.07 0.03 0.03 0.26                                ADCDNet                0.82 0.31 0.14 0.32 0.13 0.23 0.45
+      TruFor         0.12 0.52 0.07 0.07 0.13 0.25 0.41                                   TruFor              0.23 0.70 0.14 0.27 0.26 0.35 0.67
+                                                                 0.4                                                                                0.4
+  ManTraNet          0.03 0.01 0.02 0.08 0.01 0.02 0.09                               ManTraNet               0.06 0.03 0.05 0.18 0.03 0.06 0.20
+   MVSS-Net          0.01 0.00 0.00 0.04 0.00 0.00 0.02          0.2                   MVSS-Net               0.09 0.04 0.04 0.22 0.05 0.10 0.18    0.2
+ General                                                                             General
+    CAT-Net          0.56 0.19 0.03 0.02 0.14 0.08 0.44                                 CAT-Net               0.74 0.38 0.09 0.12 0.32 0.28 0.62
+   PSCC-Net          0.10 0.00 0.00 0.03 0.01 0.03 0.24          0.0                   PSCC-Net               0.25 0.06 0.06 0.25 0.03 0.15 0.50    0.0
+     IML-ViT         0.05 0.01 0.02 0.02 0.00 0.02 0.09                                  IML-ViT              0.14 0.04 0.06 0.19 0.02 0.06 0.32
+     SAFIRE          0.07 0.01 0.01 0.06 0.00 0.02 0.08                                  SAFIRE               0.16 0.03 0.05 0.19 0.02 0.06 0.24
+                          er IE   M 13     pt ID     S                                                        er IE   M 13     pt ID      S
+                     Ta mp -SRO RT IC Recei ntasy FST                                                    Ta mp -SRO RT IC Recei ntasy FST
+                   c       T               Fa                                                           c      T               Fa
+                Do                                                                                   Do
+
+Figure 6: Pixel-IoU (left) and Oracle F1 (right) for all 14 evaluated methods across eight document datasets. Pixel-IoU tracks
+Pixel-F1 closely (IoU = F1/(2 − F1)) and is included for comparison with prior work. Oracle F1 is the best achievable F1 at
+any threshold per image; the large gap between Oracle F1 and the fixed-threshold Pixel-F1 in Fig. 1 quantifies calibration error
+across the document domain.
+
+Table 4: Document-specific (†) vs. general forensic methods on 8 document datasets (zero-shot). Pixel-F1 scores (higher is
+better); best per column in bold. Full metrics (AUC, IoU) available in the benchmark repository. ‡ TIFDM DocTamper result
+may be in-domain; see Appendix B.
+
+ Method              Type     DocTamper    T-SROIE     RTM      IC13        Receipt                 FantasyID     MixTamper             FSTS-1.5k
+ DocTamper           Doc†       0.914       0.045      0.035    0.185           0.015                 0.107          0.604                 0.475
+ DTD (FH)            Doc†       0.682       0.021      0.024    0.140           0.003                 0.036          0.106                 0.242
+ FFDN                Doc†       0.736       0.043      0.025    0.156           0.019                 0.068          0.072                 0.219
+ CAFTB-Net           Doc†       0.893       0.048      0.039    0.170           0.023                 0.213          0.676                 0.671
+ TIFDM               Doc†       0.742‡      0.046      0.042    0.164           0.019                 0.300          0.312                 0.320
+ ASCFormer           Doc†       0.180       0.779      0.265    0.022           0.260                 0.222          0.314                 0.133
+ ADCD-Net            Doc†       0.762       0.176      0.064    0.115           0.043                 0.057          0.331                 0.320
+ TruFor         General       0.154      0.664     0.095 0.108        0.203         0.296           0.689                      0.522
+ MVSS-Net       General       0.012      0.002     0.004 0.059        0.002         0.002           0.142                      0.025
+ PSCC-Net       General       0.134      0.002     0.004 0.046        0.015         0.046           0.470                      0.316
+ IML-ViT        General       0.071      0.015     0.025 0.040        0.010         0.023§          0.340                      0.130
+ SAFIRE         General       0.102      0.016     0.021 0.093        0.009         0.044           0.387                      0.124
+ ManTraNet      General       0.050      0.024     0.031 0.138        0.018         0.036           0.152                      0.144
+ CAT-Net        General       0.672      0.274     0.042 0.038        0.234         0.155           0.695                      0.512
+ §
+   IML-ViT crops input to 1024×1024; ∼79% of FantasyID forgery pixels fall outside this crop, severely underestimating true localization capability.
+
+
+                                                                                 B                  Method Validation Against Pub-
+                                                                                                    lished Benchmarks
+                                                                                 To confirm correct weight loading and inference pipelines, we
+                                                                                 validated each evaluated method against at least one result
+                                                                                20
+Table 5: Pixel-AUC (threshold-independent) and Oracle F1 for all evaluated methods. High AUC with low F1 reveals calibra-
+tion failure independent of domain specificity.
+
+                              DocTamper        T-SROIE             RTM                  IC13             Receipt            FantasyID              FSTS-1.5k
+ Method       Type
+                            AUC     Opt-F1   AUC     Opt-F1   AUC      Opt-F1     AUC     Opt-F1     AUC     Opt-F1     AUC        Opt-F1        AUC     Opt-F1
+ DocTamper    Doc†          0.995   0.942    0.811   0.078    0.660     0.068    0.748     0.312     0.731   0.037      0.754       0.167        0.877   0.630
+ DTD (FH)     Doc†          0.988   0.786    0.872   0.106    0.730     0.092    0.857     0.335     0.813   0.046      0.853       0.218        0.730   0.347
+ FFDN         Doc†          0.991   0.806    0.904   0.155    0.741     0.090    0.895     0.352     0.842   0.088      0.880       0.307        0.736   0.337
+ CAFTB-Net    Doc†          0.995   0.906    0.810   0.060    0.704     0.050    0.845     0.206     0.791   0.031      0.796       0.246        0.885   0.695
+ TIFDM        Doc†          0.994   0.813    0.806   0.076    0.719     0.071    0.788     0.277     0.762   0.037      0.879       0.348        0.792   0.417
+ ASCFormer    Doc†          0.585   0.180    0.924   0.780    0.631     0.266    0.508     0.022     0.613   0.261      0.610       0.233        0.560   0.133
+ ADCD-Net     Doc†          0.974   0.822    0.899   0.315    0.682     0.142    0.731     0.324     0.757   0.129      0.750       0.226        0.704   0.446
+ TruFor       General       0.762   0.232    0.978   0.697    0.663     0.140    0.782     0.271     0.743   0.263      0.830       0.345        0.916   0.668
+ MVSS-Net     General       0.585   0.090    0.613   0.039    0.550     0.041    0.668     0.215     0.592   0.050      0.647       0.102        0.546   0.184
+ PSCC-Net     General       0.770   0.248    0.629   0.062    0.573     0.057    0.665     0.248     0.708   0.033      0.735       0.149        0.832   0.502
+ IML-ViT      General       0.688   0.143    0.541   0.036    0.587     0.058    0.768     0.192     0.566   0.024      0.576       0.061        0.732   0.318
+ SAFIRE       General       0.660   0.163    0.516   0.029    0.513     0.045    0.546     0.191     0.543   0.023      0.493       0.065        0.586   0.243
+ ManTraNet    General       0.589   0.062    0.471   0.033    0.532     0.050    0.555     0.182     0.615   0.028      0.483       0.056        0.631   0.203
+ CAT-Net      General       0.982   0.744    0.860   0.382    0.624     0.087    0.625     0.125     0.781   0.316      0.835       0.278        0.880   0.625
+
+
+                                                        Pixel-F1 distribution per method across 8 datasets
+                 CAT-Net
+
+                   TruFor
+
+               ASCFormer
+
+                   TIFDM
+
+               CAFTB-Net
+
+               DocTamper
+
+               ADCD-Net
+
+                DTD (FH)
+
+                     FFDN
+
+                  SAFIRE
+
+                PSCC-Net
+
+               ManTraNet
+
+                  IML-ViT
+                                                                                                                             Document-specific
+                MVSS-Net                                                                                                     General forensics
+                        0.0                    0.2                    0.4                      0.6                    0.8
+                                                                             Pixel-F1
+
+Figure 7: Distribution of Pixel-F1 across eight datasets per method, shown as horizontal box plots sorted by median (descend-
+ing). Individual dataset scores are overlaid as jittered points. Red methods are document-specific; blue are general forensics.
+The wide interquartile ranges confirm that no method generalises uniformly: a method can have the highest median while still
+scoring near zero on at least two datasets.
+
+
+from its original publication. We ran methods on their re-       tinct dataset with different image composition and larger test
+spective canonical validation corpora (CASIAv1 [Dong et al.,     set—not the standard CASIAv1 split we use. Because these
+2013], IMD2020 [Novozamsky et al., 2020], the DocTamper          are different evaluation datasets, the resulting AUC values
+test split [Qu et al., 2023a], and the RealTextManipulation      are not directly comparable; the observed gaps (5–20 pp) re-
+set [Liao et al., 2022]) and compared against the closest re-    flect protocol differences rather than a harder or easier split.
+ported number in the method’s original paper or a well-cited • Fine-tuning: ForensicHub [Du et al., 2025] (FFDN, DTD,
+reproduction.                                                    TIFDM) and the original DTD paper fine-tune on DocTam-
+   Tables 6 and 7 present these results. Several systematic fac- per training data before evaluation; we use frozen pretrained
+tors cause expected discrepancies; we note them inline:          weights. CAFTB-Net’s original weights were pretrained
+                            +
+• CASIAv1 vs. CASIAv1 : MVSS-Net and ManTraNet re-               on DocTamper, so our frozen-weight numbers exceed the
+                                                +
+  port numbers on the augmented CASIAv1 split—a dis-             ForensicHub re-trained baseline (which starts from scratch).
+
+
+                                                                            21
+                       Pixel-F1 Profiles Across Datasets (sorted by best-method F1)
+           1.0                                                                                         Doc-specific   ADCDNet
+                                                                                                       General        TruFor
+                                                                                                       DocTamper      ManTraNet
+                                                                                                       DTD_FH         MVSS-Net
+           0.8                                                                                         FFDN           CAT-Net
+                                                                                                       CAFTB          PSCC-Net
+                                                                                                       TIFDM          IML-ViT
+                                                                                                       ASCFormer      SAFIRE
+           0.6
+
+Pixel-F1
+           0.4
+
+           0.2
+
+           0.0
+                 per         O   IE          FSTS                yID             RTM                 ipt              IC13
+      DocT
+          am            T-SR                              Fanta
+                                                                s                               Rece
+
+Figure 8: Pixel-F1 performance profiles for all 14 methods across eight datasets sorted by best-method F1 (descending difficulty
+left to right). Document-specific methods are shown as dashed lines; general methods as solid lines. The crossing of lines across
+datasets confirms that no single method dominates uniformly.
+
+
+  TIFDM’s training corpus is not publicly documented; how-
+  ever, its original weights achieve F1=0.742 on DocTamper
+  versus ForensicHub’s from-scratch 0.259 baseline—a 2.9×
+  gap consistent with in-domain pretraining, suggesting pos-
+  sible DocTamper overlap that we cannot confirm.
+• Sample cap: For DocTamper (170K images) and Real-
+  TextManipulation (9K), we evaluate on 1,000 randomly
+  sampled images. ASCFormer’s sample cap accounts for the
+  minor gap relative to the full-set pretrained result.
+
+SAFIRE. SAFIRE [Kwon et al., 2025] (AAAI 2025) could
+not be independently verified against a published pixel-level
+benchmark number because the original paper evaluates on
+a proprietary test partition and does not report CASIAv1
+or IMD2020 pixel metrics. We verified that inference runs
+without error and that SAFIRE produces spatially coherent
+heatmaps consistent with its SAM-based segmentation archi-
+tecture, which provides sufficient confidence in the implemen-
+tation.
+
+
+
+
+                                                               22
+Table 6: Validation of general image forensic methods against published benchmarks. Metrics computed on official test splits;
+CASIAv1 uses the standard (non-augmented) split. “Published” column reports the closest metric from the original paper or a
+reference reproduction; ‡ denotes results on CASIAv1+ (augmented) rather than CASIAv1.
+
+Method      Val. Dataset    Ours      Ours     Ours    Published                        Source                                           Notes
+                           Pixel-F1   AUC     Opt-F1   (metric = value)
+TruFor      CASIAv1         0.687     0.946   0.789    AUC = 0.793; Opt-F1 = 0.715      Guillaro et al. [2023] (CVPR 2023)               Our AUC and Opt-F1 exceed the pa-
+                                                                                                                                         per; same split, higher results consis-
+                                                                                                                                         tent with implementation correctness.
+MVSS-Net    CASIAv1         0.451     0.845   0.575    AUC = 0.862‡                     Chen et al. [2021] (ICCV 2021)                   2 pp gap attributable to CASIAv1 vs.
+                                                                                                                                         CASIAv1+ split difference; result is
+                                                                                                                                         consistent.
+PSCC-Net    IMD2020         0.132     0.708   0.326    Pixel-F1 = 0.203 (pretrained)    Liu et al. [2022] (TCSVT 2022)                   Both use frozen pretrained weights;
+                                                                                                                                         7 pp gap within the expected range for
+                                                                                                                                         random sampling differences and test-
+                                                                                                                                         set version.
+IML-ViT     CASIAv1         0.694     0.942   0.776    AUC = 0.836; Opt-F1 = 0.761      Ma et al. [2023] (arXiv 2023)                    Our numbers exceed the paper on both
+                                                                                                                                         metrics, confirming correct implemen-
+                                                                                                                                         tation.
+CAT-Net     CASIAv1         0.710     0.959   0.809    AUC = 0.976; Opt-F1 = 0.781      Kwon et al. [2022] (IJCV 2022)                   1.7 pp AUC gap; Opt-F1 slightly
+                                                                                                                                         higher. Consistent with test-split vari-
+                                                                                                                                         ation reported across reproductions.
+ManTraNet   CASIAv1         0.103     0.602   0.208    AUC = 0.776–0.817‡               Wu et al. [2019] (CVPR 2019) and reproductions   The cited reproductions evaluate
+                                                                                                                                         on CASIAv1+ —a distinct aug-
+                                                                                                                                         mented split with different im-
+                                                                                                                                         age composition—not the standard
+                                                                                                                                         CASIAv1 split we use; these are dif-
+                                                                                                                                         ferent datasets, not different difficulty
+                                                                                                                                         levels of the same data. Additionally,
+                                                                                                                                         several reproductions resize images to
+                                                                                                                                         256×256 before inference, whereas
+                                                                                                                                         we evaluate at full resolution. The
+                                                                                                                                         direction of the gap therefore reflects a
+                                                                                                                                         difference in evaluation protocol rather
+                                                                                                                                         than a harder split: absolute AUC val-
+                                                                                                                                         ues are not directly comparable across
+                                                                                                                                         these two protocols.       ManTraNet’s
+                                                                                                                                         JPEG artifact detector also saturates on
+                                                                                                                                         uncompressed TIF inputs (Columbia
+                                                                                                                                         AUC = 0.558 for the same reason), fur-
+                                                                                                                                         ther explaining its lower performance
+                                                                                                                                         in our setup. Discriminative ordering
+                                                                                                                                         is preserved.
+
+
+
+
+                                                                                       23
+Table 7: Validation of document-specific methods against published benchmarks. All evaluations use frozen pretrained weights
+(zero-shot protocol). “Published” column reports the closest comparable number from the source paper; where the source uses
+fine-tuning or retraining, this is noted explicitly.
+
+Method              Val. Dataset      Ours      Published   Source                            Protocol                              Notes
+                                     Pixel-F1    Pixel-F1
+DocTamper (model)   DocTamper test    0.914       0.914     Qu et al. [2023a] (CVPR 2023)     In-domain pretrained                  Exact match to published figure.
+ADCD-Net            DocTamper test    0.762       0.806     Wong et al. [2025] (ICCV 2025)    In-domain pretrained                  4 pp gap; attributable to our 1,000-
+                                                                                                                                    image sample cap vs. full test set eval-
+                                                                                                                                    uation.
+FFDN                DocTamper test    0.736       0.821     Du et al. [2025] (NeurIPS 2025)   Fine-tuned on DocTamper               Our frozen weights trail fine-tuned re-
+                                                                                                                                    sult by 8.5 pp, which is expected.
+DTD                 DocTamper test    0.682       0.803     Du et al. [2025] (NeurIPS 2025)   Fine-tuned on DocTamper               Our frozen weights trail fine-tuned re-
+                                                                                                                                    sult by 12 pp, which is expected.
+CAFTB-Net           DocTamper test    0.893       0.328     Du et al. [2025] (NeurIPS 2025)   Retrained from scratch on DocTamper   Our result exceeds the ForensicHub
+                                                                                                                                    baseline because the original CAFTB-
+                                                                                                                                    Net weights were already pretrained on
+                                                                                                                                    DocTamper; ForensicHub trains from
+                                                                                                                                    scratch.
+TIFDM               DocTamper test    0.742       0.259     Du et al. [2025] (NeurIPS 2025)   Retrained from scratch on DocTamper   Training corpus undisclosed; the 2.9×
+                                                                                                                                    performance gap over ForensicHub
+                                                                                                                                    scratch retraining is consistent with
+                                                                                                                                    possible DocTamper pretraining, but
+                                                                                                                                    cannot be confirmed. All seven non-
+                                                                                                                                    DocTamper datasets are unambigu-
+                                                                                                                                    ously cross-domain.
+ASCFormer           RealTextManip.    0.265       0.197     Luo et al. [2024] (PR 2024)       Pretrained, no fine-tuning            Both frozen pretrained on the same
+                                                                                                                                    dataset.      Our evaluation uses the
+                                                                                                                                    tampered-only subset (1,203 images;
+                                                                                                                                    see §4), excluding the 1,994 authen-
+                                                                                                                                    tic “good_*” images present in the full
+                                                                                                                                    split; this increases our measured F1
+                                                                                                                                    relative to a mixed-split evaluation.
+
+
+
+
+                                                                                 24
+

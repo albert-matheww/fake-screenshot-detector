@@ -1,0 +1,6 @@
+iters 410 45s
+max val AUC 0.832 test AUC 0.824
+top2mean val AUC 0.826 test AUC 0.818
+stage2 LR (fit on val)  test AUC 0.809
+edited word measurable: 0.889 {'png': 0.95, 'jpeg': 0.93, 'resize_png': 0.77, 'resize_jpeg': 0.79}
+AUC on measurable subset (max agg): 0.872

@@ -1,0 +1,8 @@
+3.jpg    edited words in the amount column:  8 | max |z| stroke thickness   6.9 | max |z| edge sharpness   7.1
+4.jpg    edited words in the amount column:  9 | max |z| stroke thickness   7.4 | max |z| edge sharpness  29.8
+5.jpg    edited words in the amount column: 10 | max |z| stroke thickness   3.6 | max |z| edge sharpness  24.7
+6.jpg    edited words in the amount column:  9 | max |z| stroke thickness   9.0 | max |z| edge sharpness  23.9
+7.webp   real   words in the amount column:  9 | max |z| stroke thickness   0.8 | max |z| edge sharpness   1.6
+8.webp   real   words in the amount column: 10 | max |z| stroke thickness   2.1 | max |z| edge sharpness   2.6
+9.webp   real   words in the amount column: 11 | max |z| stroke thickness   2.6 | max |z| edge sharpness   2.6
+10.webp  real   words in the amount column: 11 | max |z| stroke thickness   2.1 | max |z| edge sharpness   1.6

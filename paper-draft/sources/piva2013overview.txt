@@ -1,0 +1,5 @@
+An Overview on Image Forensics
+Piva, Alessandro (2013). ISRN Signal Processing. doi:10.1155/2013/496701
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+The aim of this survey is to provide a comprehensive overview of the state of the art in the area of image forensics. These techniques have been designed to identify the source of a digital image or to determine whether the content is authentic or modified, without the knowledge of any prior information about the image under analysis (and thus are defined as passive). All these tools work by detecting the presence, the absence, or the incongruence of some traces intrinsically tied to the digital image by the acquisition device and by any other operation after its creation. The paper has been organized by classifying the tools according to the position in the history of the digital image in which the relative footprint is left: acquisition-based methods, coding-based methods, and editing-based schemes.

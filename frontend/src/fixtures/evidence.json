@@ -1,0 +1,123 @@
+{
+  "verdict": "evidence_of_editing",
+  "verdict_label": "Evidence of editing found",
+  "risk_score": 0.94,
+  "reasons": [
+    "The word \"$399.901\" looks edited: stroke thickness differs from neighbouring words on the same line (z=7.1).",
+    "The word \"2023\" sits about 3 px off the baseline of the rest of the date (z=5.2) and its edges are sharper than the text around it.",
+    "The printed total does not match the line items: $349.00 + $50.90 = $399.90, but the total reads $399.901.",
+    "The date \"Fri, 14 Mar 2023\" is inconsistent: 14 March 2023 was a Tuesday."
+  ],
+  "regions": [
+    {
+      "x": 514,
+      "y": 1080,
+      "w": 176,
+      "h": 44,
+      "text": "$399.901",
+      "score": 0.93,
+      "level": "evidence",
+      "reasons": [
+        "Stroke thickness differs from neighbouring words on the same line (z=7.1).",
+        "Extra trailing digit makes the amount inconsistent with the line items above."
+      ]
+    },
+    {
+      "x": 602,
+      "y": 630,
+      "w": 88,
+      "h": 44,
+      "text": "2023",
+      "score": 0.84,
+      "level": "evidence",
+      "reasons": [
+        "Baseline is offset from the rest of the date by about 3 px (z=5.2).",
+        "Edge sharpness differs from neighbouring words (z=4.1)."
+      ]
+    },
+    {
+      "x": 558,
+      "y": 990,
+      "w": 132,
+      "h": 44,
+      "text": "$50.90",
+      "score": 0.57,
+      "level": "suspicious",
+      "reasons": [
+        "Glyph spacing is slightly wider than other amounts on the receipt (z=3.3)."
+      ]
+    },
+    {
+      "x": 558,
+      "y": 540,
+      "w": 132,
+      "h": 44,
+      "text": "Coffee",
+      "score": 0.31,
+      "level": "weak",
+      "reasons": [
+        "Marginally different anti-aliasing from the word before it (z=2.1). Treat as noise unless other signs agree."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "date.weekday_mismatch",
+      "severity": "high",
+      "message": "The weekday does not match the date: 14 Mar 2023 was a Tuesday, but the screenshot says Friday.",
+      "evidence": {
+        "text": "Fri, 14 Mar 2023",
+        "stated_weekday": "Fri",
+        "actual_weekday": "Tue"
+      }
+    },
+    {
+      "id": "arithmetic.total_mismatch",
+      "severity": "high",
+      "message": "Subtotal plus tax does not equal the printed total.",
+      "evidence": {
+        "subtotal": 349.0,
+        "tax": 50.9,
+        "expected_total": 399.9,
+        "printed_total": 399.901
+      }
+    },
+    {
+      "id": "metadata.no_exif",
+      "severity": "low",
+      "message": "The file carries no creation metadata. This is normal for screenshots and is not suspicious by itself.",
+      "evidence": {
+        "exif_present": false
+      }
+    }
+  ],
+  "limitations": [
+    "This tool looks for inconsistencies between words inside one image. It cannot show that an image is untouched.",
+    "A screenshot of an edited image (a re-screenshot) can hide most traces of the edit.",
+    "Small text, heavy compression and unusual fonts can cause false alarms.",
+    "Only text is examined. Changes to icons, photos, logos or layout are not detected.",
+    "This is an automated screening aid, not a certified forensic opinion. Do not rely on it alone for disputes or legal decisions."
+  ],
+  "image": {
+    "width": 750,
+    "height": 1334,
+    "format": "PNG"
+  },
+  "stats": {
+    "ocr_words": 38,
+    "measured_words": 33,
+    "top_word_probability": 0.93,
+    "thresholds": {
+      "suspicious": 0.4,
+      "evidence": 0.8
+    }
+  },
+  "meta": {
+    "sha256": "3f1c9a7be25d4c80a6e1d97f4b2c58e0173a9d6c5b4e8f2a1d0c7b9e6a35f482",
+    "processing_ms": 8421.6,
+    "model": "word-forensics-gbm-v2"
+  },
+  "fake_score": 0.94,
+  "is_fake": true,
+  "verdict_text": "Evidence of editing found"
+}

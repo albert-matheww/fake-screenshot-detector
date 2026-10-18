@@ -1,0 +1,53 @@
+V1_AUDIT genuine screenshots: 60 flagged fake: 12 (20.0%)
+V1_AUDIT formats: {'PNG': 59, 'JPEG': 1}
+V1_AUDIT cue ela_score         mean 0.845 max 0.939 nonzero 59/60
+V1_AUDIT cue ghost_score       mean 0.496 max 1.000 nonzero 46/60
+V1_AUDIT cue quant_score       mean 0.000 max 0.000 nonzero 0/60
+V1_AUDIT cue noise_score       mean 0.755 max 1.000 nonzero 59/60
+V1_AUDIT cue clone_score       mean 0.086 max 1.000 nonzero 52/60
+V1_AUDIT cue metadata_score    mean 0.000 max 0.000 nonzero 0/60
+V1_AUDIT cue text_score        mean 0.000 max 0.000 nonzero 0/60
+V1_AUDIT cue font_score        mean 0.019 max 1.000 nonzero 2/60
+V1_AUDIT cue edge_score        mean 0.845 max 0.950 nonzero 59/60
+V1_AUDIT cue chrome_score      mean 0.000 max 0.000 nonzero 0/60
+V1_AUDIT cue arithmetic_score  mean 0.000 max 0.000 nonzero 0/60
+V1_AUDIT fake_score mean 0.385 median 0.372 max 0.626
+V1_AUDIT processing ms median 1090.0 max 5054
+V1_EDIT image sets: 42
+V1_EDIT orig_png    flagged 6/42  mean score 0.367
+V1_EDIT edit_png    flagged 6/42  mean score 0.366
+V1_EDIT orig_jpg85  flagged 5/42  mean score 0.359
+V1_EDIT edit_jpg85  flagged 5/42  mean score 0.359
+V1_EDIT AUC edit_png vs orig_png 0.496
+V1_EDIT AUC edit_jpg85 vs orig_jpg85 0.501
+V1_EDIT paired edit_png-orig_png mean delta -0.0013, edit higher in 8/42, lower in 18/42
+V1_EDIT newly flagged vs own original (png): 0 / 42
+CORPUS train: images 14494 (edited 9872), words 809424, edited words 10643; by source/class {('chrome', 'auth'): 2248, ('chrome', 'edit'): 4345, ('pillow', 'auth'): 1148, ('pillow', 'edit'): 2021, ('real', 'auth'): 1226, ('real', 'edit'): 3506}
+CORPUS val: images 3083 (edited 2102), words 156472, edited words 2245; by source/class {('chrome', 'auth'): 484, ('chrome', 'edit'): 923, ('pillow', 'auth'): 251, ('pillow', 'edit'): 462, ('real', 'auth'): 246, ('real', 'edit'): 717}
+CORPUS test: images 3237 (edited 2184), words 181649, edited words 2394; by source/class {('chrome', 'auth'): 468, ('chrome', 'edit'): 870, ('pillow', 'auth'): 258, ('pillow', 'edit'): 423, ('real', 'auth'): 327, ('real', 'edit'): 891}
+CORPUS total images 20814
+CORPUS usable fonts in edit font bank: 283 folds: {0: 59, 1: 61, 2: 47, 3: 53, 4: 63}
+CORPUS chrome fonts in render_chrome.FONTS: 24
+CORPUS chrome families: 16 ['bank_balance', 'bank_statement', 'chat', 'crypto_wallet', 'desktop_dashboard', 'desktop_invoice', 'ecom_order', 'email_inbox', 'email_view', 'group_chat', 'notifications', 'ride_receipt', 'sms_otp', 'social_post', 'stock_portfolio', 'upi_receipt']
+MODEL features: 95 train_images 14494 train_words 808445 thresholds {'1%': 0.9660556702030736, '5%': 0.8471765423120076}
+MODEL test AUC 0.8470385067607289 val AUC 0.8455713261773894
+CODE textforensics.py 393 lines
+CODE semantic.py 317 lines
+CODE analysis.py 167 lines
+CODE app.py 94 lines
+CODE tools/forge/build_dataset.py 255 lines
+CODE tools/forge/tamper.py 352 lines
+CODE tools/forge/patchbank.py 222 lines
+CODE tools/forge/render_chrome.py 1685 lines
+CODE tools/forge/train_text_model.py 220 lines
+CODE tools/forge/eval_real_cv.py 135 lines
+CODE tools/forge/refeaturize.py 63 lines
+CODE tools/forge/compare_legacy.py 29 lines
+CODE tools/forge/eval_layout_rule.py 54 lines
+CODE tools/forge/merge_corpora.py 19 lines
+CODE tools/forge/eval_ood.py 27 lines
+ENV python: Python 3.14.3
+ENV tesseract: tesseract 5.5.3
+ENV chrome: Google Chrome 155.0.8059.40
+ENV cpu: Apple M5 | ram bytes: 17179869184
+ENV pins: ['Flask==3.0.3', 'flask-cors==4.0.1', 'Pillow==12.3.0', 'numpy==2.5.1', 'gunicorn==26.0.0', 'pytesseract==0.3.13', 'scikit-learn==1.9.0', 'joblib==1.5.3', 'scipy==1.18.0']

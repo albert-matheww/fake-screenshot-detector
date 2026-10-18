@@ -1,0 +1,741 @@
+[
+ {
+  "key": "farid2009ghosts",
+  "used_for": "JPEG ghost method (double-compression traces)",
+  "title": "Exposing Digital Forgeries From JPEG Ghosts",
+  "authors": [
+   "Farid, H."
+  ],
+  "year": 2009,
+  "venue": "IEEE Transactions on Information Forensics and Security",
+  "volume": "4",
+  "issue": "1",
+  "pages": "154-160",
+  "doi": "10.1109/tifs.2008.2012215",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "farid2009survey",
+  "used_for": "overview of passive forgery detection",
+  "title": "Image forgery detection",
+  "authors": [
+   "Farid, H."
+  ],
+  "year": 2009,
+  "venue": "IEEE Signal Processing Magazine",
+  "volume": "26",
+  "issue": "2",
+  "pages": "16-25",
+  "doi": "10.1109/msp.2008.931079",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "popescu2005resampling",
+  "used_for": "resampling traces as a forensic cue",
+  "title": "Exposing digital forgeries by detecting traces of resampling",
+  "authors": [
+   "Popescu, A.C.",
+   "Farid, H."
+  ],
+  "year": 2005,
+  "venue": "IEEE Transactions on Signal Processing",
+  "volume": "53",
+  "issue": "2",
+  "pages": "758-767",
+  "doi": "10.1109/tsp.2004.839932",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "mahdian2009noise",
+  "used_for": "noise inconsistency as a forensic cue",
+  "title": "Using noise inconsistencies for blind image forensics",
+  "authors": [
+   "Mahdian, Babak",
+   "Saic, Stanislav"
+  ],
+  "year": 2009,
+  "venue": "Image and Vision Computing",
+  "volume": "27",
+  "issue": "10",
+  "pages": "1497-1503",
+  "doi": "10.1016/j.imavis.2009.02.001",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "metadata"
+ },
+ {
+  "key": "lukas2006prnu",
+  "used_for": "sensor pattern noise (needs a camera)",
+  "title": "Digital Camera Identification From Sensor Pattern Noise",
+  "authors": [
+   "Luka, J.",
+   "Fridrich, J.",
+   "Goljan, M."
+  ],
+  "year": 2006,
+  "venue": "IEEE Transactions on Information Forensics and Security",
+  "volume": "1",
+  "issue": "2",
+  "pages": "205-214",
+  "doi": "10.1109/tifs.2006.873602",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "bianchi2012block",
+  "used_for": "block-grained JPEG artifact localisation",
+  "title": "Image Forgery Localization via Block-Grained Analysis of JPEG Artifacts",
+  "authors": [
+   "Bianchi, Tiziano",
+   "Piva, Alessandro"
+  ],
+  "year": 2012,
+  "venue": "IEEE Transactions on Information Forensics and Security",
+  "volume": "7",
+  "issue": "3",
+  "pages": "1003-1017",
+  "doi": "10.1109/tifs.2012.2187516",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "christlein2012eval",
+  "used_for": "copy-move detection evaluation",
+  "title": "An Evaluation of Popular Copy-Move Forgery Detection Approaches",
+  "authors": [
+   "Christlein, Vincent",
+   "Riess, Christian",
+   "Jordan, Johannes",
+   "Riess, Corinna",
+   "Angelopoulou, Elli"
+  ],
+  "year": 2012,
+  "venue": "IEEE Transactions on Information Forensics and Security",
+  "volume": "7",
+  "issue": "6",
+  "pages": "1841-1854",
+  "doi": "10.1109/tifs.2012.2218597",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "full"
+ },
+ {
+  "key": "piva2013overview",
+  "used_for": "image forensics overview",
+  "title": "An Overview on Image Forensics",
+  "authors": [
+   "Piva, Alessandro"
+  ],
+  "year": 2013,
+  "venue": "ISRN Signal Processing",
+  "volume": "2013",
+  "issue": null,
+  "pages": "1-22",
+  "doi": "10.1155/2013/496701",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "verdoliva2020",
+  "used_for": "media forensics overview",
+  "title": "Media Forensics and DeepFakes: An Overview",
+  "authors": [
+   "Verdoliva, Luisa"
+  ],
+  "year": 2020,
+  "venue": "IEEE Journal of Selected Topics in Signal Processing",
+  "volume": "14",
+  "issue": "5",
+  "pages": "910-932",
+  "doi": "10.1109/jstsp.2020.3002101",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "full"
+ },
+ {
+  "key": "wu2019mantranet",
+  "used_for": "learned manipulation tracing",
+  "title": "ManTra-Net: Manipulation Tracing Network for Detection and Localization of Image Forgeries With Anomalous Features",
+  "authors": [
+   "Wu, Yue",
+   "AbdAlmageed, Wael",
+   "Natarajan, Premkumar"
+  ],
+  "year": 2019,
+  "venue": "2019 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)",
+  "volume": null,
+  "issue": null,
+  "pages": "9535-9544",
+  "doi": "10.1109/cvpr.2019.00977",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "kwon2021catnet",
+  "used_for": "compression-artifact tracing network",
+  "title": "CAT-Net: Compression Artifact Tracing Network for Detection and Localization of Image Splicing",
+  "authors": [
+   "Kwon, Myung-Joon",
+   "Yu, In-Jae",
+   "Nam, Seung-Hun",
+   "Lee, Heung-Kyu"
+  ],
+  "year": 2021,
+  "venue": "2021 IEEE Winter Conference on Applications of Computer Vision (WACV)",
+  "volume": null,
+  "issue": null,
+  "pages": "375-384",
+  "doi": "10.1109/wacv48630.2021.00042",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "guillaro2023trufor",
+  "used_for": "learned forgery detection and localisation",
+  "title": "TruFor: Leveraging All-Round Clues for Trustworthy Image Forgery Detection and Localization",
+  "authors": [
+   "Guillaro, Fabrizio",
+   "Cozzolino, Davide",
+   "Sud, Avneesh",
+   "Dufour, Nicholas",
+   "Verdoliva, Luisa"
+  ],
+  "year": 2023,
+  "venue": "2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)",
+  "volume": null,
+  "issue": null,
+  "pages": "20606-20615",
+  "doi": "10.1109/cvpr52729.2023.01974",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "dong2013casia",
+  "used_for": "CASIA tampering benchmark",
+  "title": "CASIA Image Tampering Detection Evaluation Database",
+  "authors": [
+   "Dong, Jing",
+   "Wang, Wei",
+   "Tan, Tieniu"
+  ],
+  "year": 2013,
+  "venue": "2013 IEEE China Summit and International Conference on Signal and Information Processing",
+  "volume": null,
+  "issue": null,
+  "pages": "422-426",
+  "doi": "10.1109/chinasip.2013.6625374",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "novozamsky2020imd",
+  "used_for": "IMD2020 real-life manipulations dataset",
+  "title": "IMD2020: A Large-Scale Annotated Dataset Tailored for Detecting Manipulated Images",
+  "authors": [
+   "Novozamsky, Adam",
+   "Mahdian, Babak",
+   "Saic, Stanislav"
+  ],
+  "year": 2020,
+  "venue": "2020 IEEE Winter Applications of Computer Vision Workshops (WACVW)",
+  "volume": null,
+  "issue": null,
+  "pages": "71-80",
+  "doi": "10.1109/wacvw50321.2020.9096940",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "tornes2023receipt",
+  "used_for": "receipt forgery dataset (Find it again)",
+  "title": "Receipt Dataset for Document Forgery Detection",
+  "authors": [
+   "Tornés, Beatriz Martínez",
+   "Taburet, Théo",
+   "Boros, Emanuela",
+   "Rouis, Kais",
+   "Doucet, Antoine",
+   "Gomez-Krämer, Petra",
+   "Sidere, Nicolas",
+   "d’Andecy, Vincent Poulain"
+  ],
+  "year": 2023,
+  "venue": "Lecture Notes in Computer Science",
+  "volume": null,
+  "issue": null,
+  "pages": "454-469",
+  "doi": "10.1007/978-3-031-41682-8_28",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "metadata"
+ },
+ {
+  "key": "qu2023doctamper",
+  "used_for": "DocTamper tampered-text dataset and detector",
+  "title": "Towards Robust Tampered Text Detection in Document Image: New Dataset and New Solution",
+  "authors": [
+   "Qu, Chenfan",
+   "Liu, Chongyu",
+   "Liu, Yuliang",
+   "Chen, Xinhong",
+   "Peng, Dezhi",
+   "Guo, Fengjun",
+   "Jin, Lianwen"
+  ],
+  "year": 2023,
+  "venue": "2023 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)",
+  "volume": null,
+  "issue": null,
+  "pages": "5937-5946",
+  "doi": "10.1109/cvpr52729.2023.00575",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "full"
+ },
+ {
+  "key": "yu2023stfd",
+  "used_for": "screenshot text-forgery dataset STFD",
+  "title": "Learning to Locate the Text Forgery in Smartphone Screenshots",
+  "authors": [
+   "Yu, Zeqin",
+   "Li, Bin",
+   "Lin, Yuzhen",
+   "Zeng, Jinhua",
+   "Zeng, Jishen"
+  ],
+  "year": 2023,
+  "venue": "ICASSP 2023 - 2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)",
+  "volume": null,
+  "issue": null,
+  "pages": "1-5",
+  "doi": "10.1109/icassp49357.2023.10095070",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "yu2025fsts",
+  "used_for": "structured data synthesis for text-image forgery localisation",
+  "title": "Toward Real-world Text Image Forgery Localization: Structured and Interpretable Data Synthesis",
+  "authors": [
+   "Yu, Zeqin",
+   "Xie, Haotao",
+   "Zhang, Jian",
+   "Ni, Jiangqun",
+   "Su, Wenkan",
+   "Huang, Jiwu"
+  ],
+  "year": 2025,
+  "venue": "arXiv preprint (NeurIPS 2025 Datasets and Benchmarks Track)",
+  "volume": null,
+  "issue": null,
+  "pages": null,
+  "doi": null,
+  "arxiv": "2511.12658",
+  "url": "https://arxiv.org/abs/2511.12658",
+  "read_depth": "full"
+ },
+ {
+  "key": "xu2026reality",
+  "used_for": "human-crafted tampered-text dataset",
+  "title": "Bridging the Reality Gap in Tampered Text Detection: A Human-Crafted Real-World Dataset and a Text-Centric Approach",
+  "authors": [
+   "Xu, Guitao",
+   "Zhang, Peirong",
+   "Jin, Lianwen"
+  ],
+  "year": 2026,
+  "venue": "IEEE Transactions on Information Forensics and Security",
+  "volume": "21",
+  "issue": null,
+  "pages": "6498-6513",
+  "doi": "10.1109/tifs.2026.3705334",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "qu2024textsleuth",
+  "used_for": "explainable tampered-text detection",
+  "title": "TextSleuth: Towards Explainable Tampered Text Detection",
+  "authors": [
+   "Qu, Chenfan",
+   "Liu, Jian",
+   "Chen, Haoxing",
+   "Yu, Baihan",
+   "Liu, Jingjing",
+   "Wang, Weiqiang",
+   "Jin, Lianwen"
+  ],
+  "year": 2024,
+  "venue": "arXiv preprint",
+  "volume": null,
+  "issue": null,
+  "pages": null,
+  "doi": null,
+  "arxiv": "2412.14816",
+  "url": "https://arxiv.org/abs/2412.14816",
+  "read_depth": "full"
+ },
+ {
+  "key": "ronfleux2026docqt",
+  "used_for": "document forgery localisation and JPEG quantisation tables",
+  "title": "DocQT: Improving Document Forgery Localization Robustness via Diverse JPEG Quantization Tables",
+  "authors": [
+   "Ronfleux–Corail, Kylian",
+   "Bernard, Guillaume",
+   "Coustaty, Mickaël",
+   "Sidère, Nicolas"
+  ],
+  "year": 2026,
+  "venue": "Lecture Notes in Computer Science",
+  "volume": null,
+  "issue": null,
+  "pages": "109-126",
+  "doi": "10.1007/978-3-032-36023-6_7",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "full"
+ },
+ {
+  "key": "dhouib2026doctamper",
+  "used_for": "efficient document tampering localisation",
+  "title": "Efficient Document Tampering Localization with Multi-level Discrepancy Features and Unified DCT–Quantization Embedding",
+  "authors": [
+   "Dhouib, Mohamed",
+   "Zhu, Ye",
+   "Vanier, Sonia",
+   "Shabou, Aymen"
+  ],
+  "year": 2026,
+  "venue": "Lecture Notes in Computer Science",
+  "volume": null,
+  "issue": null,
+  "pages": "110-127",
+  "doi": "10.1007/978-3-032-37196-6_7",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "full"
+ },
+ {
+  "key": "zhang2026textfake",
+  "used_for": "AI-generated images of text-rich content",
+  "title": "TextFake: Benchmarking AI-Generated Image Detection on Text-Rich Images",
+  "authors": [
+   "Zhang, Yuning",
+   "Miao, Changtao",
+   "Liao, Mingyu",
+   "Liu, Tingyu",
+   "Wang, Xinghao",
+   "Gong, Tao",
+   "Chu, Qi",
+   "Yu, Nenghai"
+  ],
+  "year": 2026,
+  "venue": "arXiv preprint",
+  "volume": null,
+  "issue": null,
+  "pages": null,
+  "doi": null,
+  "arxiv": "2606.01050",
+  "url": "https://arxiv.org/abs/2606.01050",
+  "read_depth": "full"
+ },
+ {
+  "key": "zhao2026docforge",
+  "used_for": "document forgery benchmark",
+  "title": "DOCFORGE-BENCH: A Comprehensive 0-shot Benchmark for Document Forgery Detection and Analysis",
+  "authors": [
+   "Zhao, Zengqi",
+   "Xia, Weidi",
+   "Wei, En",
+   "Zhang, Yan",
+   "Mo, Jane",
+   "Zhang, Tiannan",
+   "Dai, Yuanqin",
+   "Chen, Zexi",
+   "Tao, Yiran",
+   "Ren, Simiao"
+  ],
+  "year": 2026,
+  "venue": "arXiv preprint",
+  "volume": null,
+  "issue": null,
+  "pages": null,
+  "doi": null,
+  "arxiv": "2603.01433",
+  "url": "https://arxiv.org/abs/2603.01433",
+  "read_depth": "full"
+ },
+ {
+  "key": "du2025forensichub",
+  "used_for": "unified forgery benchmark and codebase",
+  "title": "ForensicHub: A Unified Benchmark & Codebase for All-Domain Fake Image Detection and Localization",
+  "authors": [
+   "Du, Bo",
+   "Zhu, Xuekang",
+   "Ma, Xiaochen",
+   "Qu, Chenfan",
+   "Feng, Kaiwen",
+   "Yang, Zhe",
+   "Pun, Chi-Man",
+   "liu, Jian",
+   "Zhou, Ji-Zhe"
+  ],
+  "year": 2025,
+  "venue": "Advances in Neural Information Processing Systems 38",
+  "volume": null,
+  "issue": null,
+  "pages": "72073-72102",
+  "doi": "10.52202/085713-2167",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "chen2025unmask",
+  "used_for": "document tampering under recapturing",
+  "title": "Unmask Tampering: Efficient Document Tampering Localization under Recapturing Attacks with Real Distortion Knowledge",
+  "authors": [
+   "Chen, Changsheng",
+   "Chen, Wenyu",
+   "Lin, Yinyin",
+   "Li, Bin",
+   "Huang, Jiwu"
+  ],
+  "year": 2025,
+  "venue": "Proceedings of the 2025 ACM SIGSAC Conference on Computer and Communications Security",
+  "volume": null,
+  "issue": null,
+  "pages": "1694-1708",
+  "doi": "10.1145/3719027.3744809",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "venkatesh2026screenshot",
+  "used_for": "screenshot-tailored multi-feature forensics",
+  "title": "Smart Detection of Manipulated Screenshots: A Screenshot-Tailored Multi-Feature Image-Forensics Pipeline with Measured Evaluation",
+  "authors": [
+   "V, Venkatesh",
+   "M, Ragul"
+  ],
+  "year": 2026,
+  "venue": "2026 7th International Conference On Computational Vision and Bio Inspired Computing (ICCVBIC)",
+  "volume": null,
+  "issue": null,
+  "pages": "1470-1475",
+  "doi": "10.1109/iccvbic71195.2026.11688551",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "smith2007tesseract",
+  "used_for": "OCR engine used for word boxes",
+  "title": "An Overview of the Tesseract OCR Engine",
+  "authors": [
+   "Smith, R."
+  ],
+  "year": 2007,
+  "venue": "Ninth International Conference on Document Analysis and Recognition (ICDAR 2007) Vol 2",
+  "volume": null,
+  "issue": null,
+  "pages": "629-633",
+  "doi": "10.1109/icdar.2007.4376991",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "friedman2001",
+  "used_for": "gradient boosting",
+  "title": "Greedy function approximation: A gradient boosting machine.",
+  "authors": [
+   "Friedman, Jerome H."
+  ],
+  "year": 2001,
+  "venue": "The Annals of Statistics",
+  "volume": "29",
+  "issue": "5",
+  "pages": "1189-1232",
+  "doi": "10.1214/aos/1013203451",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "pedregosa2011",
+  "used_for": "scikit-learn",
+  "title": "Scikit-learn: Machine Learning in Python",
+  "authors": [
+   "Pedregosa, Fabian",
+   "Varoquaux, Gaël",
+   "Gramfort, Alexandre",
+   "Michel, Vincent",
+   "Thirion, Bertrand",
+   "Grisel, Olivier",
+   "Blondel, Mathieu",
+   "Müller, Andreas",
+   "Nothman, Joel",
+   "Louppe, Gilles",
+   "Prettenhofer, Peter",
+   "Weiss, Ron",
+   "Dubourg, Vincent",
+   "Vanderplas, Jake",
+   "Passos, Alexandre",
+   "Cournapeau, David",
+   "Brucher, Matthieu",
+   "Perrot, Matthieu",
+   "Duchesnay, Édouard"
+  ],
+  "year": 2012,
+  "venue": "arXiv preprint",
+  "volume": null,
+  "issue": null,
+  "pages": null,
+  "doi": null,
+  "arxiv": "1201.0490",
+  "url": "https://arxiv.org/abs/1201.0490",
+  "read_depth": "abstract"
+ },
+ {
+  "key": "torralba2011bias",
+  "used_for": "dataset bias",
+  "title": "Unbiased look at dataset bias",
+  "authors": [
+   "Torralba, Antonio",
+   "Efros, Alexei A."
+  ],
+  "year": 2011,
+  "venue": "CVPR 2011",
+  "volume": null,
+  "issue": null,
+  "pages": "1521-1528",
+  "doi": "10.1109/cvpr.2011.5995347",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "kapoor2023leakage",
+  "used_for": "data leakage in ML evaluation",
+  "title": "Leakage and the reproducibility crisis in machine-learning-based science",
+  "authors": [
+   "Kapoor, Sayash",
+   "Narayanan, Arvind"
+  ],
+  "year": 2023,
+  "venue": "Patterns",
+  "volume": "4",
+  "issue": "9",
+  "pages": "100804",
+  "doi": "10.1016/j.patter.2023.100804",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "full"
+ },
+ {
+  "key": "fawcett2006roc",
+  "used_for": "ROC analysis and AUC",
+  "title": "An introduction to ROC analysis",
+  "authors": [
+   "Fawcett, Tom"
+  ],
+  "year": 2006,
+  "venue": "Pattern Recognition Letters",
+  "volume": "27",
+  "issue": "8",
+  "pages": "861-874",
+  "doi": "10.1016/j.patrec.2005.10.010",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "metadata"
+ },
+ {
+  "key": "wilson1927",
+  "used_for": "binomial confidence interval",
+  "title": "Probable Inference, the Law of Succession, and Statistical Inference",
+  "authors": [
+   "Wilson, Edwin B."
+  ],
+  "year": 1927,
+  "venue": "Journal of the American Statistical Association",
+  "volume": "22",
+  "issue": "158",
+  "pages": "209-212",
+  "doi": "10.1080/01621459.1927.10502953",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "abstract"
+ },
+ {
+  "key": "krawetz2007",
+  "title": "A picture's worth... Digital image analysis and forensics",
+  "authors": [
+   "Krawetz, N."
+  ],
+  "year": 2007,
+  "venue": "Black Hat Briefings USA (white paper)",
+  "volume": null,
+  "issue": null,
+  "pages": null,
+  "doi": null,
+  "arxiv": null,
+  "url": "https://www.blackhat.com/presentations/bh-usa-07/Krawetz/Whitepaper/bh-usa-07-krawetz-WP.pdf",
+  "accessed": "2026-10-15",
+  "read_depth": "full",
+  "used_for": "original description of Error Level Analysis"
+ },
+ {
+  "key": "hf_stfd",
+  "title": "STFD: Screenshot Text Forgery Dataset (dataset card)",
+  "authors": [
+   "Yu, Z."
+  ],
+  "year": 2023,
+  "venue": "Hugging Face Datasets",
+  "volume": null,
+  "issue": null,
+  "pages": null,
+  "doi": null,
+  "arxiv": null,
+  "url": "https://huggingface.co/datasets/Zegkim/STFD",
+  "accessed": "2026-10-15",
+  "read_depth": "full",
+  "used_for": "access terms and contents of the STFD dataset"
+ },
+ {
+  "key": "hf_fsts",
+  "title": "FSTS Dataset (dataset card)",
+  "authors": [
+   "Yu, Z."
+  ],
+  "year": 2025,
+  "venue": "Hugging Face Datasets",
+  "volume": null,
+  "issue": null,
+  "pages": null,
+  "doi": null,
+  "arxiv": null,
+  "url": "https://huggingface.co/datasets/Zegkim/FSTS",
+  "accessed": "2026-10-15",
+  "read_depth": "full",
+  "used_for": "format, size and licence of the FSTS release"
+ }
+]

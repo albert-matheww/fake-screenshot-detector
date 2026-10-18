@@ -1,0 +1,5 @@
+Image forgery detection
+Farid, H. (2009). IEEE Signal Processing Magazine. doi:10.1109/msp.2008.931079
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+We are undoubtedly living in an age where we are exposed to a remarkable array of visual imagery. While we may have historically had confidence in the integrity of this imagery, today's digital technology has begun to erode this trust. From the tabloid magazines to the fashion industry and in mainstream media outlets, scientific journals, political campaigns, courtrooms, and the photo hoaxes that land in our e-mail in-boxes, doctored photographs are appearing with a growing frequency and sophistication. Over the past five years, the field of digital forensics has emerged to help restore some trust to digital images. The author reviews the state of the art in this new and exciting field.

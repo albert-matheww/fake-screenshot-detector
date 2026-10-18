@@ -1,0 +1,1125 @@
+N. Krawetz                                  A Picture’s Worth...                                  1 of 31
+
+
+
+
+                                    A Picture’s Worth...
+                            Digital Image Analysis and Forensics
+
+
+                                            Neal Krawetz, Ph.D.
+                                          Hacker Factor Solutions
+                                          www.hackerfactor.com
+
+
+
+
+             Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                                          A Picture’s Worth...                                                                    2 of 31
+
+
+
+                                                          Table of Contents
+1     Terminology................................................................................................................................................... 3
+2     The Problem with Images ............................................................................................................................... 3
+    2.1       Child Pornography.................................................................................................................................. 4
+    2.2       Digital Authentication............................................................................................................................. 5
+3     Methods to Analyze Images............................................................................................................................ 5
+    3.1       Observational Analysis ........................................................................................................................... 5
+    3.2       Basic Image Enhancements..................................................................................................................... 6
+      3.2.1         Example: Warez Factory ................................................................................................................. 6
+      3.2.2         Example: Moonwalk ....................................................................................................................... 8
+    3.3       Image Format Analysis ......................................................................................................................... 10
+      3.3.1         Meta Data Analysis ....................................................................................................................... 10
+      3.3.2         JPEG Quantization Fingerprinting ................................................................................................. 11
+      3.3.3         JPEG Quality Detection................................................................................................................. 11
+    3.4       Advanced Image Analysis..................................................................................................................... 12
+      3.4.1         Principal Component Analysis....................................................................................................... 12
+      3.4.2         Error Level Analysis...................................................................................................................... 16
+      3.4.3         Wavelet Transformations............................................................................................................... 20
+      3.4.4         Wavelet Example: Hillary.............................................................................................................. 22
+    3.5      Analysis Limitations ............................................................................................................................. 22
+4     Example: Soldier Picture .............................................................................................................................. 23
+5     Example: Dr. Ayman al Zawahiri.................................................................................................................. 25
+    5.1      Other Al Zawahiri Videos ..................................................................................................................... 27
+    5.2      Back in Black ....................................................................................................................................... 29
+    5.3      Other Al Qaeda Videos ......................................................................................................................... 29
+6     Additional Research ..................................................................................................................................... 31
+7     Conclusion ................................................................................................................................................... 31
+8     Acknowledgements ...................................................................................................................................... 31
+
+
+
+
+                     Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                      A Picture’s Worth...                                         3 of 31
+
+
+
+                                        A Picture’s Worth...
+                               Digital Image Analysis and Forensics1
+
+
+                                   Neal Krawetz, Ph.D., Hacker Factor Solutions
+                                              www.hackerfactor.com
+
+
+Digital cameras and video software have made it easier than ever to create high quality pictures and movies.
+Services such as MySpace, Google Video, and Flickr make it trivial to distribute pictures, and many are picked up
+by the mass media. However, there is a problem: how can you tell if a video or picture is real? Is it computer
+generated or modified? In a world where pictures are more influencial than words, being able to distinguish fact
+from fiction in a systematic way is essential. This paper covers some common and not-so-common forensic methods
+for extracting information from digital images. This paper describes methods to distinguish real images from
+computer generated ones, and identify how pictures have been digitally manipulated.
+
+1 Terminology
+The following terms are used throughout this paper:
+    •   Computer generated (CG). An image created entirely with computer software. For example, every scene
+        from the movie Toy Story is CG.
+    •   Digital photo. A photograph from a digital camera or scanned image that has not been manipulated.
+    •   Digitally enhanced photo. A digital photo that has been manipulated. This includes minor manipulations
+        such as cropping and red eye reduction, to major re-coloring or digitally combining with other images.
+    •   Photoshopping. Adobe Photoshop is a popular tool that can digitally enhance images. Images that have
+        been modified using Photoshop or similar drawing tools (e.g., Gimp, Corel Draw, MS Paint) are described
+        as being “photoshopped” or “shopped”. The quality of the shopped image depends on both the tool and the
+        artist. Many shopped images are obvious, while others can be very subtle.
+    •   Principal Component Analysis (PCA). An analysis approach based on data clustering.
+    •   Wavelet Transformations. An analysis method based on signal decomposition.
+
+2 The Problem with Images
+Images have power. Whether it is the space shuttle exploding during launch, man walking on the moon, or soldiers
+raising a flag on Iwo Jima during World War II, powerful images influence society. The advent of sophisticated
+digital imaging software and photo-realistic graphics allows artists to strengthen images or convey alternate
+meanings. Unfortunately, many altered pictures are presented as “real”.
+Prior to the digital age, powerful images were sometimes staged, edited through techniques like negative splicing
+and airbrushing, or simply mislabeled to convey an alternate meaning. Digital imaging software has removed the
+need for physical recreations. Images can be spliced together, graphically enhanced, or completely computer
+generated. Detecting these manipulated images can be difficult. Many identified manipulations have been followed
+by controversy. For example, Newsweek presented Martha Stewart on the March 2005 cover (Figure 1). The image
+
+
+
+
+1
+ All pictures are copyright by their respective owners and are includes for academic discussion and research. This
+complies with the copyright laws of United States as defined and stipulated under Title 17 U.S. Code.
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                        A Picture’s Worth...                                          4 of 31
+
+
+actually showed Martha’s head on someone else’s body. This led to criticisms about Newsweek’s misrepresentation
+of the image.2
+
+
+
+
+          Figure 1. The March 2005 cover of Newsweek shows Martha Stewart's head on a model's body.
+Issues with image manipulation can also lead to copyright issues. Many celebrities, including Sandra Bullock and
+Pamela Anderson, have had their heads placed on pictures of nude women in order to give the impression of nude
+celebrity pictures. In these cases, celebrities own their likeness and the misuse may infringe upon their copyright.
+
+2.1 Child Pornography
+There is a much darker side to digital imagery. In 1996, the United States passed the Child Pornography Prevention
+Act (CPPA). This law prevents the use of children in sexually explicit materials. However, it did not make a
+distinction between “real” children and computer generated or illustrations of children.3 In 2002, the United States
+Supreme Court ruled that CPPA violated free speech rights.4 In particular, if the child is not real, then no child was
+harmed and therefore the CPPA does not apply. This ruling created a distinction between “child pornography” (CP)
+and “virtual child pornography” (VCP).
+           •   Child pornography. The use of real children in sexually explicit situations is prohibited by the CPPA.
+           •   Virtual child pornography. Images that do not use real children are classified as “pornography” and
+               are protected as free speech.
+For law enforcement, the distinction between CP and VCP is extremely important when prosecuting pedophiles. A
+case based on VCP is much more difficult to justify than one that uses CP. As a result, the different aspects of image
+manipulation must be identified. For example, if an oil painting algorithm is applied to a real photo, then the image
+is digitally modified but still represents a real child. In contrast, a completely computer generated child is clearly
+VCP – if it can be identified as being computer generated. Other complex scenarios have not yet to be tested by the
+courts, including “Frankenstein Children,” where pieces of different children are photoshopped together to form one
+or more children.
+
+
+
+
+2
+    http://money.cnn.com/2005/03/03/news/newsmakers/martha_photo/
+3
+    http://www.politechbot.com/docs/cppa.text.html
+4
+    http://supct.law.cornell.edu/supct/html/00-795.ZS.html
+
+
+                 Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                        A Picture’s Worth...                                           5 of 31
+
+
+2.2 Digital Authentication
+Many web sites require authentication in order to resolve complaints about impersonations. In some cases,
+photographs or copies of government IDs are requested. MySpace is one example of a site that requires
+photographic authentication. When reporting an online imposter or hijacked account, MySpace requires a digital
+image as authentication. The image should be of the account holder holding a sign that includes the MySpace
+account number.5 However, MySpace has no apparent means to authenticate the image. As a result, MySpace has
+erroneously accepted the following types of forged images for removing or hijacking user profiles:
+      •    Not me. Since MySpace has no means to tell if the picture is actually of the account holder, any person
+           holding an appropriate sign can claim to be the account holder.
+      •    Fake text. If the account holder has a picture of him holding any type of signboard or paper, then
+           Photoshop can be used to replace the text.
+      •    Fake sign. A picture of the valid account holder can be photoshopped so that it appears to be holding a
+           sign.
+Although there are advanced methods to detect forged images, doctored images such as those described above have
+been submitted to MySpace and have resulted in the termination of MySpace profiles.
+
+3 Methods to Analyze Images
+Image analysis addresses questions about the manipulation of an image:
+      •    Is the image real, CG, or digitally enhanced?
+      •    If the image is real: where was the picture taken, when, and how (e.g., camera model)?
+      •    If the image is digitally enhanced: what was manipulated and how was the manipulation accomplished?
+      •    If the image is CG: how was the image created?
+There are four different approaches to analyzing images:
+      1.   Observation. Many times forgeries or misclassified images can be identified through direct observation;
+           no image analysis tools are required.
+      2.   Basic image enhancements. Through common algorithms such as sharpening, blurring, scaling, and re-
+           coloring, attributes within the image can be made more distinct.
+      3.   Image format analysis. Changes to images alter the file format. In the case of JPEGs and other lossy
+           image formats, changes to images can be detected.
+      4.   Advanced image analysis. Signal analysis can detect manipulations. Approaches range from error level
+           analysis to principal component analysis (PCA) and wavelet transformations.
+
+3.1 Observational Analysis
+The simplest analysis approach uses human observations to pull information out of the image. Inconsistencies
+usually suggest digitally enhanced or CG. Items within the image may be used to identify where and when the image
+was created. The main items to look for in an image:
+      •    Specular highlights and shadows. Sharp highlights and shadows indicate light direction. When items are
+           merged into one picture, they may not have the same lighting.
+      •    Color tones in anti-aliasing. Images rarely have sharp, crisp edges. Instead, anti-aliasing techniques blur
+           adjacent colors together. When an object is cut out of one picture and pasted into another, the edges may
+           contain coloring that does not match the new background.
+
+
+
+5
+    http://www.myspace.com/index.cfm?fuseaction=misc.faq&Category=3&Question=26
+
+
+                 Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                      A Picture’s Worth...                                          6 of 31
+
+
+    •    Reflections. When images are shopped, reflections may not be modified. For example, a removed object
+         may still be present in a reflection. Similarly, an added object may be missing within a reflection.
+    •    Scale. When images are combined, they may not be at the correct scale.
+    •    Roots. People or objects spliced into an image may appear to be “floating” (not rooted to the ground).
+    •    Items. Common items in the image may be regional or time-specific. For example, electrical outlets differ
+         by continent. Text and currency in an image may identify a location. And clocks and calendars disclose
+         time. Similarly, photos that show computer screens may display a specific application, operating system, or
+         recognizable web site.
+    •    Duplication. Items within the picture may be copied and duplicated in other locations around the image.
+         The duplications may be unmodified, scaled, rotated, flipped, or otherwise manipulated.
+Unfortunately, many items cannot be clearly recognized without enhancing the image. Basic image enhancement
+methods can clarify elements within a picture for easier identification.
+
+3.2 Basic Image Enhancements
+Most photo editing tools contain basic image enhancement functionality. These can be used to clarify pictures (or
+regions within pictures). Common enhancement functions include:
+    •    Brightness and contrast. These algorithms can make a dark area lighter, revealing hidden objects, or tone
+         down the brightness from a washed-out image.
+    •    Color adjustment. Lighting can dramatically impact the color scheme within an image. Many tools permit
+         changing the temperature (frequency range) of an image or adjusting the individual color components.
+    •    Invert. Inverting portions of an image (negative image) can reveal information obscured due to similar
+         coloring.
+    •    Sharpen and blur. Items that are not in focus, or blurred due to motion, may be corrected with these
+         functions.
+    •    Normalization and histograms. Advanced tools allow the viewing and modification of color ranges. For
+         example, if an image appears too uniformly colored, then a normalized image will create a greater color
+         range.
+    •    Scale. With some image formats, objects can be zoomed in before incurring distortion. For example, a
+         high-resolution JPEG may be zoomed in as much as 200% before the image becomes too distorted.
+         Similarly, very large images may be shrunk for easier viewing.
+
+3.2.1 Example: Warez Factory
+A picture of an unauthorized CD duplication facility (Figure 2) was recently presented in a forum dedicated to
+warez. The picture shows CD duplicators, an inkpad for affixing “authentic” marks, and even CD case slipcovers.
+However, it is unclear how long this picture had been circulating the Internet. The question becomes: when and
+where was this picture taken?
+The only distinct text in the room comes from the Tarzan & Jane movie poster and the bottle of isopropyl alcohol.
+By sharpening these images and enhancing the contrast, the text becomes readable (Figure 3 and Figure 4). In
+particular, the text is in Spanish, so the location is likely Mexico, Venezuela, Argentina, or any other Spanish-
+speaking country. The bottle of alcohol includes the text “Madrileno” (Madrid), suggesting Spain. The movie poster
+for Tarzan & Jane denotes a release-to-DVD date of 26 Marzo (March 26), but does not specify the year. The movie
+was released to DVD in Spain on 26-March-2003. Considering that DVD promotional posters are usually released a
+few months before the video becomes available, and are hard to find items shortly after the release, the photo’s date
+range can be estimated: January – May 2003. Although there are many items in the room, no other items have been
+identified with specific years beyond 2003.
+
+
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                       A Picture’s Worth...                                          7 of 31
+
+
+In addition to the date and location, features of the room are identifiable. For example, the telephone connector on
+the wall (Figure 5) is a $3 part6 for creating a new phone outlet. This suggests that the room was not originally
+phone-ready with an RJ11 jack. Since no phone is plugged into the outlet, it could have been installed specifically
+for the computers.
+
+
+
+
+                  Figure 2. An unauthorized CD duplication factory. This images comes from
+               http://www.bork.ca/pics/?incoming/warez_factory.jpg, retrieved on 23-May-2007.
+
+
+
+
+                                                      Figure 4. Isopropyl alcohol
+                                                      bottle with a Spanish label.       Figure 5. Telephone outlet
+Figure 3. Tarzan & Jane poster announcing the         This image has been scaled,        from the wall (above) and
+DVD release on "26 de Marzo" (March 26).              sharpened, and contrast            electronic store part
+This picture has been sharpened.                      adjusted.                          (below).
+
+
+
+6
+    http://www.phonecoinc.com/topic.asp?map=4&horh=home&gorl=list&group=main&category=Acc&topic=01009
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                        A Picture’s Worth...                                          8 of 31
+
+
+3.2.2 Example: Moonwalk
+In 2006, Andrea Bertaccini was awarded the “CG Choice Award” from the CG Society for the rendering of Buzz
+Aldrin’s famous moonwalk7 (Figure 6). According to the artist, the picture was based the original NASA photo8.
+However, details within the picture suggest additional resources.
+
+
+
+
+       Figure 6. Image by Andrea Bertaccini (www.tredistudio.com, left) and original NASA photo (right).
+A comparison of the two photos shows a significant number of differences. While the lack of moon dust in the
+artist’s image is expected, other discrepancies are interesting:
+      •    Puffy. The CG spacesuit appears “puffed out” while the real suit is wrinkled.
+      •    Fibers. The real spacesuit has distinct fibers visible on the arms, similar to a wool sweater. The CG image
+           is missing the fibers.
+      •    Grounding screw. The torso box (Figure 7) in the original shows a dark grounding screw in the center.
+           However, the artist uses a light-colored screw.
+      •    Connectors. The red and blue torso connectors in the artist’s image show six very reflective screws. These
+           screws are not visible in the real photo. The actual spacesuit did have these screws, but they were not
+           reflective.
+      •    Belt. The artist’s belt has metal clips. The NASA photo shows no metal clips on the belt.
+These discrepancies may be due to the source of the image. The artist’s image was released in 2006. In 2005, IMAX
+produced a movie titled Magnificent Desolation in which they recreated the famous moonwalk.9 A behind-the-
+scenes picture from this movie (Figure 8) shows a spacesuit similar to Bertaccini’s picture: the spacesuit appears
+puffed out (not wrinkled), there are no visible fibers on the arms, the grounding screw is light-colored, the torso
+
+
+7
+    http://forums.cgsociety.org/showthread.php?t=323480
+8
+    http://www.hq.nasa.gov/office/pao/History/ap11ann/kippsphotos/5903.jpg
+9
+    http://www.imax.com/magnificentdesolation
+
+
+                 Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                       A Picture’s Worth...                                           9 of 31
+
+
+connectors have six very reflective screws, and the belt has a metal clip. While Bertaccini’s positioning of the figure
+may have been based on the NASA photo, the spacesuit appears to have been based on the IMAX recreation.
+
+
+
+
+                  Figure 7. Close-up of the torso details on the recreation and original photos.
+
+
+
+
+               Figure 8. Behind-the-scenes photo from the IMAX movie Magnificent Desolation.
+
+
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                      A Picture’s Worth...                                         10 of 31
+
+
+3.3 Image Format Analysis
+Images can be stored in a variety of formats. Some, such as RAW, only contain pixel data, while other formats
+contain a wealth of information. In many cases, such as JPEG, GIF, PNG, and TIFF, the format can be as
+informative as the image. Changes to the image yield changes to the file format. Although this paper focuses on the
+JPEG format, the methods can be applied to other complex formats including GIF, PNG, and TIFF.
+JPEG files contain a well-defined feature set.10 Changes to the image will modify the feature set. Thus, if the
+features indicate manipulation then the manipulation can be identified. The feature set for JPEG includes meta data,
+quantization tables for image compression, lossy data compression, and subdivided image processing using 8x8
+pixel cells.11
+
+3.3.1 Meta Data Analysis
+Most JPEGs include a significant amount of meta data that describes the source of the image. For example, a JPEG
+from a digital camera usually includes the camera type, resolution, focus settings, and other features (Figure 9).
+
+
+$ exiftool IM001022.JPG
+MIME Type                 : image/jpeg
+JFIF Version              : 1.1
+Make                      : Hewlett-Packard
+Camera Model Name         : HP PhotoSmart 618
+Orientation               : Horizontal (normal)
+X Resolution              : 72
+Y Resolution              : 72
+Resolution Unit           : inches
+Y Cb Cr Positioning       : Centered
+Exposure Time             : 1/125
+F Number                  : 3.7
+ISO                       : 100
+Exif Version              : 0210
+Date/Time Original        : 2007:05:28 09:19:49
+Components Configuration : YCbCr
+Compressed Bits Per Pixel : 1.6
+Shutter Speed Value       : 1/128
+Aperture Value            : 4.0
+Exposure Compensation     : 0
+Max Aperture Value        : 4.0
+Subject Distance          : 0.13 m
+...
+                            Figure 9. Sample meta data from a digital camera photo.
+
+
+Although meta data provides a significant amount of information, it has a some limitations. First, the meta data can
+be edited. Although unlikely, false information about the camera type and settings can be placed within the JPEG.
+
+10
+  Information about the JPEG file format can be found at <http://www.exif.org/specifications.html> and
+<http://www.obrador.com/essentialjpeg/HeaderInfo.htm>.
+11
+  Gregory K. Wallace, “The JPEG Still Picture Compression Standard”, Communications of the ACM, April 1991
+(vol. 34 no. 4), pp. 30-44.
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                         A Picture’s Worth...                                        11 of 31
+
+
+More likely are bad default settings. For example, most digital cameras do not account for time zones or daylight
+saving time, and may have clocks that drift. As a result, the time may not be accurate.
+More common than intentional meta data modifications is misleading meta information. For example, a photo from
+a digital camera can be opened in Photoshop and manipulated. When the image is saved, it retains the camera’s meta
+information, even though it may no longer be applicable. In addition, Photoshop does not update the meta
+information to record changes. As a result, meta data can be useful when it is accurate, but the data is not provably
+accurate.
+
+3.3.2 JPEG Quantization Fingerprinting
+Quantization fingerprinting, or ballistics12, provides a method to detect images that do not match the specified meta
+data. The JPEG algorithm uses a set of quantization matrices to control image compression and quality. For JPEGs,
+images are converted from RGB to YCrCb. One quantization matrix handles the luminance (Y) and a second matrix
+handles the chrominance for both red (Cr) and blue (Cb).13
+Ideally, the quantization tables should be generated and optimized for each image. However, computing these
+matrices is a time-consuming process; most digital cameras do not have the CPU power, and most applications do
+not want to impede the user experience by spending twenty seconds on computations each time the image needs to
+be saved. To simplify this process, virtually all graphical applications and digital cameras use hard-coded
+quantization tables.14 These default tables are usually optimized for the data size, color spectrum, digital camera
+CCD properties, and manufacturer needs. For example, a photo taken with a Canon digital camera usually prints
+better on a Canon printer because the colors are optimized for the manufacturer. And a digital camera with three
+quality settings (low, medium, and high) usually has three hard-coded quantization tables.
+Since the pre-computed quantization tables are manufacturer specific, they are usually distinct between applications
+and camera models.15 If the quantization table can be identified, then the tool that saved the JPEG is identifiable.
+More importantly, if the quantization table does not match the camera information specified in the meta data, then
+the image can be identified as having been resaved or modified.
+
+3.3.3 JPEG Quality Detection
+When saving a JPEG image, most tools allow the selection of the image quality. In general, lower quality results in a
+smaller image. For example, an image saved at 90% implies roughly 10% data loss – where the pixel colors do not
+perfectly match the original. While a quality of 99% will result in virtually no data loss, it will generate very large
+images. In contrast, 75% might be good enough to convey the meaning while creating significantly smaller files.
+Although a known quantization table allows the identification of the tool as well as the quality, the quantization
+table may not always match a known application or camera. In this situation, the quality of the JPEG must be
+approximated.
+Each quantization table contains 64 bytes. The first byte is the DC and acts as a scalar value. The remaining 63 bytes
+are the AC and define compression by frequency. The algorithm developed by Hacker Factor Solutions for
+approximating the quality of a JPEG is as follows:
+
+
+
+
+12
+ Hany Farid, “Digital Image Ballistics from JPEG Quantization” Dartmouth College, TR2006-583, 2006.
+Available online at <http://www.ists.dartmouth.edu/library/204.pdf>.
+13
+  JPEGs usually have two quantization matrices. However, some applications and digital cameras create three. If
+there are two matrices, then one is Y and the other is used for both Cr and Cb. If there are three, then Y, Cr, and Cb
+each have a matrix.
+14
+     Many applications interpolate between static stables when an intermediate quality is requested.
+15
+     http://www.impulseadventure.com/photo/jpeg-quantization.html
+
+
+                 Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                        A Picture’s Worth...                                         12 of 31
+
+
+    1.   Compute the average AC value for each quantization table. For example, if the tables are:
+          # Quantization table                                      # Quantization table
+          #   Table index=0 (luminance)                             #   Table index=1 (chrominance)
+                 3   2   2   3   2   2  3                   3              3   4   4   5   4   5   9                 5
+                 3   3   4   3   3   4  5                   8              5   9 20 13 11 13 20                     20
+                 5   5   4   4   5 10   7                   7             20 20 20 20 20 20 20                      20
+                 6   8 12 10 12 12 11                      10             20 20 20 20 20 20 20                      20
+                11 11 13 14 18 16 13                       14             20 20 20 20 20 20 20                      20
+                17 14 11 11 16 22 16                       17             20 20 20 20 20 20 20                      20
+                19 20 21 21 21 12 15                       23             20 20 20 20 20 20 20                      20
+                24 22 20 24 18 20 21                       20             20 20 20 20 20 20 20                      20
+
+
+         Then the average AC value for Table 0 is 11.63 and Table 1 is 17.57.
+    2.   The average compression value is computed across all tables. For example, since Table 0 is used once (Y)
+         and Table 1 is used twice (Cr and Cb), the average becomes (11.63 + 17.57 + 17.57)/3 = 15.59.
+    3.   Images are rendered using RGB, but the tables represent YCrCb. The conversion is as follows:
+                  R = Y + (R-Y) = Y + Cr
+                  G = Y - 0.51(R-Y) - 0.186(B-Y) = Y - 0.51Cr -0.186Cb
+                  B = Y + (B-Y) = Y + Cb
+         Since the significant ratio is 0.51, the conversion rate is determined by the difference between tables:
+                  D = ||Y-Cr|| * (1.0 - 0.51) + ||Y-Cb|| * (1.0 - 0.51)
+                  D = ||11.63 – 17.57|| * 0.49 + ||11.63 – 17.57|| * 0.49 = 5.82
+    4.   The conversion rate is incorporated to form the estimated quality: 100 - 15.59 + 5.82 = 90.23. Since the
+         JPEG algorithm uses integers instead of floating point values, this can be rounded to the nearest integer.
+         This example image was saved with a quality level of 90%.
+This algorithm accurately determines the image quality from images saved using ‘xv’, Gimp, ffmpeg, libjpeg, and
+most other tools. However, Photoshop seems to compute the percentage differently; JPEGs saved using Photoshop
+do not appear to match the quality specified in the user interface. For example, using Adobe Photoshop, an image
+saved at “80%” (using “Save for Web”) has quantization tables equivalent to 91%.
+
+3.4 Advanced Image Analysis
+Image format analysis can confirm meta data inaccuracies and detect the last tool that modified an image. However,
+format analysis does not evaluate the image itself. Methods such as principal component analysis, error level
+analysis, and wavelet transformations permit the identification of specific image manipulations.
+
+3.4.1 Principal Component Analysis
+JPEG uses a lossy compression algorithm; the image rendered from a JPEG file is not a perfect copy of the original
+image. Each time a JPEG image is resaved by a graphics editor, the image loses quality – even if the editing tool
+made no picture changes. This leads to a problem with quantization table analysis: if an image is saved at 75%,
+loaded into a drawing program, and resaved at 90%, then the quantization tables will reflect 90% while the image
+quality is 67.5% (90% of 75%).
+Errors within a JPEG appear as blocky artifacts and color distortions. The blocky artifacts appear on the 8x8 pixel
+boundaries used by the JPEG algorithm. In many cases, the JPEG artifacts are too subtle for the human eye to detect.
+However, principal component analysis (PCA) can identify these JPEG artifacts.
+
+
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                      A Picture’s Worth...                                         13 of 31
+
+
+3.4.1.1 Understanding PCA
+PCA is used for clustering data points.16 Each principal component defines a plane across the data set. The first
+principal component (PC1) identifies a plane with the widest variance across the data. In effect, the average distance
+from every point to the PC1 plane is maximized. The second principal component (PC2) identifies the second widest
+variance with respect to PC1. Since this is a three-dimensional plot, there are three principal components. The final
+component (PC3) identifies the smallest variance; the average distance from each point to PC3 plane is smallest.17
+PCA analysis is commonly used for information reduction problems such as clustering, robotic vision, and data
+compression. For example, PC1 is associated with the greatest variance in the data, while PC3 contains the least. For
+lossy data compression, the values found in PC3 can be removed with the least amount of impact. Each principal
+component emphasizes different sections of information.
+For image analysis, PCA is used to identify the color spectrum within the image. Consider an entire image that is
+plotted based on the pixel colors: (R,G,B) is mapped to (x,y,z) (Figure 10). Most images have a narrow range of
+colors that appear as a large cluster when plotted. PC1 identifies the widest range across the color set. When two
+images are spliced together from different color sets, they usually end up forming two distinct clusters. With PCA,
+areas within the picture that come from different clusters will have noticeably different values.
+
+
+
+
+                     Figure 10. Sample scatter plot of an image and principal components.
+
+3.4.1.2 PCA Visualization Options
+There are two ways to render the distance from each pixel to the principal component (Figure 11). First, the distance
+from each point to the plane can be measured, showing the maximum variance across the data set. In general, PC1
+generates very crisp gray-scale pictures; it contains the largest amount of information. In contrast, PC3 usually
+appears to have an even coloring because all points are similar distances from the PC3 plane. Although PC3 defines
+the least amount of information, it is usually best at identifying JPEG artifacts.
+
+
+16
+ Jonathon Shlens, “A Tutorial on Principal Component Analysis”. Salk Institute for Biological Studies, 2005.
+Available online at <http://www.snl.salk.edu/~shlens/pub/notes/pca.pdf>.
+17
+  PC3 may not be the absolute minimum possible variance. The principal components are orthogonal to each other.
+PC1 is the maximum variance, and PC3 is the minimum variance with respect to PC1 and PC2.
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                      A Picture’s Worth...                                        14 of 31
+
+
+Distances can also be measured from a line normal to the plane that passes through the center of the data set. For
+PC1, the average distance from each point to the line defines the narrowest variance; this is the minimum variance
+across the maximum amount of information. Rendering with the PC1 line usually appears to have uniform coloring.
+In contrast, the line associated with PC3 shows a very crisp picture; it is the maximum variance across the minimum
+amount of information. Although images based on the distances from the PC1 line and PC3 plane may look similar,
+the PC1 line contains more information. Unless specified, all PCA analysis in this paper is performed using the line
+normal to the principal component’s plane.
+
+
+
+
+ Figure 11. Top row: initial image (top); middle row: PC1, PC2, and PC3 with color based on distance from
+ the plane; bottom row: PC1, PC2, and PC3 with color based on distance from the line normal to the plane.
+
+
+3.4.1.3 JPEG Artifact Detection with PCA
+JPEG artifacts are usually visible when rendering with either the PC1 line or PC3 plane. These artifacts appear as
+rectangular chunks in the background and distortions around the figures (Figure 12). However, the PC3 plane
+usually shows artifacts from only one JPEG resave. When two pictures of different qualities are combined, they
+bring with them different JPEG artifacts. Rendering based on the PC1 line highlights these differences, allowing an
+observer to identify a spliced image (Figure 13).
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                  A Picture’s Worth...                                    15 of 31
+
+
+
+
+ Figure 12. JPEG artifacts shown using the PC1 line. Images are at 90%, 80%, 70%, and 50% and inverted
+                                               for clarity.
+
+
+
+
+ Figure 13. PC1 of a figured created by splicing two images. The image on the left was at 90% and the right
+               was 75%. The blocky JPEG artifacts are more distinct from the 75% image.
+
+
+             Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                        A Picture’s Worth...                                          16 of 31
+
+
+3.4.1.4 PCA Example: Moonwalk
+As an example, consider the moonwalk picture discussed earlier (Section 3.2.2). The artist stated that the image was
+created using 3DS MAX and post-processed using Combustion and Photoshop.18 The quantization matrix matches
+Photoshop’s “high (8)” quality, equivalent to a JPEG saved at 89%. However, using the PC1 line shows a significant
+number of artifacts that resemble a quality around 40% (Figure 14). This suggests that the image was saved multiple
+times.
+
+
+
+
+                                       Figure 14. Moonwalk image and PC1.
+In addition to the large number of resaves, the spacesuit shows more artifacts than the background and helmet
+reflection, supporting the artist’s description that the background and helmet reflection are bitmaps that were added
+after the astronaut was rendered. PC1 also identifies the red and blue connectors, red “LIFE” background, and
+American flag as having the wrong color scheme for this image (white indicates far from the PC1 line). These are
+areas that were likely enhanced by the artist after the initial rendering.
+
+3.4.2 Error Level Analysis
+JPEG is a lossy format, but the amount of error introduced by each resave is not linear. A 90% image resaved at
+90% is equivalent to a one-time save of 81%. Similarly, saving an image at 75% and then resaving it at 90%
+(75% 90%) will generate virtually the same image as 90% 75%, or saved once at 67.5%.19 The amount of error
+is limited to the 8x8 cells used by the JPEG algorithm; after roughly 64 resaves, there is virtually no change.
+However, when an image is modified, the 8x8 cells containing the modifications are no longer at the same error
+level as the rest of the unmodified image.
+Error level analysis (ELA) works by intentionally resaving the image at a known error rate, such as 95%, and then
+computing the difference between the images. If there is virtually no change, then the cell has reached its local
+minima for error at that quality level. However, if there is a large amount of change, then the pixels are not at their
+local minima and are effectively “original”. Figure 15 shows an original image, the image resaved at 75%, and
+
+18
+     http://forums.cgsociety.com/showthread.php?t=323480
+19
+  Because the JPEG algorithm operates on integers instead of floating point values, the 75% 90% image will be
+nearly identical to 90% 75%, but may not be a perfect match.
+
+
+                Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                     A Picture’s Worth...                                       17 of 31
+
+
+resaved again at 75%. The 95% ELA for each of the three images shows the areas containing original pixels. Nearly
+all pixels in the original image are not at their local minima. The first resave (75%) shows large areas where the
+pixels have reached their local minima. The second resave introduces more areas that have reached their local
+minima for error.
+
+
+
+
+  Figure 15. An original photo from a digital camera, resaved at 75%, and then resaved again at 75%. Each
+                           picture is associated with the 95% ELA for the image.
+
+
+
+
+              Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                       A Picture’s Worth...                                         18 of 31
+
+
+Any modification to the picture will alter the image such that stable areas (no additional error) become unstable.
+Figure 16 shows a modified image using Photoshop. The modified picture was based on the first 75% resave. Books
+on the shelf were duplicated and a toy dinosaur was added to the shelf. The 95% ELA identifies the changes since
+they are areas that are no longer at their minimal error level. Additional areas of the picture show slightly more
+volatility because Photoshop merged information from multiple layers, effectively modifying many of the pixels.
+
+
+
+
+ Figure 16. The first resaved image (75%) was modified. The 95% ELA identifies the modified areas: books
+                             were copied on the shelf and a dinosaur was added.
+
+3.4.2.1 Example: The Alf Kid
+The “Alf Kid” or “Fat Alf Kid” (Figure 17) is arguably one of the most photoshopped people on the Internet.
+Usually artists alter his shirt or place him in humorous situations (Figure 18). ELA can identify the last
+modifications made to his image. Ironically, the “original” picture that is used by most artists has been repeatedly
+resaved and shopped; the last change was the image being cropped – denoted by a high ELA values along the
+bottom and right margins – and the letters “ALF” being added to his shirt. In actuality, the original photo may not
+have even had the Alf character on his shirt; large number of resaves has resulted in the loss of that information.
+
+
+
+
+                    Figure 17. The Alf Kid "original" image and overlay with the 95% ELA.
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                      A Picture’s Worth...                                        19 of 31
+
+
+
+
+ Figure 18. The Alf Kid with his shirt modified and next to Osama bin Laden. The 95% ELA identifies the
+shirt change and shows that the Alf Kid has a lower error level than the rest of the Osama bin Laden picture.
+
+
+3.4.2.2 Example: WTC Crash
+Shortly after September 11, 2001, a picture surfaced of a tourist standing on the roof of the World Trade Center with
+an airplane heading for the building (Figure 19). As expected, this image created a firestorm of controversy before
+being declared a fraud. The 95% ELA identifies the last changes made to this image: the date stamp was added, the
+United Airlines stripe was placed on the nose of the airplane, and minor modifications were made to the person.
+Even though the airplane was added to this picture, it has been resaved enough times to obscure that information
+from ELA.
+
+
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                      A Picture’s Worth...                                        20 of 31
+
+
+
+
+                              Figure 19. The crash picture and 95% ELA overlay.
+
+3.4.3 Wavelet Transformations
+While ELA is useful for identifying recent changes relative to the number of resaves, resaving a picture many times
+or using a very low quality JPEG can obscure ELA results. However, changes to pictures can still be identified
+through the use of wavelet transformations.
+Wavelets are used for signal decomposition.20 A single wavelet is a known and well-defined signal. This signal can
+be scaled and added together in order to create more complicated signals. Any real signal can be decomposed into a
+set of wavelets that, when combined, approximate the signal (Figure 20).
+
+
+
+
+     Figure 20. A Morlet wavelet (red), scaled (green), and combined to form a more complex signal (blue).
+Although wavelets can approximate any signal, some signal types are more difficult to approximate. Square waves,
+or areas with sharp color changes, are difficult to approximate. Although the flat area of the square wave can be
+approximated quickly, the sharp corners may require many wavelets to properly fit the signal. Similarly, linear
+transitions are approximated by a series of stepped square waves. In addition, extreme values (black and white) are
+
+
+20
+   Amara Graps, “An Introduction to Wavelets”. IEEE Computational Science and Engineering, Summer 1995, vol.
+2, num 2. Available online at <http://www.amara.com/ftpstuff/IEEEwavelet.pdf>.
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                      A Picture’s Worth...                                         21 of 31
+
+
+difficult to approximate. In contrast, wavelets are very good at approximating “natural” colors and noisy images,
+such as those generated by digital cameras.
+In the case of digital photos, the picture is the signal and wavelets approximate the image. Rendering an 800x600
+pixel image requires up to 480,000 wavelets per color channel to perfectly recreate the picture. However, if only a
+small percentage of the wavelets are used, then the main attributes of the picture become visible, even if they are
+blurry. As more wavelets are included in the rendering, the image sharpens. And even more wavelets fine-tune the
+sharpened colors.
+This property of wavelets – from blurry to sharp to correct colors – can be used to identify image manipulations. In
+particular, the entire image should sharpen at the same rate. If the picture components are scaled or merged from
+different focal lengths, then the components will sharpen at different rates.
+
+
+
+
+Figure 21. A dinosaur scaled larger and smaller (top-left), then rendered using 1% of available wavelets (top-
+                              right), 5% (bottom-left), and 20% (bottom-right).
+
+
+Consider the dinosaur example in Figure 21. This picture was from one image of a dinosaur.21 Using Photoshop, the
+image was scaled bigger and smaller. At 1% of the rendered wavelets, the entire image appears blurry. The extreme
+colors (white background and black text) are not rendered properly. At 2%, the shoulder and hip on the small
+dinosaur becomes crisp, while the others remain blurry. At 3%, the small dinosaur becomes crisp – additional
+wavelets fine-tune the colors but not the sharpness. The original dinosaur becomes sharp at 5%, while the big one
+becomes crisp at 8%. After 8%, additional wavelets fine-tune the colors but not the sharpness.
+
+
+21
+     http://images.amazon.com/images/P/B00004L8M7.01.LZZZZZZZ.jpg
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                      A Picture’s Worth...                                         22 of 31
+
+
+3.4.4 Wavelet Example: Hillary
+Celebrities and politicians are frequently photoshopped into fictional situations. Consider Figure 22. This image was
+created by “redcard” as part of an image manipulation contest.22 Rendering the image with 5% of the available
+wavelets shows a crisp torso and near-crisp arms and legs. However, the face remains fuzzy. The fuzziness ends just
+below the chin. The wavelet analysis suggests that the head is from a picture of Senator Hillary Clinton, the neck
+and torso comes from a second source, and the arms and legs may be from a third source.
+
+
+
+
+ Figure 22. Photoshopped image with Hillary Clinton's head (left) and resolved using 5% of wavelets (right).
+
+3.5 Analysis Limitations
+The methods discussed in this paper provide a set of very powerful tools for evaluating images. However, they
+cannot be applied to all pictures and the results may not be conclusive. For example, very small images can
+invalidate some approaches. Wavelets require images that are at least a few hundred pixels in each direction (bigger
+is better), and image scaling can fool ELA and PCA.
+Low quality images, either due to a very low JPEG quality setting or from color reduction (e.g., GIF) can impede
+most of the analysis techniques. In addition, media transitions may influence images. Scanning in a photo,
+converting a printed magazine picture to a JPEG, or capturing a TV signal can introduce artifacts from the
+conversion process.
+More complicated analysis systems are dependent on image contents. For example, a picture with sharp contrasts or
+a well-defined pattern could confound ELA and wavelet results. Wavelets may also lead to harmonic convergences,
+where two pictures with different signal properties are combined and lead to unaltered regions resolving at an
+alternate rate from the rest of the picture (see Section 4).
+
+
+
+
+22
+     http://www.worth1000.com/emailthis.asp?entry=341612
+
+
+                Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                         A Picture’s Worth...                                           23 of 31
+
+
+Images with a significant amount of recoloring (brightening, pallet skew, etc.) can also lead to false identification.
+Recoloring can appear indistinguishable from a modified image (ELA) or multiple layers (wavelets).
+On occasion, a skilled artist can create photo-realistic images that pass all of these evaluation methods. However,
+artists with this level of talent are extremely rare. Although photo-realistic tools are available, the image quality is
+highly dependent on the artist. In the more general case, an enhanced or CG image may pass one or more of these
+evaluation methods, but is unlikely to pass all of them.
+
+4 Example: Soldier Picture
+Modified images frequently appear in online forums, television, movies, and advertisements without much concern.
+However, there is a stigma when they appear in mass media and news outlets. Since news sources are supposed to
+report facts, enhanced or modified images could easily misrepresent real situations or mislead readers.
+In 2003, photographer Brian Walski submitted a photo of a British soldier in Basra. This picture was identified as a
+fake after editors noticed duplication in the crowd of people – leading to Walski’s dismissal from the Los Angeles
+Times.23 The picture is widely believed to be a combination from two other Walksi photos (Figure 23).
+
+
+
+
+      Figure 23. The first and second originals images (top) were combined to form the forgery (bottom-left).
+          Bottom-right shows an attempt to recreate the forgery by overlaying the originals using Gimp.
+
+
+The two original pictures can be combined to recreate the forgery and identify how it was likely created. A basic
+observation of the images suggests that the majority of the forgery comes from the first original – everything right of
+the soldier was kept. The second original picture was cut, leaving only the solder and people to his left. The second
+original was scaled larger and combined with the first image. Finally, the combination was significantly recolored
+and the sky was modified.
+
+23
+     http://blog.wired.com/wiredphotos54/2007/05/double_vision_i.html
+
+
+                 Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                       A Picture’s Worth...                                          24 of 31
+
+
+However, original sources are usually unknown. Using the techniques covered in this paper, the faked image can be
+analyzed without the assistance of the original images (Figure 24).
+     •    Observation. In the combined picture, the squatting man in white (lower left, behind soldier’s leg) is
+          duplicated in front of the soldier’s knee. However, the copies are not identical; one or both appear to have
+          been scaled.
+     •    Meta Information. The JPEG does not contain camera information. However, it does include Adobe-
+          specific meta data, suggesting that it was edited using an Adobe tool.
+     •    Quantization Table Analysis. The quantization matrix is unknown, but the quality is approximately 72%.
+     •    ELA. The error level analysis shows that the sky is at one error level, but all of the people are at a
+          different error level. This is actually due to the image recoloring, but ELA only identifies “a” change.
+     •    PCA. PC1 shows that the sky has been resaved many times. The soldier and people to his left have been
+          resaved a few times, as denoted by a fuzzy artifact halo. Other people in the crowd were not resaved as
+          many times. PC1 summarizes the image into three regions: sky, soldier and people to his left, and people
+          to his right.
+     •    Wavelets. At 8% of the wavelets, the soldier appears crisp, but with many areas of sharp color transitions.
+          This suggests that his image was resized to fit the picture. The man in the plaid shirt (right edge) has a
+          crisp face; it resolved at around 2% of the available wavelets. However, the man in white behind him and
+          the child in front of him both have blurry faces, suggesting three different layers. The full wavelet analysis
+          suggests that the people may form up to nine different layers.
+By evaluating the ELA, PCA, observed duplication, and different percentages of rendered wavelets, it is clear that
+the image has been manipulated. However, the details of the manipulation are inconclusive. The significant
+recoloring, small size, and low resolution increase false-positive results in the analysis. If these issues are ignored,
+then the picture appears to include eleven or more distinct layers that were combined to form the image. However,
+this image has been significantly modified. The analysis shows that it may contain as few as three layers: soldier and
+people to his left, ground and people to the soldier’s right, and the sky.
+The largest inconsistency in the analysis comes from the PCA and wavelet analysis. (For other pictures, other
+analysis methods may yield inconsistent results.) In this case, wavelets show that the man in the plaid shirt resolves
+quickly. This is due to a frequency harmonic and not due to manipulation. In particular, neither of the original
+images shows an irregularity with the man in plaid, but the recreation attempt (Figure 24) does show the same
+wavelet characteristics.
+Cynthia Baron offered the following suggestion for identifying harmonic convergence regions: Wavelet analysis
+uses symmetrical image sizes (e.g., 512x512 or 1024x1024) and processes one direction before the other (e.g.,
+horizontal before vertical). Rotating the image before performing the wavelet analysis may shift or remove the
+location of any harmonic convergences. In this case, rotating the forged image removed the crispness from the plaid
+man’s shirt, and reduced the crispness in his face.
+
+
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                       A Picture’s Worth...                                          25 of 31
+
+
+
+
+     Figure 24. Modified picture from Brian Walski (top-left), 95% ELA (top-right), contrast-enhanced PCA
+                           (bottom-left), and rendered using 8% of available wavelets.
+
+
+5 Example: Dr. Ayman al Zawahiri
+As-Sahab is the video production branch of Al Qaeda. They periodically release videos designed to remind people
+of Al Qaeda’s existence, issue threats, recruit members, and potentially act as a covert channel for triggering
+terrorist cells. Many of the videos by As-Sahab appear to have been manipulated.
+On 20-Dec-2006, Dr. Ayman al Zawahiri (#2 guy in Al Qaeda) released a video. USA Today covered the video
+release with a headline story (Figure 25).24 USA Today’s description of the video says, “He wore a black turban and
+white robe ... he had a rifle behind his right shoulder that was leaning against a plain brown backdrop.” While this is
+a valid description of the As-Sahab video25, the picture used by USA Today did not show that image. Instead, USA
+Today used a picture from another video, dated 28-Sept-2006. This is an example of a mislabeled image.
+The picture that USA Today chose to use with the story includes many other interesting features. First, it came from
+the IntelCenter (www.intelcenter.com) – an organization that tracks terrorist activities. The IntelCenter placed their
+logo in the top-right corner of the video. However, the company name is clearly cropped – likely by USA Today. A
+comparison with the same frame from the actual video shows many other observable differences. In particular, the
+IntelCenter adjusted the color and sharpness of the picture (Figure 26).
+
+
+
+
+24
+     http://www.usatoday.com/news/world/2006-12-20-al-qaeda-palestinians_x.htm
+25
+     http://www.archive.org/details/Conflict-Between-Islam-and-Unbelief
+
+
+                 Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                  A Picture’s Worth...                                  26 of 31
+
+
+
+
+ Figure 25. USA Today announcing the video release with wrong picture and a frame from the correct video.
+
+
+
+
+ Figure 26. The image provided by IntelCenter and presented at USA Today (top-left) and the actual frame
+                from the video (top-right). Bottom row shows the 95% ELA for each image.
+
+
+
+
+             Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                         A Picture’s Worth...                                         27 of 31
+
+
+Observation combined with the 95% ELA shows the order of the modifications. The changes, starting with the most
+recent and working back:
+       •    Cropped. The last change was the image being cropped.
+       •    IntelCenter. The IntelCenter added their logo.
+       •    Recolored. The image was recolored and sharpened, modifying the error rate along the image.
+       •    As-Sahab. The As-Sahab logo and subtitle text were added.
+       •    Al Zawahiri. Zawahiri was added to the picture. ELA clearly shows a crisp error level change between
+            him and the background. This type of error-level halo is common for chroma-key (green screen) images.
+            In particular, there is a distinctive error level feature generated by chroma-key replacements: since most
+            chroma-key replacement algorithms are based on hue and not saturation or brightness, the different color
+            channels along the seam are at different error levels.
+       •    Banner. Just as text can be added to a blank sign (Section 2.2), someone appears to have added the text to
+            the banner behind Zawahiri.
+The PC1 and wavelet analysis for this image also supports these findings. The background office appears to be one
+layer that was saved multiple times. The text of the banner was likely added around the same time Zawahiri was
+added, and the As-Sahab logo and subtitles were added last.
+
+5.1 Other Al Zawahiri Videos
+The video from 28-Sept-2006 was not the only manipulated video. In fact, many of the videos featuring al Zawahiri
+test positive for chroma-key masking. Consider the video released on 27-July-2006 (Figure 27).26 This video appears
+to show al Zawahiri sitting in a video studio.
+When this video came out, many Americans became enraged at the US government. The main strife was generated
+by a single argument: if al Zawahiri is sitting in a studio making videos, the why can’t we catch him? The answer is
+simple: he is not in a studio.
+       •   Observation. The studio background shows a specular reflection above the scaffolding. However, there is
+           no shadow below it.
+       •   ELA. The 95% ELA shows a chroma-key halo around Zawahiri. The As-Sahab logo was added last. The
+           background shows a repetitive pattern, indicating a solid color background. Since digital cameras add noise
+           to images, the solid color is not from a digital camera; the background was drawn.
+       •   PCA PC1. The line constructed from PC1 shows that the background was repeatedly resaved, the three
+           pictures behind Zawahiri have three different resave levels, Zawahiri has a different level, and the As-
+           Sahab logo shows no JPEG artifacts. This indicates that the picture was created using at least six layers.
+       •   PCA PC3. The distance from the third principal component’s line, as well as the first principal
+           component’s plane, emphasizes the lighting in the room. A large lighting ring can be observed on Zawahiri
+           and the background. Since the lighted area behind Zawahiri is only slightly larger than the light on him, the
+           background screen is no more than one to two feet behind him. The lighting contradicts the picture’s
+           rendering of a large studio.
+       •   Wavelets. At 5%, the wavelets show six distinct layers. Mohammad Alef (left background) is very blurry,
+           the World Trade Center is blurry, Mohammad Atta (right background) is nearly crisp, Zawahiri is crisp,
+           and the As-Sahab logo is very crisp and showing sharp color transitions.
+Since the background appears to have been drawn and includes other pictures, the question becomes: where did the
+other images come from? The image of Mohammad Atta (background right) appears to be from a photo found in the
+9/11 Commission’s final report.27 This image was reduced in size and skewed to fit the background. The artist also
+
+26
+     http://www.archive.org/details/Crusaders-and-Zoinism-war-on-Gaza-and-Lebnon
+27
+     http://www.rcfp.org/moussaoui/jpg/size600/GX00004.2-1.jpg
+
+
+                 Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                   A Picture’s Worth...                                     28 of 31
+
+
+removed the government exhibit tag from the lower corner. The image of Mohammad Alef (background-left) may
+be from a wedding video between his daughter and Osama bin Laden’s son.28
+
+
+
+
+                                                                                                         .
+Figure 27. (From top to bottom) Still frame from the 28-Sept-2006 video, 95% ELA, PC1, PC3, 5% wavelets,
+                      and Mohammad Atta from the USA Government's 9/11 report.
+
+
+
+28
+  In most videos, Mohammad Alef wears a collared shirt. Frames from the wedding video show him wearing a shirt
+similar to the one in pictured here.
+
+
+              Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                       A Picture’s Worth...                                        29 of 31
+
+
+5.2 Back in Black
+Claiming that there was a chroma-key background is not the same as actually seeing it. On 22-Jan-2007, the SITE
+Institute (www.siteinstitute.org) – an organization that tracks terrorist activities – announced that they had
+intercepted an Al Qaeda video before it had been publicly released; SITE released it. Three days later, As-Sahab
+also released the video.29
+The video (Figure 28) shows al Zawahiri in front of a black curtain. The curtain is not properly centered in the
+camera’s view – there is a wedge of real background in the top-right corner. Changing the brightness of the image
+shows that the curtain is draped from a bar. While this could be a plain black fabric, the coloring appears to have a
+uniform hue. The fabric could be a type of chroma-key background called a “chroma-key sheet”. Normally chroma-
+key backgrounds are mounted to reduce folds that could cause uneven lighting. However, a chroma-key sheet is
+suspended from a metal frame30 (Figure 29) and may show suspension folds.
+
+
+
+
+             Figure 28. Frame from the 25-Jan-2005 As-Sahab video (left) and color enhanced (right).
+
+
+
+
+                                           Figure 29. A chroma-key sheet.
+
+5.3 Other Al Qaeda Videos
+Videos featuring al Zawahiri are not the only doctored As-Sahab videos. On 2-Sept-2006, Azzam al-Amriki (Azzam
+the American, aka Adam Gadahn) was featured in a video (Figure 30). The video appears to show him in a white
+room with a desk, computer, and some books. However, the 95% ELA suggests that the books do not exist in the
+room. While the computer, walls, desk, and Azzam are at one error level, the books, subtitles, and As-Sahab logo
+
+
+
+
+29
+     http://www.archive.org/details/Correct-Equation
+30
+     http://www.videoguys.com/Emails/seriousmagic_blast.html
+
+
+                 Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                       A Picture’s Worth...                                          30 of 31
+
+
+appear at a different error level. The PC1 shows that the color range of the books is very different from the rest of
+the image, suggesting that they come from an alternate source.31
+
+
+
+
+     Figure 30. Azzam al-Amriki (Adam Gadahn) as seem in the 2-Sept-2006 video (top-left), 95% ELA (top-
+                     right), PC1 (bottom-left), and contrast-enhanced PC1 (bottom-right).
+
+
+The PC1 with an adjusted contrast shows a horizontal-line pattern. This is a media artifact; the original video of
+Azzam used an interlaced video source that is identified by the first principal component. However, while the
+horizontal lines are very visible on the background and mildly visible on Azzam, they are not visible on the books or
+As-Sahab logo. This suggests that these images did not come from an interlaced video source.
+A scatter plot of the colors used in the al-Amriki video shows three distinct color regions (Figure 31). The main
+dense area contains the colors found across most of the picture: Azzam, walls, desk, and computer. The small cusp
+in the center of the plot consists of colors found in the As-Sahab logo and subtitle. These colors do not appear
+anywhere else in the image and form an independent cluster. Outside of the main image spectrum are the colors
+found in the books. The color spectrum for the books is distinctly outside of the main coloring for the image. This
+implies that the books are unlikely from the same footage as al-Amriki.
+
+
+
+
+31
+   Individual frames from the video, extracted by different people show the same attributes.
+http://www.memritv.org/data/thumbnails/clip_1257.jpg and http://rightvoices.com/wp-
+content/uploads/2006/09/adam_yehiye_gadahn.jpg
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+N. Krawetz                                       A Picture’s Worth...                                          31 of 31
+
+
+
+
+           Figure 31. Scatter plot of the Azzam al-Amriki video frame. The book colors are in green.
+
+6 Additional Research
+The approaches covered in this paper represent a work-in-progress, both at Hacker Factor Solutions and in the field
+in general. As digital image technologies advance, so do methods for detecting manipulations and distinguishing
+reality from fiction. This is a fairly new field, and most researchers are working on different (but related)
+technologies. Example research project include:
+    •    Hany Farid (Dartmouth College): Image manipulation detection.
+    •    Jessica Fridrich (Binghamton University): Steganography detection and tamper detection.
+    •    Shih-Fu Chang (Columbia University): Media forensics using signal processing and statistical pattern
+         recognition.
+    •    Nasir Memon (Polytechnic University): Image steganography and manipulation detection.
+    •    Min Wu (University of Maryland): Digital media fingerprinting.
+In addition, fields such as robotic vision are developing technologies that may be readily applicable to forensic
+image analysis.
+
+7 Conclusion
+As pictures are manipulated to sway opinions, image analysis and digital forensics grow in importance. This paper
+covers different methods for viewing and analyzing images. Although a single image may pass one or two tests, a
+modified image is unlikely to pass all of the tests. In addition, these methods are only the beginning of the available
+analysis approaches. Other methods do exist and are designed to catch other image manipulation techniques.
+
+8 Acknowledgements
+Neal Krawetz at Hacker Factor Solutions is grateful to the following people for their insight, suggestions, feedback,
+enlightening conversations, and technical opinions: Adam Bates (University of Colorado at Boulder), Cynthia Baron
+(Northeastern University), Paul Whyman, Bob Gobeille, Pedro Bueno (Internet Storm Center), Hany Farid
+(Dartmouth College), and Mark Rasch, J.D.
+
+
+
+
+               Copyright 2007 Hacker Factor Solutions, presented at Black Hat Briefings USA 2007.
+

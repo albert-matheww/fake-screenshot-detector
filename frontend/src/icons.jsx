@@ -94,3 +94,61 @@ export function ImageIcon(props) {
     </Svg>
   );
 }
+
+export function EyeIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z" />
+      <circle cx="12" cy="12" r="2.8" />
+    </Svg>
+  );
+}
+
+// "Searched, nothing found" - deliberately not a tick or shield.
+export function SearchMinusIcon(props) {
+  return (
+    <Svg {...props}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5L21 21" />
+      <path d="M8 10.5h5" />
+    </Svg>
+  );
+}
+
+export function HelpCircleIcon(props) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2 1-1.2 1.9" />
+      <path d="M12 17.2v.1" />
+    </Svg>
+  );
+}
+
+export function AlertOctagonIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M8.2 3h7.6L21 8.2v7.6L15.8 21H8.2L3 15.8V8.2L8.2 3z" />
+      <path d="M12 8v5" />
+      <path d="M12 16.2v.1" />
+    </Svg>
+  );
+}
+
+export function InfoIcon(props) {
+  return (
+    <Svg {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5.5" />
+      <path d="M12 7.7v.1" />
+    </Svg>
+  );
+}
+
+export function XIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M6 6l12 12M18 6L6 18" />
+    </Svg>
+  );
+}

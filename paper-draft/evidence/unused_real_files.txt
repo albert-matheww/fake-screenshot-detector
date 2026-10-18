@@ -1,0 +1,1 @@
+16 real files produced no sample; OCR words found in the whole image: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2] (the builder skips a window with fewer than 6 OCR words)

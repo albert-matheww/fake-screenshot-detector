@@ -1,0 +1,4 @@
+n=80 images; median 581 ms; p90 1030 ms; max 1637 ms
+smallest third: 0.08-0.38 megapixels, median 194 ms, median measured words 16
+middle third: 0.38-0.95 megapixels, median 664 ms, median measured words 58
+largest third: 1.00-2.96 megapixels, median 749 ms, median measured words 62

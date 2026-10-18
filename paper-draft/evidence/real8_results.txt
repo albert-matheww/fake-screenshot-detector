@@ -1,0 +1,8 @@
+3.jpg    edited  1125x2000 verdict=suspicious           risk=0.55 top_word_p=0.113 model_regions=[] layout_rule=['79']
+4.jpg    edited  1125x2000 verdict=evidence_of_editing  risk=0.81 top_word_p=0.979 model_regions=[('70', 'evidence')] layout_rule=[]
+5.jpg    edited  1125x2000 verdict=no_evidence          risk=0.13 top_word_p=0.273 model_regions=[] layout_rule=[]
+6.jpg    edited  1125x2000 verdict=no_evidence          risk=0.16 top_word_p=0.340 model_regions=[] layout_rule=[]
+7.webp   real    923x2000 verdict=no_evidence          risk=0.14 top_word_p=0.306 model_regions=[] layout_rule=[]
+8.webp   real    923x2000 verdict=no_evidence          risk=0.11 top_word_p=0.243 model_regions=[] layout_rule=[]
+9.webp   real    923x2000 verdict=no_evidence          risk=0.05 top_word_p=0.116 model_regions=[] layout_rule=[]
+10.webp  real    923x2000 verdict=no_evidence          risk=0.03 top_word_p=0.064 model_regions=[] layout_rule=[]

@@ -1,0 +1,3 @@
+trained on Pillow only    -> test on  Pillow edits: AUC 0.846  |  Chrome edits: AUC 0.752
+trained on Chrome only    -> test on  Pillow edits: AUC 0.783  |  Chrome edits: AUC 0.855
+trained on both engines   -> test on  Pillow edits: AUC 0.849  |  Chrome edits: AUC 0.844

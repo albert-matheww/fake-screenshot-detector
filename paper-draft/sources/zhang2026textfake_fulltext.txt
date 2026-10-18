@@ -1,0 +1,968 @@
+                                             TextFake: Benchmarking AI-Generated Image Detection on Text-Rich
+                                                                        Images
+
+                                                 Yuning Zhang1,2 , Changtao Miao3,* , Mingyu Liao1,2 , Tingyu Liu1,2 , Xinghao Wang1,2
+                                                                       Tao Gong1,2,† , Qi Chu1,2 , Nenghai Yu1,2
+                                             1
+                                                 School of Cyber Science and Technology, University of Science and Technology of China
+                                                     2
+                                                       Anhui Province Key Laboratory of Digital Security 3 Individual Researcher
+
+
+                                                                      Abstract
+
+
+
+
+arXiv:2606.01050v1 [cs.CV] 31 May 2026
+                                                 Recent AI-generated image (AIGI) detectors
+                                                 perform well on natural-image benchmarks, but
+                                                 their behavior on text-rich forgeries, such as
+                                                 fabricated screenshots, documents, and news
+                                                 pages prevalent in misinformation, remains
+                                                 untested. We introduce TextFake, a 20,000-
+                                                 image benchmark for text-rich AIGI detection
+                                                 spanning 28 languages, 4 topic categories, and
+                                                 2 scene modalities. Fake images are synthe-                 Text-Lacking Fake Image    Text-Rich Fake Image
+                                                 sized via a four-stage pipeline that annotates
+                                                 real images along three controlled dimensions
+                                                 and generates counterparts through distribution-
+                                                 aligned structured prompting, ruling out covari-
+                                                 ate shortcuts. Zero-shot evaluation of 14 spe-
+                                                 cialized detectors and 3 frontier VLM APIs
+                                                 reveals a large systematic gap: no method ex-
+                                                 ceeds 80% accuracy, with some dropping over
+                                                 60% from natural-image benchmarks. Diag-
+                                                 nostic evaluations identify three failure modes:
+                                                 the Text Density Curse, where dense glyphs
+                                                 overwhelm low-level detectors; Cloaking via            Figure 1: Text-rich fake images expose a critical detec-
+                                                 Rendering Fidelity, where stronger text render-        tion gap: across representative detectors, mean accuracy
+                                                 ing suppresses generative artifacts; and Thresh-       drops from 86.7% on GenImage to 51.8% on TextFake,
+                                                 old Collapse, where routine perturbations drive        a decline of 34.9 percentage points.
+                                                 detectors toward chance-level performance.
+
+                                         1       Introduction
+                                                                                                        appears in none of them as a design dimension or
+                                         Despite rapid progress in AI-generated image                   evaluation target. Because no existing benchmark
+                                         (AIGI) detection (Zhang et al., 2019), existing                covers this modality, detection methods have never
+                                         benchmarks remain dominated by natural-scene im-               been evaluated on text-rich forgeries and their be-
+                                         ages, leaving text-rich forgeries largely unexplored.          havior here is unknown (Wang et al., 2023; Mirsky
+                                         Fabricated screenshots, fake news pages, and offi-             and Lee, 2021; Sukhija et al., 2025), which leaves
+                                         cial documents are prevalent in misinformation and             a task that is both high-stakes and unexplored.
+                                         fraud (Lu et al., 2023); as frontier generators grow              We introduce TextFake, a 20,000-image bench-
+                                         capable of rendering multilingual text and realistic           mark for text-rich AIGI detection covering 28 lan-
+                                         layouts, this gap is increasingly consequential.               guages, two scene modalities, and four topics, with
+                                            Existing AIGI benchmarks have grown from                    real and synthetic subsets distributionally aligned
+                                         early deepfake collections (Li et al., 2018; He                to reduce dataset shortcuts.
+                                         et al., 2021) to large natural-image evaluations                  Zero-shot evaluation of 14 specialized detec-
+                                         such as CIFAKE (Bird and Lotfi, 2024) and Gen-                 tors and three frontier VLM APIs shows that
+                                         Image (Zhu et al., 2023). Yet text-rich imagery                no method exceeds 80% accuracy, while several
+                                                 ∗
+                                                     Project Lead. † Corresponding Author.              spatial- and frequency-based detectors (Wang et al.,
+
+                                                                                                    1
+2020; Qian et al., 2020) perform near chance. A               2020; Tan et al., 2024a,b; Yan et al., 2026; Li
+four-stage pipeline reveals that performance de-              et al., 2025; Karageorgiou et al., 2025) extract hand-
+clines as text density increases; higher-fidelity             crafted or learned features from pixel statistics,
+generators produce images that are harder to de-              edge patterns, and spectral coefficients to flag low-
+tect; and JPEG compression, Gaussian noise, and               level artifacts left by generative pipelines, cues that
+screenshot-induced moiré patterns cause severe                text-rich images naturally mask with dense, legiti-
+prediction shifts. By aligning distributions across           mate high-frequency glyph structures. Foundation-
+scene, topic, and language, the pipeline rules out            model-based detectors (Yan et al., 2025; Ojha et al.,
+covariate shortcuts and attributes these gaps to the          2023; Cavia et al., 2024; Cheng et al., 2025; Chen
+intrinsic challenges posed by text-rich content.              et al., 2025; Qin et al., 2025) instead probe or fine-
+   Our contributions are:                                     tune large pretrained vision encoders (e.g., CLIP,
+    • We construct TextFake, a 20,000-image                   DINOv2), relying on their broad visual priors to
+      benchmark for text-rich AIGI detection span-            generalize across unseen generators. Proprietary
+      ning 28 languages, two scene modalities, and            VLM APIs (Google, 2025; OpenAI, 2026b; An-
+      four topics, with real and synthetic subsets            thropic, 2026) take this further by framing detec-
+      distributionally aligned.                               tion as a visual question-answering task, prompting
+                                                              multimodal LLMs in a zero-shot manner. The latter
+    • We introduce a four-stage pipeline that col-            two paradigms offer richer semantics but are not
+      lects multilingual real images, annotates               attuned to pixel-level typographic authenticity.
+      them via OCR and VLM classifiers, syn-
+      thesizes fake counterparts via distribution-            3     TextFake: A Distributionally Aligned
+      aligned structured prompting, and normalizes                  Benchmark
+      metadata for fair comparison.
+                                                              Existing AIGI detection benchmarks mainly target
+    • We evaluate 14 specialized detectors and three          open-domain natural images (Zhu et al., 2023; Bird
+      frontier VLM APIs on TextFake, showing that             and Lotfi, 2024; He et al., 2021), leaving text-rich
+      natural-scene benchmark performance does                forgeries underexplored. This setting is important
+      not transfer, and conduct four diagnostic anal-         because screenshots, documents, and interface im-
+      yses (text density, rendering fidelity, perturba-       ages contain dense glyph structures, layout regu-
+      tion robustness, and language/scene bias) that          larities, and acquisition artifacts that differ substan-
+      surface concrete failure modes.                         tially from natural scenes. To evaluate detector
+2    Related Work                                             robustness in this high-risk regime, we construct
+                                                              TextFake, a multilingual benchmark with 20,000
+AIGI Detection Benchmarks. AI-generated im-                   text-rich images, evenly split into 10,000 real and
+age detection has progressed from early deep-                 10,000 AI-generated samples.
+fake datasets (Li et al., 2018; He et al., 2021) to              TextFake is built around distributional control.
+open-domain natural-image benchmarks such as                  Each image is annotated along three dimensions:
+CIFAKE (Bird and Lotfi, 2024), GenImage (Zhu                  scene modality, semantic topic, and language. We
+et al., 2023), and cross-generator evaluations (Li            align real and synthetic subsets on scene and topic
+et al., 2026). Specialized work has recently ex-              distributions, while maintaining broad multilingual
+tended to scientific figures (Hu et al., 2026). De-           coverage for language-level analysis. This design
+spite this progress, all mainstream benchmarks are            reduces shortcut learning (Geirhos et al., 2020)
+dominated by natural scenes; text-rich modalities             and supports both aggregate evaluation and failure
+(fabricated screenshots, official documents, and              diagnosis.
+news pages) remain unevaluated. These are socially
+consequential because a single altered number or              3.1    Construction Pipeline
+name can change the evidential meaning of an im-
+                                                              Figure 2 shows the four-stage construction pipeline.
+age, and they directly stress-test the text-rendering
+                                                              First, we collect real text-rich images from multilin-
+limits of frontier generators. TextFake fills this gap.
+                                                              gual news sites, forums, and online communities,
+Detection Paradigms. Current detectors broadly                covering both screen captures and photographed or
+follow three lines. Spatial and frequency meth-               scanned paper documents. Second, each image is
+ods (He et al., 2016; Wang et al., 2020; Liu et al.,          processed with OCR (Cavia et al., 2024) and VLM-
+
+                                                          2
+          Stage 1                               Stage 2: Real Image Process                                                                                        Stage 4
+  Real Image Collection                                                                                                                                          Post-process
+                                                                           Scene
+                                                                           Topic                      Topic     Scene
+
+                                                                          Language
+                                                 Language &
+                                                Content Check            Text Length
+                                                                                                                                                                Meta-data Deletion
+                                                                             … …                                                                                 & Re-encoding
+
+
+
+                                                                                                                                             Evenly Combine
+    Multi-lingual News Site,
+                                                                                                  Language    Text Length
+  Forum, Community, and etc.    Raw                  Filtered          Annotated
+                               Image                 Image              Image                   Real Image Distribution
+
+   Different Screen Devices
+
+                                                                Distribution Alignment
+                                                                                                                                                              Gaussian     Screenshot
+                                                                                                                                                               Noise         Moiré
+    Different Source Topics                     Stage 3: Fake Image Generation
+                                      Fixed                                          Image Generation
+   Screen Source 80%                Taxonomy                                                                                                                  Brightness
+   Paper Source 20%                                               Prompt                                                                                       Change       Contrast
+                                     Source                       Template                                                                                                  Change
+                                    & Platform
+
+
+
+                                                                                                                            Fake Image Set
+                                                                                        Language &
+                                     Dynamic           An image of                     Content Check                                                                        JPEG
+                                   Event Details                                                                                                                           Compres
+                                                                                                                                                                              s
+  Photographed     Scanned
+                                      Visual
+                                    condition                                                                                                                  Optional Perturbation
+                                     Device
+                                   & Framing           in language of
+ Aligned on Languages,         …
+                                                                                           Filtered
+                                                                                                                                                                           TextFake
+                                   Attributes
+Scenes, Topics of Sources          Sampling            Prompt Synthesis                    Image                                                                            Dataset
+
+
+Figure 2: Overview of the TextFake construction pipeline. Stage 1 collects multilingual text-rich images from diverse
+sources including news sites, forums, and online communities, covering both screen captures and photographed or
+scanned paper documents. Stage 2 applies OCR and VLM-based classifiers to annotate each image with scene type,
+topic category, language, and text length, filtering out samples that fail language or content checks, and producing
+a statistical profile of the real-image distribution. Stage 3 generates fake counterparts through structured prompt
+synthesis, sampling attributes to align with the real-image distribution across languages, scenes, and topics. Stage 4
+evenly combines real and synthetic images, strips file metadata, uniformly re-encodes all samples to eliminate
+format-level shortcuts, and applies optional perturbations such as Gaussian noise, JPEG compression, and brightness
+changes for robustness evaluation.
+
+
+based (Achiam et al., 2023) filters to obtain scene,                                   Structured prompt template
+topic, language, and text-length annotations. Third,                                   A [UI_MODE] [SCENE] of [PLATFORM] in [LAN-
+synthetic images are generated through structured                                      GUAGE] about [TOPIC]: [DYNAMIC_CONTENT].
+                                                                                       UI layout: [UI_ELEMENTS].
+prompt synthesis. Each prompt combines fixed tax-                                      Aspect ratio: [ASPECT_RATIO].
+onomy attributes, source and platform information,                                     Resolution: [RESOLUTION].
+                                                                                       Device: [DEVICE].
+dynamic event details, visual conditions, and de-                                      Capture condition: [PHYSICAL_TRACE].
+vice framing, with all attributes sampled to match                                     All text content is in [LANGUAGE] ([NATIVE_SCRIPT]).
+the real-image distribution. Finally, real and syn-
+thetic images are combined, stripped of file meta-                                 Figure 3: Structured prompt template used for synthetic
+data, uniformly JPEG re-encoded, and optionally                                    image generation. Each prompt is assembled from a
+                                                                                   fixed taxonomy of attributes including topic category,
+perturbed for robustness evaluation.
+                                                                                   language, and scene modality, combined with source
+                                                                                   and platform metadata, dynamically sampled event de-
+3.2      Controlled Dimensions                                                     tails, visual conditions such as lighting, resolution, and
+TextFake controls three major dimensions. For                                      background clutter, and device framing cues such as
+scene modality, we use an 80:20 screen–paper prior                                 screen bezels and paper edges. These elements are
+                                                                                   drawn to approximate the distributional characteristics
+in both real and fake subsets. Screen images con-
+                                                                                   of the corresponding real images, ensuring that the gen-
+tain digital rendering and anti-aliased glyph edges,                               erated samples present realistic and diverse text-rich
+while paper images include printing artifacts, paper                               scenes rather than stylistically uniform outputs.
+texture, sensor noise, and moiré patterns.
+   For semantic topic, we use four classes: Politics
+& Military, Society & Livelihood, Technology &                                     imbalance rather than authenticity cues.
+Finance, and Culture & Entertainment. The max-                                        For language, TextFake covers 28 languages
+imum real–fake topic gap is only 1.3 percentage                                    from 12 language families, spanning both high-
+points, reducing the risk that detectors exploit topic                             resource languages and typologically distinct
+
+                                                                               3
+Table 1: Summary of TextFake dimensions and controls.                                    scenes, but whether their learned forensic priors
+                                                                                         transfer to dense screenshots, interfaces, and docu-
+    Dimension           Benchmark design
+    Total size          20,000 images: 10,000 real and 10,000 fake
+                                                                                         ments.
+    Scene               80:20 screen–paper prior in both real and fake subsets
+    Topic               Four classes                                                     4.1   Experimental Setup
+    Language            28 languages across 12 language families
+    Real sources        8,002 screenshots and 1,998 images of paper                      Benchmark and preprocessing. All evaluations
+    Quality control     VLM safety filtering + human spot-checking
+                                                                                         are conducted in a zero-shot setting (Ojha et al.,
+                 (a) Text Length Distribution            (b) Topics Distribution
+                                                                                         2023). To prevent detectors from exploiting source
+                                                                                         metadata, such as file extensions or initial com-
+                                                                                         pression signatures, every image is uniformly re-
+                                                                                         encoded as JPEG at 99% quality before evalua-
+                                                                                         tion (Wang et al., 2020). The primary metric is
+                                                                                         overall classification accuracy. For diagnostic anal-
+                                                                                         yses, we additionally report real accuracy and fake
+                      (c) Languages Distribution           (d) Scenes Distribution       accuracy to identify class-specific threshold shifts.
+                                                                                            Evaluated baselines. We benchmark 18 evalua-
+                                                                                         tion configurations derived from 17 detection meth-
+                                                                                         ods (Li et al., 2026). The baselines are grouped
+                                                                                         into three paradigms:
+
+                                                                                          (1) Spatial and frequency methods, which target
+                                                                                              local pixel anomalies, gradient artifacts, or
+Figure 4: Distribution of TextFake across the three con-                                      high-frequency spectral traces. This group
+trolled dimensions: scene modality (screen vs. paper),                                        includes ResNet50 (He et al., 2016), CNNDe-
+semantic topic, and language family. Real and synthetic                                       tection (Wang et al., 2020), NPR (Tan et al.,
+subsets are aligned in scene and topic composition to                                         2024a), FreqNet (Tan et al., 2024b), and addi-
+minimize distributional shortcuts.
+                                                                                              tional benchmarked forensic detectors such as
+                                                                                              Gram-Net (Liu et al., 2020), DFFreq (Yan
+scripts. This enables analysis of how glyph topol-                                            et al., 2026), SAFE (Li et al., 2025), and
+ogy, stroke density, and script-specific frequency                                            SPAI (Karageorgiou et al., 2025).
+patterns affect detection.
+                                                                                          (2) Foundation-model-based methods, which use
+3.3      Dataset Summary and Quality Assurance                                                representations from large-scale pretrained vi-
+Table 1 summarizes the benchmark. TextFake con-                                               sion or vision-language models. This group
+tains 20,000 images, including 10,000 real and                                                includes AIDE (Yan et al., 2025), CLIPDetec-
+10,000 AI-generated samples. The real subset con-                                             tion (Ojha et al., 2023), LaDeDa (Cavia et al.,
+sists of 8,002 screenshots and 1,998 images of pa-                                            2024), DDA (Chen et al., 2025), GAPL (Qin
+per, while the fake subset is generated to match                                              et al., 2025), and CO-SPY (Cheng et al.,
+the benchmark design. All images pass language                                                2025). For CO-SPY, we evaluate both SD-
+and content filtering, and VLM-assigned scene and                                             v1.4 and ProGAN initialization variants.
+topic labels are spot-checked by human annotators,                                        (3) Proprietary VLM APIs: Gemini-3-Pro-
+with estimated agreement above 98%. Metadata                                                  Preview (Google, 2025), GPT-5.4 (OpenAI,
+removal and uniform JPEG re-encoding are applied                                              2026b), and Claude-Sonnet-4.6 (Anthropic,
+to all images before release.                                                                 2026), evaluated through direct zero-shot vi-
+                                                                                              sual prompting.
+4     Experiments: The Illusion of
+      Generalization                                                                     4.2   Results and Analysis
+We evaluate whether detectors that perform well on                                       Table 2 reports per-class accuracy, macro F1, and
+standard natural-image AIGI benchmarks, specifi-                                         average precision for all evaluated methods on
+cally GenImage (Zhu et al., 2023), remain reliable                                       TextFake. No method exceeds 80% overall accu-
+on text-rich images. The central question is not                                         racy, and the results reveal a consistent conservative
+whether detectors can recognize synthetic natural                                        bias across paradigms.
+
+                                                                                     4
+Table 2: Detection performance (%) on TextFake (Ours). Acc. = Overall Accuracy; Real Acc. = Accuracy on real
+image set; Fake Acc. = Accuracy on fake image set; F1 = macro F1; AP = average precision. AP is not applicable
+(N/A) for VLM APIs, which do not output probability scores.
+
+Method                                    Acc.             Real Acc.           Fake Acc.       F1           AP
+ResNet50 (He et al., 2016)                 62.1                98.8              25.4          40.2        76.1
+NPR (Tan et al., 2024a)                    62.1                99.5              24.7          39.5        73.8
+CNNDetection (Wang et al., 2020)           54.2                98.4              10.1          18.1        66.9
+Gram-Net (Liu et al., 2020)                53.5                97.3               9.6          17.1        59.9
+DFFreq (Yan et al., 2026)                  66.0                99.6              32.5          48.9        73.2
+FreqNet (Tan et al., 2024b)                60.4                94.1              26.8          40.3        67.5
+SAFE (Li et al., 2025)                     50.5                83.4              17.5          26.1        52.2
+SPAI (Karageorgiou et al., 2025)           66.3                87.3              45.4          57.4        70.3
+CLIPDetection (Ojha et al., 2023)          61.9                71.8              52.0          57.7        65.6
+LaDeDa (Cavia et al., 2024)                64.9                99.3              30.5          46.5        72.5
+AIDE (Yan et al., 2025)                    32.2                57.7               6.8           9.1        35.3
+CO-SPY (Cheng et al., 2025)                59.1                89.9              28.3          40.9        68.2
+DDA (Chen et al., 2025)                    52.8                94.0              11.6          19.7        54.2
+GAPL (Qin et al., 2025)                    79.3                82.5              76.2          78.7        88.3
+Gemini-3-Pro-Preview (Google, 2025)        77.9                93.4              55.1          66.8        N/A
+GPT-5.4 (OpenAI, 2026b)                    67.6                97.4              37.8          53.8        N/A
+Claude-Sonnet-4.6 (Anthropic, 2026)        74.3                98.8              50.9          67.0        N/A
+
+
+
+   Degradation of conventional artifact priors.            reasoning alone does not provide reliable forensic
+Spatial and frequency methods exhibit a systematic         access to the low-level cues embedded in high-
+pattern: high Real Acc. paired with very low Fake          fidelity text-rich imagery.
+Acc. DFFreq reaches 99.6% Real Acc. but only                  Within TextFake, accuracy also varies across the
+32.5% Fake Acc.; ResNet50 pairs 98.8% Real Acc.            four generator subsets: SPAI obtains 89.8% on
+with 25.4% Fake Acc.; SAFE and FreqNet both fall           Qwen-image2 but drops to 72.4% on Seedream5l,
+below 20% Fake Acc. These methods, calibrated              while DFFreq ranges from 79.2% (Nano2) to 50.2%
+on natural-image benchmarks, default to predict-           (Seedream5l). This within-benchmark variation in-
+ing authenticity on text-rich content, where dense         dicates that text-rendering fidelity affects forensic
+glyph structures suppress the spectral anomalies           separability even within the text-rich domain, moti-
+they rely on. AP scores in the range 52–76 confirm         vating the analysis in Section 5.3.
+that the underlying discriminative signal is weak
+rather than merely misthresholded.                         5     Diagnostic Evaluation: Decoding the
+                                                                 "Invisible Ink"
+   Foundation-model-based detectors show similar
+or more extreme imbalance. AIDE achieves only              Aggregate accuracy alone does not explain why
+32.2% overall Acc., with Fake Acc. of just 6.8%            detectors fail in the text-rich regime. We introduce
+and AP of 35.3. DDA pairs 94.0% Real Acc. with             four diagnostic evaluations isolating: text density,
+11.6% Fake Acc. The notable exception is GAPL,             text-rendering fidelity, transmission perturbations,
+which achieves 79.3% Acc., the highest among all           and language and scene bias.
+evaluated methods, with a roughly balanced per-
+class profile (Real Acc. 82.5%, Fake Acc. 76.2%,           5.1        The Text Density Curse
+F1 78.7, AP 88.3), suggesting that its foundation-
+                                                           Setup & Metric. We hypothesize that the vol-
+model representations are less sensitive to the low-
+                                                           ume of visible text disrupts conventional artifact
+level frequency shifts introduced by dense text.
+                                                           extraction by introducing dense, legitimate high-
+  Performance limits of frontier VLMs. VLM                 frequency structure (Durall et al., 2020; Wang et al.,
+APIs follow the same conservative pattern. GPT-            2020). To test this hypothesis, we run OCR on each
+5.4 pairs 97.4% Real Acc. with only 37.8% Fake             image and use the recognized character count as a
+Acc. (67.6% overall); Claude-Sonnet-4.6 achieves           proxy for text density (Cavia et al., 2024). Images
+98.8% Real Acc. but only 50.9% Fake Acc. (74.3%            are stratified into three percentile bins: LOW (0–
+overall). Gemini-3-Pro-Preview produces the most           10%), MID (45–55%), and HIGH (90–100%). We
+balanced VLM profile (Real Acc. 93.4%, Fake Acc.           report ∆(H − L) as the absolute accuracy change
+55.1%, 77.9% overall). Across all three, semantic          from the LOW bin to the HIGH bin.
+
+                                                       5
+                                                                                                                     Text Density
+Table 3: Accuracy (%) by text-density bin for represen-
+tative detectors.
+
+ Method                             LOW    MID    HIGH    ∆
+ ResNet50 (He et al., 2016)         91.8   55.8   54.5   -37.3
+ CNNDet (Wang et al., 2020)         89.1   46.6   48.1   -41.1
+ Gram-Net (Liu et al., 2020)        88.6   45.2   45.6   -43.0
+ DFFreq (Yan et al., 2026)          94.3   59.4   56.5   -37.8
+ SPAI (Karageorgiou et al., 2025)   81.9   62.3   59.0   -22.9
+ GAPL (Qin et al., 2025)            77.0   78.9   80.8   +3.8           (a) Spatial & Frequency based Method                        (b) Foundation model & API based Method
+
+ Gemini-3P (Google, 2025)           86.8   75.7   76.8   -10.0
+ Sonnet-4.6 (Anthropic, 2026)       92.6   75.2   81.3   -11.3       Figure 5: Accuracy trends over character-count per-
+ GPT-5.4 (OpenAI, 2026b)            90.5   62.9   72.5   -18.0       centiles for (a) spatial and frequency methods and
+                                                                     (b) foundation model and VLM API methods (VLMs
+                                                                     shown as dashed lines). Highlighted regions mark the
+Observation & Insight. Table 3 and Figures 6, 5                      LOW (blue), MID (yellow), and HIGH (red) density
+visualize these effects across bins and percentiles.                 bins. Spatial/frequency methods decline steeply from
+Most spatial and frequency-based detectors ex-                       the LOW region, while foundation models and VLM
+hibit substantial degradation as text density in-                    APIs exhibit smaller but consistent degradation.
+creases: Gram-Net (∆ = −43.0%), CNNDetec-
+tion (∆ = −41.1%), DFFreq (∆ = −37.8%), and
+ResNet50 (∆ = −37.3%) all lose more than 37%
+of accuracy from LOW to HIGH density. Much
+of this collapse occurs at the LOW-to-MID transi-
+tion (e.g., Gram-Net: 88.6% → 45.2%), suggesting
+that even moderate text volume disables spectral
+                                                                                                               Characters Count Percentage
+artifact detection. SPAI shows a comparatively
+modest decline (∆ = −22.9%), consistent with                         Figure 6: Radar visualization of detector accuracy
+its partial reliance on semantic features. VLM                       across LOW, MID, and HIGH text-density bins. (a)
+APIs degrade more moderately (GPT-5.4: −18.0%;                       Spatial and frequency-based methods; (b) foundation
+Claude-Sonnet-4.6: −11.3%), indicating that se-                      model and VLM API methods. The pronounced area
+                                                                     contraction from LOW (blue) to HIGH (red) illustrates
+mantic reasoning partially but not fully offsets the
+                                                                     the Text Density Curse: nearly all methods lose accu-
+density effect.                                                      racy as text density increases, with spatial/frequency
+   Diagnostic insight. The degradation is con-                       detectors collapsing most severely.
+sistent across all spatial and frequency detectors;
+GAPL is the sole exception (∆ = +3.8%), sug-
+gesting its foundation-model representations ac-                     confirming that dense glyph edges overwhelm the
+tively leverage textual structure rather than being                  spectral cues they rely on; SPAI is the excep-
+disrupted by it.                                                     tion, with a smaller gap (∆ = +15.9%) and the
+                                                                     highest TextFake Fake Acc. in its group (45.4%).
+5.2   Text as Forensic Camouflage: Scene-Level                       Foundation methods split into two patterns: CO-
+      Detection Gap                                                  SPY and LaDeDa recover strongly on MSCOCO
+Setup & Metric. To isolate the effect of text con-                   (∆ > 50%), whereas AIDE and DDA remain near-
+tent itself, rather than density gradients, we com-                  chance on both datasets (∆ < 13%), indicating
+pare Fake Accuracy on two GPT Image-2 fake sets:                     generator-specific insensitivity independent of text.
+TextFake (text-rich) and an MSCOCO-based set                         GAPL maintains the best performance across both
+(natural scenes, no visible text). The generator is                  domains (∆ = +19.5%). VLM APIs show moder-
+fixed; scene type is the sole variable.                              ate but consistent gaps; GPT-5.4 drops most sharply
+                                                                     (∆ = +55.5%) while Gemini-3-Pro-Preview is the
+Observation & Insight. Table 4 shows a per-                          most resilient (∆ = +18.2%).
+vasive gap: most detectors score only 10–35%                            Diagnostic insight. High ∆ indicates that text
+Fake Acc. on TextFake but climb to 40–95% on                         actively suppresses otherwise functional features;
+MSCOCO, with the generator held fixed. Among                         low ∆ with low absolute performance signals
+spatial/frequency methods, FreqNet and SAFE suf-                     generator-specific failure. Only GAPL and Gemini
+fer the largest drops (∆ = +63.5% and +58.8%),                       achieve low ∆ from a position of genuine TextFake
+
+                                                                 6
+competence.                                                                         detect across all methods. VLM accuracy drops
+                                                                                    substantially on this subset compared to the lower-
+Table 4: Fake Accuracy (%) on TextFake vs. MSCOCO,
+                                                                                    fidelity Qwen-Image-2 (e.g., Gemini drops by 17.0
+both from GPT Image-2. ∆ = MSCOCO − TextFake.
+                                                                                    pp, Claude by 20.9 pp). Specialized detectors
+ Category     Method                                TextFake   MSCOCO    ∆          also struggle: SPAI shows a sharp monotonic
+              ResNet50 (He et al., 2016)
+              NPR (Tan et al., 2024a)
+                                                      25.4
+                                                      24.7
+                                                                53.7
+                                                                67.0
+                                                                        +28.3
+                                                                        +42.3
+                                                                                    decline as fidelity increases, confirming that better
+              CNNDetection (Wang et al., 2020)        10.1      26.0    +15.9       character rendering suppresses exploitable spectral
+ Spatial &    Gram-Net (Liu et al., 2020)              9.6      40.3    +30.7
+ Frequency    DFFreq (Yan et al., 2026)               32.5      77.3    +44.8       artifacts, whereas the foundation-model-based
+              FreqNet (Tan et al., 2024b)             26.8      90.3    +63.5
+              SAFE (Li et al., 2025)                  17.5      76.3    +58.8       GAPL degrades more gradually.
+              SPAI (Karageorgiou et al., 2025)        45.4      61.3    +15.9
+              CLIPDetection (Ojha et al., 2023)       52.0      83.7    +31.7
+                                                                                       Interestingly, Seedream-5-Lite presents an
+              LaDeDa (Cavia et al., 2024)
+              AIDE (Yan et al., 2025)
+                                                      30.5
+                                                       6.8
+                                                                82.7
+                                                                19.0
+                                                                        +52.2
+                                                                        +12.2
+                                                                                    anomaly. It evades frequency-based detection (DF-
+ Foundation   CO-SPYProGAN (Cheng et al., 2025)       28.1      96.3    +68.2       Freq drops to near-chance 50.2%) but remains eas-
+              CO-SPYSD1.4 (Cheng et al., 2025)        28.3      83.3    +55.0
+              DDA (Chen et al., 2025)                 11.6      16.7    +5.1        ily detectable by VLMs, likely due to lingering
+              GAPL (Qin et al., 2025)                 76.2      95.7    +19.5
+              Gemini-3-Pro-Preview (Google, 2025)     55.1      73.3    +18.2
+                                                                                    semantic or layout anomalies. This supports a
+ VLM API      GPT-5.4 (OpenAI, 2026b)                 37.8      93.3    +55.5       multi-mechanism view: stronger generators first
+              Claude-Sonnet-4.6 (Anthropic, 2026)     50.9      87.3    +36.4
+                                                                                    eliminate spectral artifacts, while semantic cues
+                                                                                    only vanish at peak fidelity (e.g., GPT-Image-2),
+5.3     Cloaking via Rendering Fidelity                                             causing VLM performance to drop sharply.
+Setup & Metric. To examine whether stronger                                            Diagnostic insight. Higher rendering fidelity
+text rendering makes generated images harder to                                     consistently impairs detection accuracy. As genera-
+detect, we define a diagnostic metric named Entity                                  tors perfect character-level statistics, both spectral
+OCR Hit Rate. Conventional string-level metrics                                     and semantic artifacts vanish, effectively closing
+such as CER or WER are sensitive to layout vari-                                    the forensic window for current detectors.
+ation, line breaks, and OCR alignment errors (Du
+et al., 2020). Our metric instead targets factual                                   5.4   Threshold Collapse in the Wild
+rendering fidelity (Khang et al., 2025). For each                                   Setup & Metric. Real-world text-rich forgeries
+generation prompt, we extract critical semantic an-                                 rarely remain in their original file state. Screen-
+chors that should appear in the image, including                                    shots and paper are commonly recompressed by
+percentages, monetary amounts, large numbers,                                       platforms, re-captured from displays, saved across
+drug dosages, stock symbols, and proper nouns.                                      applications, or degraded by low-light sensors. We
+We then OCR the generated image and compute                                         therefore stress-test three representative detectors
+the exact recall rate of these entities in the OCR                                  (GAPL, SPAI, and DFFreq) under five realistic
+output (Liu et al., 2024). This gives a targeted es-                                perturbations with severity standardized to level
+timate of whether the generator has rendered the                                    3: JPEG compression, Gaussian noise, brightness
+factual text that matters for visual plausibility.                                  shift, contrast shift, and screenshot moiré. We re-
+                                                                                    port overall accuracy, and for DFFreq we further
+                          #{entities recovered by OCR}                              report real accuracy and fake accuracy to expose
+HitRate(x) =                                           .                            class-specific threshold shifts.
+                             #{entities in prompt}
+                                                     (1)
+                                                                                    Observation & Insight. Table 7 shows that Gaus-
+Observation & Insight. Table 5 places the En-                                       sian noise, JPEG compression, and screenshot
+tity OCR Hit Rate alongside detection accuracy                                      moiré cause the largest degradation, reducing the
+for representative detectors across all four gener-                                 three-method mean to near-chance accuracy. More
+ator subsets, making the adversarial relationship                                   importantly, Table 8 shows that the failure is not a
+directly visible. The rendering hierarchy: GPT-                                     smooth robustness decline. DFFreq exhibits a bi-
+Image-2 (OpenAI, 2026a) (70.0%) > Seedream-                                         nary shift: under JPEG compression, real accuracy
+5-Lite (ByteDance Seed Team, 2026) (62.8%) >                                        reaches 100.0% while fake accuracy falls to 0.0%;
+Nano-Banana-2 (Google, 2026) (57.4%) > Qwen-                                        under Gaussian noise, fake accuracy rises to 99.6%
+Image-2 (Qwen Team, 2026) (41.8%), maps onto a                                      while real accuracy collapses to 1.2%.
+broadly inverse detection ordering.                                                    Diagnostic insight. The binary flip (JPEG push-
+   GPT-Image-2 achieves the highest text-                                           ing toward all-real with real accuracy 100% and
+rendering fidelity and remains the hardest to                                       fake accuracy 0%; Gaussian noise pushing toward
+
+                                                                                7
+Table 5: Entity OCR Hit Rate and detection accuracy (%) per generator subset for representative methods, sorted by
+hit rate (ascending). Higher hit rate indicates stronger text rendering fidelity; GPT-Image-2, the highest-fidelity
+generator, achieves the lowest detection accuracy across all methods.
+
+                                                                                     GAPL                         SPAI                   DFFreq              Gemini              Claude              GPT-5.4
+ Generator                                                    Hit Rate ↑
+                                                                                (Qin et al., 2025)      (Karageorgiou et al., 2025)   (Yan et al., 2026)   (Google, 2025)    (Anthropic, 2026)     (OpenAI, 2026b)
+
+ Qwen-Image-2 (Qwen Team, 2026)                                   41.8                86.5                        89.8                      62.8               94.9               95.2                    89.3
+ Nano-Banana-2 (Google, 2026)                                     57.4                86.0                        74.3                      79.2               90.5               84.1                    77.8
+ Seedream-5-Lite (ByteDance Seed Team, 2026)                      62.8                85.7                        72.4                      50.2               94.5               92.4                    90.8
+ GPT-Image-2 (TextFake) (OpenAI, 2026a)                           70.0                79.3                        66.3                      66.0               77.9               74.3                    67.6
+
+
+
+
+         Table 6: Latin vs. non-Latin accuracy (%).                                                                  Table 8: Class-wise perturbation behavior for DFFreq
+                                                                                                                     (%). Real Acc. = accuracy on real images; Fake Acc. =
+                    GAPL                             SPAI                       DFFreq                               accuracy on fake images.
+ Group                                                                                               Mean
+                (Qin et al., 2025)         (Karageorgiou et al., 2025)       (Yan et al., 2026)
+
+ Latin               79.59                          63.23                         62.49              68.44
+ Non-Latin           79.02                          68.74                         68.62              72.13           Condition                                   Real Acc.                         Fake Acc.
+ ∆                   -0.57                          +5.51                         +6.13              +3.69
+                                                                                                                     Baseline                                         99.60                              32.46
+                                                                                                                     JPEG                                             100.0                               0.0
+Table 7: Perturbation robustness: overall accuracy (%).                                                              Gaussian Noise                                     1.2                              99.6
+                                                                                                                     Screenshot moiré                                  19.3                              90.3
+                           GAPL                          SPAI                     DFFreq
+ Perturbation                                                                                        Mean
+                      (Qin et al., 2025)       (Karageorgiou et al., 2025)     (Yan et al., 2026)
+
+ Baseline                  79.33                         66.34                      66.03            70.57
+ JPEG                      57.10                         52.75                      50.00            53.28
+                                                                                                                                  Table 9: Accuracy by scene modality (%).
+ Gaussian Noise            51.85                         46.00                      50.40            49.42
+ Brightness                70.10                         58.65                      56.35            61.70
+ Contrast                  71.05                         58.30                      55.00            61.45               Method                                             Screenshot           Paper           ∆
+ Screenshot moiré          49.90                         57.70                      54.80            54.13
+                                                                                                                         GAPL (Qin et al., 2025)                               80.06             76.16     +3.90
+                                                                                                                         SPAI (Karageorgiou et al., 2025)                      70.20             50.43     +19.77
+                                                                                                                         DFFreq (Yan et al., 2026)                             66.70             62.31     +4.40
+                                                                                                                         Gemini-3-Pro-Preview (Google, 2025)                   75.32             88.07     -12.75
+all-fake with real accuracy 1.2% and fake accu-                                                                          Claude-Sonnet-4.6 (Anthropic, 2026)                   72.10             83.74     -11.64
+racy 99.6%) shows that routine transmission per-                                                                         GPT-5.4 (OpenAI, 2026b)                               64.74             77.67     -12.93
+turbations cause complete threshold collapse in
+frequency-domain detectors.
+                                                                                                                     tectors associate with synthesis, while VLM APIs
+5.5      Anti-Intuitive Biases: Language and                                                                         benefit from richer semantic context in images of
+         Scene                                                                                                       paper, a complementarity that points to the need
+                                                                                                                     for hybrid approaches.
+Linguistic Typology Bias. The 28-language
+breakdown yields a counter-intuitive pattern: non-                                                                   6         Conclusion
+Latin scripts are not consistently harder for current
+detectors. As shown in Table 6, frequency-sensitive                                                                  We introduced TextFake, a 20,000-image bench-
+methods improve on non-Latin languages, with                                                                         mark that exposes a critical blind spot in AI-
+SPAI gaining +5.51 pp and DFFreq gaining +6.13                                                                       generated image detection: methods achieving
+pp over their Latin-script performance. GAPL re-                                                                     strong results on natural-scene benchmarks suffer
+mains nearly unchanged.                                                                                              severe degradation on text-rich forgeries, with no
+   Diagnostic insight. The pattern is counter-                                                                       evaluated method exceeding 80% accuracy. Our di-
+intuitive: frequency-sensitive detectors perform                                                                     agnostic analyses trace this gap to three compound-
+better on non-Latin scripts, suggesting that certain                                                                 ing factors: dense glyph strokes and anti-aliased
+script topologies expose rendering inconsistencies                                                                   edges suppress the spectral anomalies that spatial
+more clearly than Latin text.                                                                                        and frequency detectors depend on; improving text-
+                                                                                                                     rendering fidelity progressively erases generative
+Scene Distribution Bias. Scene modality ex-                                                                          footprints; and routine transmission perturbations
+poses a complementary bias. Specialized detectors                                                                    such as JPEG recompression or screenshot moiré
+generally perform better on screenshots than on                                                                      can flip a detector’s decision entirely. Among all
+paper, while VLM APIs show the opposite trend.                                                                       evaluated methods, GAPL proves the most robust,
+SPAI drops from 70.20% on screenshots to 50.43%                                                                      suggesting that foundation-model representations
+on paper, a nearly 20 pp gap.                                                                                        are better equipped to capture character-level struc-
+  Diagnostic insight. Physical acquisition arti-                                                                     ture. These findings underscore the need for detec-
+facts (paper texture, sensor noise, moiré) overlap                                                                   tors purpose-built for the statistical and robustness
+with the spectral cues that frequency-domain de-                                                                     demands of text-rich imagery.
+
+                                                                                                                8
+7   Limitations                                               Siyuan Cheng, Lingjuan Lyu, Zhenting Wang, Xiangyu
+                                                                 Zhang, and Vikash Sehwag. 2025. CO-SPY: com-
+TextFake prioritizes evaluation depth over exhaus-               bining semantic and pixel features to detect synthetic
+tive coverage. Generator selection targets current               images by AI. In IEEE/CVF Conference on Com-
+                                                                 puter Vision and Pattern Recognition.
+best-in-class text-rendering capability; the modu-
+lar design supports incremental expansion as the              Yuning Du, Chenxia Li, Ruoyu Guo, Xiaoting Yin, Wei-
+field evolves, consistent with standard benchmark               wei Liu, Jun Zhou, Yifan Bai, Zilin Yu, Yehua Yang,
+practice. Annotation depth is concentrated in high-             Qingqing Dang, and 1 others. 2020. Pp-ocr: A prac-
+                                                                tical ultra lightweight ocr system. arXiv preprint
+resource languages to enable statistically reliable             arXiv:2009.09941.
+per-language analysis, with multilingual and do-
+main extension left as directions for future com-             Ricard Durall, Margret Keuper, and Janis Keuper. 2020.
+                                                                Watch your up-convolution: CNN based generative
+munity efforts. The zero-shot, binary-classification
+                                                                deep neural networks are failing to reproduce spec-
+protocol reflects the most deployment-relevant eval-            tral distributions. In 2020 IEEE/CVF Conference
+uation regime; more specialized tasks such as                   on Computer Vision and Pattern Recognition, CVPR
+source attribution and region-level analysis are nat-           2020, Seattle, WA, USA, June 13-19, 2020, pages
+ural extensions that build on this foundation.                  7887–7896. Computer Vision Foundation / IEEE.
+
+                                                              Robert Geirhos, Jörn-Henrik Jacobsen, Claudio
+8   Ethics Statement                                            Michaelis, Richard S. Zemel, Wieland Brendel,
+                                                                Matthias Bethge, and Felix A. Wichmann. 2020.
+A portion of the real images depict identifiable                Shortcut learning in deep neural networks. Nat.
+individuals; access to the full dataset requires com-           Mach. Intell.
+pleting a data-use agreement that restricts redistri-         Google. 2025. Gemini 3: Introducing the latest gemini
+bution and limits use to non-commercial research                ai model from google. Accessed: 2026-05-25.
+purposes. Synthetic images are released solely for
+evaluating AIGI detection methods; the agreement              Google. 2026. Nano banana 2: Combining pro capabil-
+                                                                ities with lightning-fast speed. Accessed: 2026-05-
+explicitly prohibits any use facilitating misinforma-           25.
+tion. Annotators provided informed consent and
+were compensated above local minimum wage.                    Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian
+                                                                Sun. 2016. Deep residual learning for image recogni-
+                                                                tion. In IEEE Conference on Computer Vision and
+                                                                Pattern Recognition.
+References
+                                                              Yinan He, Bei Gan, Siyu Chen, Yichun Zhou, Guojun
+Josh Achiam, Steven Adler, Sandhini Agarwal, Lama               Yin, Luchuan Song, Lu Sheng, Jing Shao, and Ziwei
+  Ahmad, Ilge Akkaya, Florencia Leoni Aleman,                   Liu. 2021. Forgerynet: A versatile benchmark for
+  Diogo Almeida, Janko Altenschmidt, Sam Altman,                comprehensive forgery analysis. In IEEE Conference
+  Shyamal Anadkat, and 1 others. 2023. Gpt-4 techni-            on Computer Vision and Pattern Recognition, pages
+  cal report. arXiv preprint arXiv:2303.08774.                  4360–4369.
+Anthropic. 2026. Introducing claude sonnet 4.6. Ac-           You Hu, Chenzhuo Zhao, Changfa Mo, Haotian Liu,
+  cessed: 2026-05-25.                                           and Xiaobai Li. 2026. Scifigdetect: A benchmark
+                                                                for ai-generated scientific figure detection. CoRR,
+Jordan J. Bird and Ahmad Lotfi. 2024. CIFAKE: im-               abs/2604.08211.
+   age classification and explainable identification of
+   ai-generated synthetic images. IEEE Access, pages          Dimitrios Karageorgiou, Symeon Papadopoulos, Ioan-
+  15642–15650.                                                  nis Kompatsiaris, and Efstratios Gavves. 2025. Any-
+                                                                resolution ai-generated image detection by spectral
+ByteDance Seed Team. 2026. Introducing seedream 5.0             learning. In IEEE/CVF Conference on Computer
+  lite. Accessed: 2026-05-25.                                   Vision and Pattern Recognition.
+Bar Cavia, Eliahu Horwitz, Tal Reiss, and Yedid Hoshen.       Minsoo Khang, Sang Chul Jung, Sungrae Park, and
+  2024. Real-time deepfake detection in the real-world.         Teakgyu Hong. 2025. Kieval: Evaluation metric for
+  arXiv preprint arXiv:2406.09398.                              document key information extraction. In Interna-
+                                                                tional Conference on Document Analysis and Recog-
+Ruoxin Chen, Junwei Xi, Zhiyuan Yan, Ke-Yue Zhang,              nition, pages 270–286. Springer.
+  Shuang Wu, Jingyi Xie, Xu Chen, Lei Xu, Isabel
+  Guan, Taiping Yao, and 1 others. 2025. Dual data            Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiaolong Jiang,
+  alignment makes ai-generated image detector easier            Yao Hu, and Fuli Feng. 2025. Improving synthetic
+  generalizable. In The Thirty-ninth Annual Confer-             image detection towards generalization: An image
+  ence on Neural Information Processing Systems.                transformation perspective. In Proceedings of the
+
+
+                                                          9
+  31st ACM SIGKDD Conference on Knowledge Dis-                   Chuangchuang Tan, Huan Liu, Yao Zhao, Shikui Wei,
+  covery and Data Mining.                                          Guanghua Gu, Ping Liu, and Yunchao Wei. 2024a.
+                                                                   Rethinking the up-sampling operations in cnn-based
+Yuezun Li, Ming-Ching Chang, and Siwei Lyu. 2018.                  generative network for generalizable deepfake detec-
+  In ictu oculi: Exposing AI created fake videos by                tion. In IEEE/CVF Conference on Computer Vision
+  detecting eye blinking. In IEEE International Work-              and Pattern Recognition.
+  shop on Information Forensics and Security.
+                                                                 Chuangchuang Tan, Yao Zhao, Shikui Wei, Guanghua
+Ziqiang Li, Jiazhen Yan, Ziwen He, Kai Zeng, Weiwei
+                                                                   Gu, Ping Liu, and Yunchao Wei. 2024b. Frequency-
+  Jiang, Lizhi Xiong, and Zhangjie Fu. 2026. Is artifi-
+                                                                   aware deepfake detection: Improving generalizability
+  cial intelligence generated image detection a solved
+                                                                   through frequency space domain learning. In Thirty-
+  problem? Advances in Neural Information Process-
+                                                                   Eighth AAAI Conference on Artificial Intelligence.
+  ing Systems.
+Yuliang Liu, Zhang Li, Mingxin Huang, Biao Yang,                 Sheng-Yu Wang, Oliver Wang, Richard Zhang, Andrew
+  Wenwen Yu, Chunyuan Li, Xu-Cheng Yin, Cheng-                     Owens, and Alexei A. Efros. 2020. Cnn-generated
+  Lin Liu, Lianwen Jin, and Xiang Bai. 2024. Ocr-                  images are surprisingly easy to spot... for now. In
+  bench: on the hidden mystery of ocr in large multi-              IEEE/CVF Conference on Computer Vision and Pat-
+  modal models. Science China Information Sciences,                tern Recognition.
+  67(12):220102.
+                                                                 Yabin Wang, Zhiwu Huang, and Xiaopeng Hong. 2023.
+Zhengzhe Liu, Xiaojuan Qi, and Philip H. S. Torr. 2020.            Benchmarking deepart detection. arXiv preprint
+  Global texture enhancement for fake face detection               arXiv:2302.14475.
+  in the wild. In 2020 IEEE/CVF Conference on Com-
+  puter Vision and Pattern Recognition.                          Jiazhen Yan, Ziqiang Li, Fan Wang, Ziwen He, and
+                                                                    Zhangjie Fu. 2026. Dual frequency branch frame-
+Zeyu Lu, Di Huang, Lei Bai, Jingjing Qu, Chengyue                   work with reconstructed sliding windows attention
+  Wu, Xihui Liu, and Wanli Ouyang. 2023. Seeing                     for ai-generated image detection. IEEE Transactions
+  is not always believing: Benchmarking human and                   on Information Forensics and Security.
+  model perception of ai-generated images. In Proceed-
+  ings of the 37th International Conference on Neural            Shilin Yan, Ouxiang Li, Jiayin Cai, Yanbin Hao, Xiao-
+  Information Processing Systems.                                  long Jiang, Yao Hu, and Weidi Xie. 2025. A sanity
+                                                                   check for ai-generated image detection. In The Thir-
+Yisroel Mirsky and Wenke Lee. 2021. The creation and               teenth International Conference on Learning Repre-
+  detection of deepfakes: A survey. ACM computing                  sentations.
+  surveys (CSUR), 54(1):1–41.
+                                                                 Xu Zhang, Svebor Karaman, and Shih-Fu Chang. 2019.
+Utkarsh Ojha, Yuheng Li, and Yong Jae Lee. 2023. To-               Detecting and simulating artifacts in GAN fake im-
+  wards universal fake image detectors that generalize             ages. In IEEE International Workshop on Informa-
+  across generative models. In IEEE/CVF Conference                 tion Forensics and Security. IEEE.
+  on Computer Vision and Pattern Recognition, CVPR
+  2023, Vancouver, BC, Canada, June 17-24, 2023.                 Mingjian Zhu, Hanting Chen, Qiangyu Yan, Xudong
+                                                                   Huang, Guanyu Lin, Wei Li, Zhijun Tu, Hailin Hu,
+OpenAI. 2026a. Gpt image 2. Accessed: 2026-05-25.
+                                                                   Jie Hu, and Yunhe Wang. 2023. Genimage: a million-
+OpenAI. 2026b. Introducing gpt-5.4. Accessed: 2026-                scale benchmark for detecting ai-generated image. In
+  05-25.                                                           Proceedings of the 37th International Conference on
+                                                                   Neural Information Processing Systems.
+Yuyang Qian, Guojun Yin, Lu Sheng, Zixuan Chen,
+  and Jing Shao. 2020. Thinking in frequency: Face               A    Dataset Details
+  forgery detection by mining frequency-aware clues.
+  In European Conference on Computer Vision, pages               The TextFake dataset is available at
+  86–103.
+                                                                 https://huggingface.co/datasets/
+Ziheng Qin, Yuheng Ji, Renshuai Tao, Yuxuan Tian,                Yuning0123/TextFake. Figure 7 presents a
+  Yuyang Liu, Yipu Wang, and Xiaolong Zheng.                     structured sample grid from TextFake, orga-
+  2025. Scaling up ai-generated image detection
+                                                                 nized into four rows and ten columns. Rows
+  via generator-aware prototypes. arXiv preprint
+  arXiv:2512.12982.                                              correspond to the four authenticity-modality
+                                                                 conditions (Screen Fake, Paper Fake, Screen Real,
+Qwen Team. 2026. Qwen-image-2.0: Professional info-
+  graphics, exquisite textures, and native 2k resolution.
+                                                                 Paper Real); columns cover ten representative
+ Accessed: 2026-05-25.                                           languages (Chinese, English, Hindi, Arabic, Italian,
+                                                                 Korean, Russian, French, German, Spanish). The
+Ranveer Sukhija, Munish Kumar, and MK Jindal. 2025.
+  Document forgery detection: a comprehensive review.
+                                                                 grid illustrates the breadth of visual variation
+  International Journal of Data Science and Analytics,           that detection methods must handle: glyph
+  20(5):4385–4407.                                               topologies range from Latin alphabets and CJK
+
+                                                            10
+                Chinese   English   Hindi   Arabic   Italian     Korean     Russian    French    German    Spanish
+
+
+
+
+Screen (Fake)
+
+
+
+
+Paper (Fake)
+
+
+
+
+Screen (Real)
+
+
+
+
+Paper (Real)
+
+
+Figure 7: Representative TextFake samples across ten languages and four authenticity–modality conditions. Rows
+(top to bottom): Screen (Fake), Paper (Fake), Screen (Real), Paper (Real). Columns: Chinese, English, Hindi,
+Arabic, Italian, Korean, Russian, French, German, Spanish.
+
+
+ideographs to Arabic cursive, Devanagari, and                   als and handwritten manuscripts. Fake synthetics
+Hangul; layout conventions span social media                    (10,000 images, 50%) are fully AI-generated using
+feeds, newspaper front pages, and photographed                  structured prompts sampled to match the real sub-
+manuscripts; acquisition conditions include clean               set’s scene, topic, and language distributions. The
+screenshots, moiré-affected display re-captures,                80:20 screen-to-paper ratio is preserved in both real
+and low-light paper captures with visible sensor                and fake subsets, ensuring that scene-modality im-
+noise. Even human observers face genuine                        balance does not function as an authenticity signal.
+difficulty distinguishing real from fake.
+   Table 10 lists the 28 languages sorted by sample             B   Real and Fake Accuracy Breakdown
+count. The distribution is intentionally top-heavy:             Table 12 extends the aggregate accuracy results
+Chinese (15.5%) and English (13.6%) together ac-                in Table 2 with a per-class breakdown. Real Acc.
+count for nearly 30% of the benchmark, reflecting               measures the fraction of authentic images correctly
+their prevalence in real-world multilingual infor-              classified; Fake Acc. (equivalently, TPR) measures
+mation ecosystems. A second tier of ten languages               the fraction of AI-generated images correctly iden-
+(Hindi, Arabic, Italian, Korean, Russian, French,               tified as fake. These two metrics capture qualita-
+German, Spanish, Japanese, Portuguese) each con-                tively different failure modes, and their divergence
+tribute 3–6%, while the remaining 16 languages                  exposes the systematic biases that aggregate accu-
+(including Burmese, Amharic, Tagalog, and He-                   racy obscures.
+brew) form a long tail at 1–3% each. This distri-
+                                                                    Among specialized detectors, a strong conserva-
+bution enables high-statistical-power evaluation on
+                                                                tive bias is apparent. DFFreq achieves Real Acc.
+common languages while preserving coverage of
+                                                                of 99.6%, but its Fake Acc. falls to only 32.5%,
+typologically distinct scripts.
+                                                                little better than random for a balanced binary task.
+   Table 11 summarizes the three source categories              This pattern reflects decision thresholds calibrated
+that make up the real subset. Real screenshots                  on natural-image benchmarks where synthesis ar-
+(8,002 images, 40% of the full benchmark) are                   tifacts are more pronounced; on text-rich content,
+collected from live web sources. Real documents                 these detectors default to predicting authenticity.
+(1,998 images, 10%) consist of photographed or                  SPAI shows a milder version of the same bias
+scanned physical media, including printed materi-               (Real Acc. 87.5%, Fake Acc. 45.4%). GAPL stands
+
+                                                           11
+                       Table 10: Language distribution in TextFake (28 languages, sorted by count).
+Language        Count           %   Language      Count           %        Language     Count    %     Language     Count    %
+Chinese            3,108    15.5    English        2,721     13.6          Hindi         1,097   5.5   Arabic         913    4.6
+Italian              895     4.5    Korean           858      4.3          Russian         846   4.2   French         793    4.0
+German               791     4.0    Spanish          722      3.6          Japanese        710   3.6   Portuguese     614    3.1
+Burmese              613     3.1    Indonesian       501      2.5          Amharic         483   2.4   Polish         470    2.4
+Ukrainian            439     2.2    Marathi          439      2.2          Vietnamese      416   2.1   Dutch          397    2.0
+Urdu                 379     1.9    Turkish          375      1.9          Thai            288   1.4   Bengali        250    1.3
+Swahili              250     1.3    Persian          250      1.3          Tagalog         207   1.0   Hebrew         175    0.9
+
+
+       Table 11: Dataset composition by source.                            49.3%) spans 37 percentage points, comparable
+                Source              Count Share                            to the gap between a strong and a random-chance
+                Fake synthetics 10,000 50.0%                               detector.
+                Real screenshot 8,002 40.0%
+                Real document 1,998 10.0%                                     Several patterns stand out. Burmese (86.8%)
+                                                                           benefits from its visually complex letterforms,
+apart as the only specialized detector with a roughly                      whose dense high-frequency glyph structure am-
+balanced profile: Real Acc. 82.4% versus Fake Acc.                         plifies rendering inconsistencies that spectral de-
+76.2%, a gap of only 6.2 pp, suggesting that its                           tectors can exploit; SPAI and DFFreq both exceed
+foundation-model representations are less anchored                         90% on this language alone. Polish (86.0%) and
+to spectral artifacts that text disrupts.                                  Italian (85.2%) rank second and third despite us-
+   VLM APIs exhibit an analogous asymmetry,                                ing the Latin script, likely because their denser
+though somewhat less extreme. Claude-Sonnet-                               diacritic inventories introduce more discrimina-
+4.6 achieves a near-perfect Real Acc. of 99.0%, yet                        tive high-frequency structure than plainer Latin
+its Fake Acc. is only 50.9%; GPT-5.4 pairs 97.3%                           scripts like English. At the opposite end, English
+Real Acc. with 37.8% Fake Acc. Gemini-3-Pro-                               ranks 26th out of 28 languages (57.5%): DFFreq
+Preview produces the most balanced profile among                           drops to 39.6%, below chance, suggesting that the
+VLMs (Real Acc. 93.5%, Fake Acc. 55.1%), which                             large volume of English text-image data in gen-
+explains its leading overall accuracy. The result                          erator training enables highly realistic rendering
+suggests that even models with strong visual and                           that suppresses low-level artifacts. Swahili (51.4%)
+language reasoning exhibit an implicit authenticity                        reaches the lowest mean, essentially random across
+prior that over-predicts real labels on this domain.                       all three methods, indicating that even a familiar
+Table 12: Per-class accuracy (%) on TextFake. Acc. =                       Latin script cannot guarantee detectability when
+overall accuracy; Real Acc. = accuracy on real images;                     the generator’s training distribution is sparse for
+Fake Acc. = accuracy on fake images (true positive rate).
+                                                                           that language.
+Category    Method                       Acc. Real Acc. Fake Acc.
+            GAPL                                                              Table 14 reports per-language accuracy for the
+                                         79.3    82.4      76.2
+Specialized
+            (Qin et al., 2025)                                             three VLM APIs. The ordering differs substantially
+            SPAI
+            (Karageorgiou et al., 2025) 66.4     87.5      45.4
+                                                                           from Table 13, reflecting different competencies.
+            DFFreq
+            (Yan et al., 2026)           66.0    99.6      32.5            Gemini-3-Pro-Preview leads on morphologically
+            Gemini-3-Pro-Preview                                           rich or visually complex non-Latin scripts: Marathi
+                                         78.1    93.5      55.1
+VLM API
+            (Google, 2025)                                                 (100.0%), Turkish (92.3%), Urdu (87.5%), and Ko-
+            Claude-Sonnet-4.6
+                                         74.4    99.0      50.9
+            (Anthropic, 2026)                                              rean (87.5%). Claude-Sonnet-4.6 performs best
+            GPT-5.4
+            (OpenAI, 2026b)              67.6    97.3      37.8            on European languages (Italian 92.7%, Ukrainian
+                                                                           88.6%, Polish 89.1%, and German 85.0%), con-
+                                                                           sistent with its strong multilingual representation
+C    Per-Language Detection Accuracy
+                                                                           of European corpora. GPT-5.4 achieves the single
+Table 13 reports detection accuracy for each of                            highest VLM score on Amharic (93.9%), a script
+the 28 languages under three specialized detectors.                        family where its training distribution appears to
+Languages are sorted by mean accuracy (descend-                            provide unusually discriminative OCR-like render-
+ing) to highlight the performance gradient from                            ing intuition. All three VLMs share a weakness on
+most- to least-detectable scripts. The spread is                           Arabic, Portuguese, and Chinese, where Fake Acc.
+striking: the gap between the highest-mean lan-                            tends to be low, suggesting that high-quality gener-
+guage (Burmese, 86.2%) and the lowest (Swahili,                            ation for these scripts is particularly challenging to
+
+                                                                      12
+Table 13: Per-language overall accuracy (%) for three specialized detectors on TextFake. Languages sorted by mean
+accuracy (descending). Bold indicates the highest score per language.
+                                      GAPL                      SPAI                       DFFreq
+Language        Script           (Qin et al., 2025)   (Karageorgiou et al., 2025)      (Yan et al., 2026)   Mean
+
+Burmese         Burmese                79.3                        90.9                      90.1            86.8
+Polish          Latin                  84.7                        88.5                      84.7            86.0
+Italian         Latin                  85.7                        83.1                      86.7            85.2
+Marathi         Devanagari             79.0                        86.8                      85.2            83.7
+Ukrainian       Cyrillic               81.1                        84.5                      82.9            82.8
+Hindi           Devanagari             81.9                        81.9                      81.0            81.6
+Amharic         Ge’ez                  66.1                        86.5                      87.2            79.9
+German          Latin                  81.3                        75.5                      82.2            79.7
+Urdu            Arabic                 89.7                        77.6                      69.9            79.1
+Dutch           Latin                  80.9                        65.0                      83.6            76.5
+French          Latin                  83.4                        73.0                      72.4            76.3
+Turkish         Latin                  88.5                        69.6                      65.9            74.7
+Korean          CJK                    78.4                        67.7                      76.8            74.3
+Hebrew          Hebrew                 84.6                        67.4                      68.0            73.3
+Tagalog         Latin                  73.0                        73.9                      71.0            72.6
+Japanese        CJK                    79.9                        66.8                      69.2            72.0
+Russian         Cyrillic               78.0                        65.1                      64.5            69.2
+Indonesian      Latin                  74.3                        61.9                      70.5            68.9
+Arabic          Arabic                 80.8                        61.8                      63.4            68.7
+Chinese         CJK                    78.9                        59.1                      56.1            64.7
+Persian         Arabic                 89.3                        58.8                      42.8            63.6
+Bengali         Bengali                72.8                        58.0                      55.2            62.0
+Portuguese      Latin                  69.2                        53.8                      62.4            61.8
+Spanish         Latin                  74.1                        56.1                      54.9            61.7
+Vietnamese      Latin                  70.9                        48.1                      65.4            61.5
+English         Latin                  81.2                        51.7                      39.6            57.5
+Thai            Thai                   65.3                        39.9                      62.5            55.9
+Swahili         Latin                  66.8                        47.4                      40.0            51.4
+
+
+
+detect semantically.                                         and Society & Livelihood present the greatest chal-
+                                                             lenge for specialized detectors, with means of ap-
+D    Topic-Level Detection Accuracy                          proximately 69% and 68%, reflecting more varied
+                                                             layouts and higher generator rendering quality in
+TextFake images are annotated with one of four               these domains. Among VLMs, Claude-Sonnet-4.6
+semantic topic categories: Politics & Military (gov-         and Gemini-3-Pro-Preview maintain consistently
+ernment actions, elections, armed conflicts), Soci-          strong performance across all four categories, while
+ety & Livelihood (social welfare, health, education),        GPT-5.4 shows a larger variance (69.6% on Poli-
+Technology & Finance (tech industry, market data,            tics vs. 64.6% on Society), indicating less stable
+financial reporting), and Culture & Entertainment            cross-topic generalization.
+(sports, arts, celebrity, lifestyle). Real and fake
+subsets are balanced across topics to within 1.3             E   VLM Detection Prompt Template
+percentage points, ensuring that topic distribution
+cannot serve as a proxy for authenticity.                    All three VLM APIs (Gemini-3-Pro-Preview, GPT-
+   Table 15 shows that Politics & Military is the            5.4, Claude-Sonnet-4.6) are queried in a zero-shot
+most detectable category across both specialized             setting with a fixed prompt template (Figure 8) de-
+detectors (mean 72.9%) and VLM APIs (Gemini                  signed to elicit forensically relevant analysis rather
+76.7%, Claude 76.9%). This is likely due to stereo-          than content-level plausibility judgments. A key
+typed visual templates (standardized mastheads,              design choice is the explicit redirection toward low-
+prominent bylines, and branded color schemes),               level visual evidence: rather than asking whether
+which simultaneously amplify synthesis artifacts             an image “looks real,” the prompt directs models
+and provide richer semantic anchors for VLMs.                to inspect character-level rendering quality, image
+Culture & Entertainment is notably the strongest             artifact signatures, and layout consistency with au-
+topic for Gemini (83.6%), a 15-point margin over             thentic platform conventions. This is necessary
+Claude (68.9%), suggesting that visually distinc-            because high-fidelity forgeries can be semantically
+tive entertainment imagery aligns particularly well          plausible while still carrying detectable rendering
+with Gemini’s training. Technology & Finance                 defects at the glyph or artifact level.
+
+                                                        13
+Table 14: Per-language overall accuracy (%) for three VLM APIs on TextFake. Languages sorted by Gemini-3-Pro-
+Preview accuracy (descending). Bold indicates the highest score per language.
+                                             GPT-5.4                     Claude-Sonnet-4.6            Gemini-3-Pro-Preview
+Language                  Script          (OpenAI, 2026b)                (Anthropic, 2026)               (Google, 2025)
+Marathi                   Devanagari           85.1                            89.4                             100.0
+Dutch                     Latin                83.8                            82.8                             91.7
+Turkish                   Latin                66.7                            76.7                              92.3
+Korean                    CJK                  75.3                            73.2                             87.5
+Hindi                     Devanagari           72.2                            75.9                             86.1
+Indonesian                Latin                80.9                            87.2                             86.7
+Ukrainian                 Cyrillic             71.1                            88.6                             85.7
+Burmese                   Burmese              81.7                            86.7                              83.3
+Polish                    Latin                89.1                            89.1                             86.7
+Amharic                   Ge’ez                93.9                            89.8                              84.2
+Italian                   Latin                88.5                            92.7                             81.0
+Japanese                  CJK                  75.0                            84.7                             78.3
+German                    Latin                79.0                            85.0                             77.8
+Russian                   Cyrillic             69.1                            79.7                             75.0
+English                   Latin                65.6                            77.2                              77.5
+French                    Latin                63.2                            73.3                             75.0
+Urdu                      Arabic               58.7                            63.0                              87.5
+Vietnamese                Latin                63.0                            56.4                             71.4
+Chinese                   CJK                  56.4                            66.1                             76.3
+Spanish                   Latin                56.3                            70.3                             77.3
+Arabic                    Arabic               53.5                            58.1                              72.0
+Portuguese                Latin                46.0                            58.2                             58.8
+Thai                      Thai                 61.3                            50.0                             54.6
+
+Table 15: Detection accuracy (%) by topic category. Methods: GAPL (Qin et al., 2025), SPAI (Karageorgiou
+et al., 2025), DFFreq (Yan et al., 2026), GPT-5.4 (OpenAI, 2026b), Claude-Sonnet-4.6 (Anthropic, 2026), and
+Gemini-3-Pro-Preview (Google, 2025).
+Topic                              GAPL       SPAI               DFFreq               GPT             Claude             Gemini
+Politics & Military                81.6        70.3               66.8                69.6             76.9               76.7
+Culture & Entertainment            81.1        69.0               66.5                65.7             68.9               83.6
+Technology & Finance               79.4        61.1               65.8                69.0             75.6               77.6
+Society & Livelihood               76.3        64.2               64.6                64.6             72.4               77.0
+
+
+
+
+  The prompt instructs the model to judge each                    System message
+image along four dimensions, including text ren-                  You are an expert in digital image forensics. Your task is to
+                                                                  determine whether a provided image is real (an authentic
+dering fidelity, visual artifacts, layout authenticity,           photograph or screen capture) or AI-generated/fabricated.
+and semantic coherence, and respond with a single-
+                                                                  User message
+word label (REAL or FAKE) followed by a one-
+                                                                  Please analyze the image carefully. Pay attention to the
+sentence justification. No few-shot examples or                   following cues:
+chain-of-thought scaffolding are provided, keeping                1. Text rendering: Are characters properly formed, con-
+the evaluation strictly zero-shot.                                sistently spaced, and free of distortion or hallucinated
+                                                                  glyphs?
+F       GPU and API Usage                                         2. Visual artifacts: Are there unnatural blending bound-
+                                                                  aries, compression inconsistencies, or irregular high-
+To draw main conclusions, we conducted experi-                    frequency patterns?
+                                                                  3. Layout authenticity: Do interface elements, borders,
+ments using about 40 GPU hours of RTX A6000                       and typography match those of genuine platforms or print
+and about 100,000 API requests, covering both                     media?
+                                                                  4. Semantic coherence: Does the content make logical
+API-based generation and VLM API evaluations.                     sense for the claimed source or publication?
+                                                                  Based on your analysis, respond with exactly one word
+                                                                  on the first line (REAL or FAKE), followed by a single
+                                                                  sentence of justification.
+                                                                 Figure 8: Zero-shot VLM detection prompt used for
+                                                                 Gemini-3-Pro-Preview, GPT-5.4, and Claude-Sonnet-
+                                                                 4.6. Only the binary label (first line) is used for comput-
+                                                                 ing accuracy.
+
+
+
+
+                                                            14
+

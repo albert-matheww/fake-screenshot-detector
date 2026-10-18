@@ -20,10 +20,6 @@ services:
     dockerContext: ./backend
     plan: free
     envVars:
-      - key: ELA_QUALITY
-        value: "90"
-      - key: FAKE_THRESHOLD
-        value: "0.5"
       - key: CORS_ORIGINS
         value: "*"
 

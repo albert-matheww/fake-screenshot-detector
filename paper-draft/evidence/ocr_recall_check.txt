@@ -1,0 +1,2 @@
+first corpus (OCR confidence threshold 40): test edited images 531; edited word measurable in 358 (67.4%); jpeg 78% (n=179), png 78% (n=175), resize_jpeg 46% (n=102), resize_png 45% (n=75)
+final corpus (all OCR boxes kept, single glyphs skipped): test edited images 2184; edited word measurable in 1970 (90.2%); jpeg 94% (n=771), png 94% (n=725), resize_jpeg 81% (n=398), resize_png 82% (n=290)

@@ -1,0 +1,4 @@
+Hugging Face dataset file listing for Zegkim/FSTS (API tree, retrieved 2026-10-15):
+FSTS.zip 46043435687 bytes (about 46.0 GB)
+README.md 3620 bytes
+.gitattributes 2461 bytes

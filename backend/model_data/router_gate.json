@@ -1,0 +1,26 @@
+{
+ "content": {
+  "validated": false,
+  "n": 23,
+  "answered": 18,
+  "accuracy": 1.0,
+  "accuracy_interval": [
+   0.824,
+   1.0
+  ],
+  "wrong_answer_rate": 0.0,
+  "reason": "needs n >= 60, answers on at least half, accuracy >= 0.85, wrong-answer rate <= 0.05; got n=23, answered 18, accuracy 1.00"
+ },
+ "structure": {
+  "validated": false,
+  "n": 23,
+  "answered": 23,
+  "accuracy": 0.174,
+  "accuracy_interval": [
+   0.07,
+   0.371
+  ],
+  "wrong_answer_rate": 0.826,
+  "reason": "needs n >= 60, answers on at least half, accuracy >= 0.85, wrong-answer rate <= 0.05; got n=23, answered 23, accuracy 0.17"
+ }
+}

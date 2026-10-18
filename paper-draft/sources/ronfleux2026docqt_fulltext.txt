@@ -1,0 +1,875 @@
+                                             DocQT: Improving Document Forgery
+                                           Localization Robustness via Diverse JPEG
+                                                      Quantization Tables
+
+                                               Kylian Ronfleux–Corail1,2[0009−0006−6601−4212] , Guillaume
+                                        Bernard1[0000−0001−5945−4865] , Mickaël Coustaty2[0000−0002−0123−439X] , and
+                                                           Nicolas Sidère2[0000−0001−6719−5007]
+                                                                     1
+                                                                       MAIF, Niort, France
+                                                2
+                                                    L3i Laboratory, La Rochelle University, La Rochelle, France
+
+
+
+
+arXiv:2605.19688v2 [cs.CV] 6 Aug 2026
+                                            Abstract. Document manipulation localization models achieve strong
+                                            performance on public benchmarks yet fail to generalize to operational
+                                            document workflows. We identify a critical and overlooked source of
+                                            this gap: the mismatch between the narrow distribution of JPEG quan-
+                                            tization tables used during training — restricted to standard libjpeg
+                                            quality factors — and the heterogeneous compression profiles encoun-
+                                            tered in real-world insurance document pipelines. To isolate this fac-
+                                            tor, we conduct a controlled factorial study comparing two architectures
+                                            with contrasting levels of quantization table awareness — FFDN [2] and
+                                            Mesorch [20] — each trained under either standard quality factor aug-
+                                            mentation (Standard-QT ) or operationally calibrated quantization tables
+                                            sampled from DocQT, a quantization-table bank derived from a MAIF
+                                            operational image corpus (Real-QT ), and evaluated under three recom-
+                                            pression conditions. Training under Real-QT yields substantial localiza-
+                                            tion gains on DocTamper [15] and significantly reduces the pixel-level
+                                            false positive rate on authentic operational documents, but only for ar-
+                                            chitectures that explicitly ingest the quantization table as input. The re-
+                                            leased DocQT quantization-table dataset and compression-reproduction
+                                            material are directly available at https://github.com/Kyliroco/Improv
+                                            ing-Document-Forgery-Localization-Robustness-via-Diverse-JPEG-Q
+                                            uantization-Tables. These results demonstrate that standard quality
+                                            factor augmentation does not adequately proxy operational compression
+                                            diversity, and that architectural choices explicitly conditioning on the
+                                            quantization table provide a meaningful robustness advantage for real-
+                                            world deployment.
+
+
+                                            Keywords: Document Manipulation Localization · JPEG Quantization
+                                            Tables · Image Forensics · Compression Robustness
+2       K. Ronfleux–Corail et al.
+
+1     Introduction
+
+1.1   Document Manipulation Localization in Insurance Operational
+      Workflows
+
+Organizations such as insurance companies, public agencies, and financial in-
+stitutions handle thousands of documents every day—ranging from claims and
+contracts to invoices and supporting paperwork. These documents constitute a
+primary vector for fraud and money laundering attempts [1,13,3]. As an illustra-
+tive example of operational scale, internal observations at MAIF, a French insur-
+ance company, indicate that over 100,000 documents are received per month for
+claim management alone. At such volumes, manual inspection is impractical, and
+automated localization systems are required [1]. In this context, false positives—
+that is, authentic documents incorrectly flagged as tampered—trigger additional
+manual reviews, increasing both processing time and operational costs. As ar-
+gued by Guillaro et al. [5], in a realistic deployment where manipulated images
+are rare, a high false alarm rate can render a system counterproductive, with
+false positives drastically outnumbering true positives.
+    In this work, we focus on Document Manipulation Localization (DML), de-
+fined as the task of producing a pixel-level segmentation mask identifying tam-
+pered regions, independently of any intent classification. Importantly, the pres-
+ence of tampering does not imply fraudulent intent: many legitimate documents
+undergo modifications such as highlighting, digital annotations, or watermarking
+that do not constitute forgery [13]. Fraud determination remains a business-level
+decision [1]. Throughout this paper, the terms tampering and manipulation are
+used interchangeably to denote pixel-level alteration; forgery is reserved for cases
+in which the intent to deceive is established.
+    The majority of manipulation localization models are developed and evalu-
+ated on natural images, while document-oriented methods remain comparatively
+scarce [4,15]. We argue that the performance reported on public benchmarks such
+as DocTamper [15] overstates the practical robustness of these models when de-
+ployed in operational workflows. This paper investigates the primary source of
+this generalization gap: the mismatch between the narrow distribution of JPEG
+quantization tables used during model training and the heterogeneous compres-
+sion profiles present in real-world document pipelines.
+
+
+1.2   Problem Statement: Quantization Table Mismatch
+
+JPEG compression artifacts constitute a central forensic signal exploited by
+state-of-the-art localization models [9,15,2]. However, the forensic cues these
+models learn—in particular double-quantization residuals observed in the DCT
+domain—depend directly on the specific identity of the quantization table rather
+than merely a nominal quality factor [17,9]. Most existing training pipelines re-
+strict JPEG augmentation to standard quality factors derived from libjpeg, which
+correspond to a small, discrete subset of all possible quantization tables [17,8].
+                                DocQT for Forgery Localization Robustness        3
+
+    This assumption breaks down in operational settings. A MAIF operational
+image corpus reveals a broad diversity of acquisition devices, scanning software,
+and document conversion chains encountered in insurance workflows [14]; from
+this corpus, we derive DocQT, a dataset of 859 distinct luminance quan-
+tization tables. In comparison, public benchmarks such as DocTamper [15]
+and T-SROIE [18] expose only a single quantization table, while SROIE [6] con-
+tains at most 6 distinct configurations. This mismatch between training-time
+and inference-time quantization table distributions is expected to degrade local-
+ization accuracy and increase false positives on intact documents [9,17].
+    To address this gap, we conduct a comparative experimental study that sys-
+tematically controls the quantization table distribution during both training and
+evaluation, following the evaluation framework of ForensicHub [4] and the bench-
+marking methodology of IMDL-BenCo [12]. Our contributions are twofold: first,
+we quantify the domain shift induced by the mismatch between training-time
+quantization tables and those encountered in operational workflows; second, we
+demonstrate that retraining with operational insurance quantization tables sig-
+nificantly reduces false positives on authentic documents while preserving local-
+ization performance on tampered ones.
+
+2     Related Works
+2.1   Document Manipulation Localization
+Document manipulation localization is an active research field in image ma-
+nipulation detection and localization, first studied extensively on natural scene
+images before being adapted to the specific challenges of documents [4,12]. In
+this section, we review both lines of work, focusing on methods related to the
+JPEG compression artifacts that are central to our problem.
+
+Alteration Detection and Localization in Natural Images. Natural im-
+ages constitute the primary domain in which manipulation localization methods
+have been developed [4,2,10]. A recurring principle across this literature is the
+exploitation of low-level statistical inconsistencies—noise patterns, compression
+artifacts, or boundary discontinuities—that betray the presence of a manipula-
+tion even when it is visually convincing [9,2,20].
+    ManTra-Net [19] operationalizes this principle through self-supervised train-
+ing: a manipulation-trace feature extractor is trained to classify 385 distinct
+manipulation types, and forgery localization is then cast as a local anomaly
+detection problem using a ConvLSTM-based module that computes Z-score de-
+viations across multiple window scales. While powerful in its generality, this
+approach does not explicitly model compression artifacts, which limits its sen-
+sitivity to the JPEG-specific traces prevalent in document images. CAT-Net [9]
+directly addresses this limitation by processing DCT coefficients through a dedi-
+cated stream that learns the statistical distribution of double-quantization resid-
+uals, combined with a standard RGB stream; the method relies on the obser-
+vation that a region compressed twice leaves characteristic periodic patterns in
+4       K. Ronfleux–Corail et al.
+
+the DCT coefficient histograms, whose structure depends on the ratio between
+the two quantization steps. PSCC-Net [10] pursues a different strategy, focusing
+on multi-scale spatial consistency rather than compression traces: a top-down
+path built on a lightweight HRNet backbone extracts multi-scale features, while
+a bottom-up path progressively refines manipulation masks from coarse to fine
+scales through a Spatio-Channel Correlation Module (SCCM) that captures both
+spatial and channel-wise correlations.
+    TruFor [5] extends this line of work by introducing a multimodal fusion frame-
+work that combines the RGB image with Noiseprint++, a learned noise-sensitive
+fingerprint trained via self-supervised contrastive learning on real images sub-
+jected to 512 distinct editing histories; both modalities are fused through a
+SegFormer-based transformer encoder, and the framework additionally produces
+a reliability map identifying regions where localization predictions are uncertain,
+along with a global integrity score. This reliability mechanism is particularly rel-
+evant in operational settings where false alarms carry a significant cost [5]. Build-
+ing on the limitations of purely microscopic approaches, Mesorch [20] argues that
+manipulation operates simultaneously at the microscopic level through low-level
+forensic traces and at the macroscopic level through semantic object-level alter-
+ations, and addresses both by running a CNN branch and a Transformer branch
+in parallel: the CNN processes high-frequency DCT-enhanced features to capture
+local textural anomalies, while the Transformer processes low-frequency DCT-
+enhanced features to model global semantic context, with an adaptive weighting
+module dynamically adjusting the contribution of each scale.
+    These models have become standard references in image manipulation local-
+ization [4,12]. However, they are designed and evaluated under assumptions—
+rich visual content, diverse textures, standard compression profiles—that do
+not hold for administrative document images, motivating the development of
+document-specific approaches.
+
+
+
+Specific Case of Documents. Document images differ fundamentally from
+natural images in their forensic properties. The presence of text, regular lay-
+outs, and uniform backgrounds suppresses the boundary artifacts that natural
+image methods rely upon, while artifacts introduced by scanning, printing, or
+document conversion processes create additional confounding signals [3,15,11].
+Even a single substituted character can substantially alter the semantic content
+of a document [15,3,11], which distinguishes document forensics from natural
+image forensics where manipulations typically affect larger semantic regions. Ac-
+cordingly, document-focused approaches have predominantly targeted pixel-level
+localization rather than whole-image detection [4,12,15].
+    As illustrated in Figure 1, the manipulation operations encountered in doc-
+ument forensics—copy-move, splicing, generation, and coverage—are predom-
+inantly applied at the character or word level [15,11,1]. These operations are
+typically confined to small areas and forensic traces they leave are subtle and
+easily masked by the uniform backgrounds features [2,3].
+                                DocQT for Forgery Localization Robustness        5
+
+
+
+
+           (a) Copy-move
+
+
+
+
+            (b) Coverage
+
+
+
+
+                                                            (d) Splicing
+
+
+
+           (c) Generation
+
+Fig. 1: Illustration of the 4 manipulation types considered in document forensics -
+Red elements denote the tampered regions. (a) Copy-move: a region is duplicated
+within the same document. (b) Coverage: a patch conceals existing content.
+(c) Generation: new pixel content is synthesized to replace a region. (d) Splicing:
+a region extracted from a different source document is inserted into the target.
+
+
+
+    DTD [15] establishes the foundational framework for this domain by combin-
+ing a Visual Perception Head with a Frequency Perception Head operating on
+raw DCT coefficients, fused through a Swin-Transformer encoder and a Multi-
+view Iterative Decoder (MID) that progressively aggregates features at multi-
+ple scales; to improve robustness against JPEG compression, the authors fur-
+ther propose Curriculum Learning for Tampering Detection (CLTD), a training
+paradigm that progressively increases compression difficulty with quality factors
+drawn from [75, 100]. FFDN [2] extends this dual-branch design by identifying
+two residual weaknesses: the incomplete integration of frequency information into
+the RGB feature space, and the loss of fine-grained high-frequency traces during
+downsampling. It addresses these through a Visual Enhancement Module (VEM)
+that injects frequency information into the RGB stream using zero-initialized
+convolutions, and a Wavelet-like Frequency Enhancement (WFE) module that
+explicitly decomposes features into high- and low-frequency components. Both
+6       K. Ronfleux–Corail et al.
+
+DTD and FFDN share a common architectural property that is central to this
+study: they explicitly ingest the JPEG quantization table as an input
+to the network, making their learned representations inherently dependent on
+the distribution of quantization tables seen during training.
+     In contrast, CAFTB [16] operates in the noise domain: two parallel branches—
+one extracting spatial features from the RGB image, the other applying an SRM
+filter to expose global noise inconsistencies—are fused through a cross-attention
+module to integrate local and global forgery cues. TIFDM [3] similarly enhances
+forgery traces from multiple domains through a dedicated deep module before
+feeding them into an encoder-decoder network with a multiscale attention mod-
+ule, with a particular emphasis on robustness to real-world distortions. Neither
+CAFTB nor TIFDM explicitly processes quantization tables, relying instead on
+implicit pixel-domain or noise-domain artifacts.
+     Recent benchmarking efforts have begun to unify the evaluation of these het-
+erogeneous approaches. ForensicHub [4] provides a modular and configuration-
+driven architecture that decomposes forensic pipelines into interchangeable com-
+ponents across datasets, transforms, models, and evaluators, enabling cross-
+domain comparisons across the four main forensic tasks including document
+manipulation localization. Similarly, IMDL-BenCo [12] standardizes the train-
+ing and evaluation protocols for image manipulation detection and localization.
+Both frameworks highlight a persistent gap: the robustness of document forensic
+models to compression variability remains insufficiently characterized, as evalu-
+ations are typically restricted to standard quality factor ranges.
+
+2.2   JPEG Quantization as an Alteration Detector
+JPEG compression artifacts have long constituted a central forensic signal in im-
+age authenticity analysis [17,9,8]. One of the earliest practical methods exploiting
+these artifacts is Error Level Analysis (ELA) [8], which detects inconsistencies
+in residual compression error across image regions: when a tampered image is
+re-saved at a fixed quality, authentic regions and manipulated regions exhibit
+different error levels because they carry distinct compression histories. Since
+these artifacts originate from block-based DCT coding followed by coefficient
+quantization, forensic cues are commonly analyzed through compression incon-
+sistencies observed in the DCT domain [9,15,2], whose manifestation is governed
+by the underlying quantization tables [17,9].
+     JPEG compression partitions the image into non-overlapping 8 × 8 blocks,
+transforms each block into the frequency domain via the Discrete Cosine Trans-
+form (DCT), and then divides the resulting 64 coefficients component-wise by
+a 8 × 8 quantization matrix before rounding to the nearest integer [17,9]. This
+quantization step is the primary source of information loss: large matrix en-
+tries aggressively suppress high-frequency coefficients, while small entries pre-
+serve detail at the cost of larger file size [17,8]. As illustrated in Figure 2, the
+conventional quality factor q ∈ [1, 100] scales a reference matrix according to
+a fixed formula [17], producing quantization tables with markedly different co-
+efficient magnitudes—and thus different compression artifacts—across quality
+                                                                            DocQT for Forgery Localization Robustness                                                               7
+
+levels. When a JPEG image undergoes a second compression cycle, the DCT
+coefficient histograms exhibit characteristic periodic patterns whose structure
+depends on the ratio between the two quantization matrices [17,9]. It is pre-
+cisely these double-quantization residuals that methods such as CAT-Net [9]
+and the Frequency Perception Head of DTD and FFDN [15,2] are designed to
+detect, which explains why the identity of the quantization matrix—rather than
+merely the quality level—is critical to their correct operation. The JPEG stan-
+dard defines separate quantization tables for luminance (Y) and chrominance
+(Cb, Cr) channels [17]; since the forensic models considered in this study op-
+erate exclusively on the luminance table [15,2,9], all subsequent references to
+quantization table denote the luminance table.
+
+
+                                             Quality Factor = 50                                                              Quality Factor = 90
+                                 0   16 11 10 16 24 40 51 61                                                      0   3   2     2     3     5     8    10 12     120
+
+                                 1   12 12 14 19 26 58 60 55                                                      1   2   2     3     4     5    12 12 11        100
+
+
+
+
+DCT frequency index (vertical)                                                   DCT frequency index (vertical)
+                                 2   14 13 16 24 40 57 69 56                                                      2   3   3     3     5     8    11 14 11
+
+
+
+                                                                                                                                                                      Quantization step
+                                                                                                                                                                 80
+                                 3   14 17 22 29 51 87 80 62                                                      3   3   3     4     6    10 17 16 12
+                                                                                                                                                                 60
+                                 4   18 22 37 56 68 109 103 77                                                    4   4   4     7    11 14 22 21 15
+                                 5   24 35 55 64 81 104 113 92                                                    5   5   7     11 13 16 21 23 18                40
+
+                                 6   49 64 78 87 103 121 120 101                                                  6   10 13 16 17 21 24 24 20                    20
+                                 7   72 92 95 98 112 100 103 99                                                   7   14 18 19 20 22 20 21 20
+                                     0   1      2    3     4     5     6    7                                         0   1      2    3     4     5     6    7
+                                         DCT frequency index (horizontal)                                                 DCT frequency index (horizontal)
+
+Fig. 2: Standard libjpeg luminance quantization tables at two quality fac-
+tors. Each cell value represents the quantization step for the corresponding DCT
+frequency coefficient. At q = 50 (left), high-frequency coefficients are aggressively
+quantized (steps up to 121), discarding fine detail. At q = 90 (right), steps are
+much smaller (maximum 24), preserving more information. Both tables are de-
+rived from the same base matrix scaled by q [17], and represent only two points
+in the discrete family of tables reachable through standard quality factors.
+
+
+
+    A key aspect of the JPEG standard is that quantization tables are not univer-
+sally fixed: virtually all graphical applications and digital cameras rely on hard-
+coded, manufacturer-specific tables optimized for their own hardware and color
+pipelines [8]. As a consequence, a given nominal quality level does not correspond
+to a unique quantization table across encoders. For example, a JPEG saved at
+quality 80% in Adobe Photoshop uses quantization tables equivalent to quality
+91% in libjpeg [8]. In practice, however, many existing forensic works implicitly
+assume that compression follows standard libjpeg-based encoding conventions:
+they parameterize compression exclusively through integer quality factors, which
+8       K. Ronfleux–Corail et al.
+
+map to quantization tables via a fixed formula [17] and thus cover only a small,
+discrete subset of the tables encountered in practice.
+    Among models that incorporate explicit compression augmentation, the qual-
+ity factor ranges remain narrow: CAT-Net [9] uses factors in [60, 100], DTD [15]
+and FFDN [2] apply random recompression restricted to [75, 100], and Tru-
+For [5], the broadest of these, uses [30, 100]. Several other models, including
+ManTra-Net [19], PSCC-Net [10], and Mesorch [20], include no explicit JPEG
+augmentation at all. All these configurations are derived from integer quality fac-
+tors, which correspond to a small discrete subset of possible quantization tables
+and implicitly assume that compression follows standard tool-based encoding
+conventions [17]. Despite the known diversity of quantization tables in
+real-world imaging pipelines [8], no existing work has systematically
+analyzed the impact of this diversity on the performance of docu-
+ment manipulation localization models, nor proposed training strategies
+to mitigate the resulting distribution shift.
+
+
+2.3   Proposed Methodology
+
+To address the gap identified in the preceding sections, we propose:
+ 1. A dataset analysis comparing the JPEG quantization table distributions
+    across public scientific benchmarks and an operational insurance corpus,
+    quantifying the extent of the heterogeneity gap (Section 3).
+ 2. An experimental protocol designed to isolate the impact of JPEG quan-
+    tization table distribution shift on forgery localization performance, through
+    a factorial design that crosses two recompression pipelines with two struc-
+    turally contrasting models (Section 4).
+
+
+3     Dataset Analysis
+
+3.1   Datasets
+
+The datasets considered in this study were selected to cover the majority of pub-
+licly available document image datasets containing both altered and non-altered
+samples, spanning a wide range of document types, manipulation methods, and
+acquisition conditions. This selection includes DocTamper [15], RTM [11], T-
+SROIE [18], SROIE [6], FUNSD [7], and Find-it / Find-it Again [1,13] as public
+benchmarks, alongside the MAIF operational image corpus used to evaluate
+model behavior on real operational data exhibiting heterogeneous acquisition
+and compression pipelines. Due to privacy and confidentiality constraints, the
+underlying MAIF document images cannot be publicly released. From this image
+corpus, however, we derive DocQT, a public dataset of header-extracted lumi-
+nance quantization tables used to define the Real-QT condition; these tables
+do not contain document content and are released, together with the material
+required to reproduce the compression protocol, at https://github.com/Kylir
+oco/Improving-Document-Forgery-Localization-Robustness-via-Diverse-JPE
+                               DocQT for Forgery Localization Robustness         9
+
+G-Quantization-Tables. This combination enables a comprehensive evaluation
+of model robustness across both controlled and operational environments.
+    We establish a terminological distinction between document images and nat-
+ural images. Document images refer to administrative or insurance-related docu-
+ments processed in operational contexts. In such images, character-level tamper-
+ing can be visually imperceptible: the absence of texture suppresses the bound-
+ary artifacts that detection methods rely upon, making localization significantly
+more challenging [2,3,11,15]. Documents processed in operational contexts ex-
+hibit substantial diversity both in content type—ranging from administrative
+forms to photographic evidence captured on smartphones [1,15,11]—and in im-
+age format, as they are commonly submitted as native PDFs, scanned PDFs,
+or raster images (JPEG or PNG) [14]. Raster photographs are predominantly
+stored in JPEG format, which introduces compression artifacts whose charac-
+teristics depend directly on the quantization table used during encoding [8,9].
+
+
+
+Table 1: Datasets considered in this work. CM: copy-move; SP: splicing; GN:
+generation; IP: inpainting; CV: coverage. The symbol ⋆ denotes unaltered refer-
+ence sets used for false positive evaluation only.
+Dataset                 Subset # Images      Mod. Type         # Altered # QT
+                        Train   120 000     CM / GN / SP        120 000    1
+                        Test    30 000      CM / GN / SP         30 000    1
+DocTamper [15]          FCD      2 000      CM / GN / SP          2 000    1
+                        SCD     18 000      CM / GN / SP         18 000    1
+                        Train    5 803  CM / GN / SP / IP / CV    4 000    1
+RTM [11]
+                        Test     3 197  CM / GN / SP / IP / CV    2 000    1
+                        Train     626            GN                626     1
+T-SROIE [18]
+                        Test      360            GN                360     1
+SROIE⋆ [6]              –         973             –                 –      6
+Find-it [1]             –        1 180    CM / GN / SP / IP        240     6
+FUNSD⋆ [7]              –         199             –                 –      –
+Find-it Again [13]      –         988       CM / GN / SP           163     –
+MAIF operational corpus⋆
+                         –      13 455             –                –      859
+(real documents, France)
+
+
+
+
+3.2   Quantization Table Diversity Across Corpora
+
+A central motivation of this study is the discrepancy between the JPEG com-
+pression diversity observed in public benchmarks and that encountered in op-
+erational settings. As reported in Table 1, SROIE [6] and Find-it [1] are the
+only public datasets exhibiting more than a single luminance quantization ta-
+ble, with 6 distinct configurations each arising from the heterogeneity of scan-
+ning equipment; all other public datasets—DocTamper [15], RTM [11], and T-
+SROIE [18]—expose a single uniform quantization table throughout, consistent
+with systematic generation using a standard encoder at a fixed quality factor.
+10      K. Ronfleux–Corail et al.
+
+    In contrast, the MAIF dataset exhibits 859 distinct luminance quantization
+tables, reflecting the diversity of acquisition devices, scanning software, and doc-
+ument conversion chains encountered in insurance workflows [3,14]. As illustrated
+in Figure 3, the distribution follows a pronounced long-tail pattern: even SROIE,
+the most diverse public benchmark, concentrates the vast majority of its images
+within 6 configurations, whereas the operational corpus distributes images across
+hundreds of non-standard tables with no dominant configuration. Although this
+frequency profile comes from a single French insurance workflow, it aggregates
+customer-submitted documents acquired through diverse devices and software
+chains, so overlap in quantization-table support with other administrative set-
+tings is plausible even if mixture weights differ. These observations confirm that
+public benchmarks do not capture the quantization table variability present in
+operational document environments [3,11,1], and directly motivate the Real-QT
+experimental condition described in Section 4.1.
+
+
+
+
+Fig. 3: Distribution of the most frequent luminance JPEG quantization tables
+in the MAIF operational dataset (orange) and SROIE [6] (blue). Each bar rep-
+resents a distinct quantization table, ranked by frequency of occurrence in the
+operational corpus. The first bar aggregates the 851 remaining tables, each in-
+dividually representing less than 25% of the operational dataset. While a single
+table accounts for over 90% of SROIE images, no dominant configuration emerges
+in the operational corpus, confirming its substantially higher compression diver-
+sity.
+
+
+
+
+4    Benchmark Protocol
+This section describes the experimental protocol designed to isolate the effect
+of JPEG quantization table distribution shift on document manipulation local-
+ization. Two training pipelines are tested: Standard-QT, which applies classical
+                                DocQT for Forgery Localization Robustness        11
+
+quality factor augmentation, and Real-QT, which uses quantization tables ex-
+tracted from real operational document headers. These pipelines are crossed with
+two structurally contrasting models to form a factorial design.
+
+4.1   JPEG Recompression Pipelines
+The central experimental variable of this study is the JPEG quantization table
+distribution encountered during both training and evaluation. Two recompres-
+sion pipelines are defined and applied independently, yielding a factorial design
+that combines training pipeline with evaluation recompression condition.
+    The first pipeline, referred to as Standard-QT, recompresses all images with
+quality factors drawn uniformly at random from [30, 100] using OpenCV, cover-
+ing the broadest quality factor range reported in the literature (see Section 2.2
+for a detailed comparison across methods).
+    The second pipeline, referred to as Real-QT, recompresses all images us-
+ing quantization tables sampled from DocQT, a dataset extracted from the
+JPEG headers of the MAIF operational image corpus following the fingerprint-
+ing approach described in [8]. This dataset yields over 800 distinct luminance
+quantization tables reflecting heterogeneous real-world acquisition and process-
+ing pipelines.
+    Each model variant is evaluated under three conditions: no forced recom-
+pression (Orig.), Standard-QT recompression (Std ), and Real-QT recompression
+(Real ). This factorial design enables us to disentangle the effect of the training
+distribution from that of the evaluation distribution on localization and false
+positive performance.
+
+4.2   Training Pipeline
+All images are normalized using ImageNet statistics to match the expected input
+distribution of the pretrained backbones used by both models. Data augmenta-
+tion is applied during training only: horizontal and vertical flips with probability
+0.5, random rotation by multiples of 90 degrees with probability 0.5, random
+brightness and contrast adjustment, and Gaussian blur with probability 0.2.
+These transformations are chosen to improve generalization without degrading
+the low-level forensic artifacts that both models rely upon [19,9].
+
+4.3   Methods Used
+All experiments are conducted within the ForensicHub framework [4], which
+provides a unified training and evaluation infrastructure across forensic tasks
+and natively implements both FFDN [2] and Mesorch [20]. These two models are
+selected because they represent opposite ends of a structural spectrum directly
+relevant to the central question of this paper—the impact of JPEG quantization
+table distribution shift on localization performance.
+    As described in Section 2.1, FFDN inherits from DTD [15] a Frequency Per-
+ception Head that ingests the quantization table as an explicit input, making it
+12      K. Ronfleux–Corail et al.
+
+by design sensitive to any mismatch between training-time and inference-time
+quantization tables. Mesorch, as described in Section 2.1, does not exploit the
+quantization table explicitly: it relies on implicit pixel-domain and DCT-domain
+artifacts captured through parallel CNN and Transformer branches, which makes
+it a particularly informative counterpoint for assessing the role of explicit quan-
+tization table awareness under distribution shift.
+    The remaining models available in ForensicHub—such as ManTra-Net [19],
+CAT-Net [9], or PSCC-Net [10]—are not retained in the main comparison be-
+cause they do not sharpen the same explicit-versus-implicit quantization condi-
+tioning contrast. Preliminary CAT-Net runs under the same protocol followed
+the same qualitative direction as FFDN under Real-QT, but with lower abso-
+lute performance and weaker cross-dataset generalization, so the main analysis
+remains centered on the two more discriminative endpoints of this spectrum.
+    Two model variants are trained, one under each pipeline: FFDN-Std and
+Mesorch-Std are trained under Standard-QT ; FFDN-Real and Mesorch-
+Real are trained under Real-QT.
+
+4.4   Data
+Dataset Splits. Training data is drawn from four sources: the full DocTamper
+training set [15] (120,000 images), and 5,000 crops each from the training por-
+tions of Find-it [1], Find-it Again [13], and T-SROIE [18]. Additionally, 400
+crops from FUNSD [7]—approximately half the dataset—and a subset of un-
+altered documents from the MAIF operational image corpus are included as
+negative examples to expose the models to authentic document statistics during
+training. RTM [11] is deliberately excluded from training in order to evaluate the
+capacity of models trained exclusively on synthetically generated manipulations
+to generalize to real manual forgeries. For datasets providing official splits, only
+the official training partition is used; for datasets without predefined splits, the
+training subset is defined prior to any preprocessing to prevent data leakage. All
+remaining data are reserved for evaluation.
+
+4.5   Evaluation Criteria
+All models produce a pixel-level probability map P ∈ [0, 1]H×W , from which a
+binary prediction mask M̂ is derived by thresholding at τ = 0.5:
+                                                        
+                              M̂ (i, j) = I P (i, j) ≥ τ .                      (1)
+   Given the ground-truth binary mask Mgt provided by each dataset, the fol-
+lowing pixel-level quantities are defined:
+
+                              P                                    
+                   T Ppix =    i,j I M̂ (i, j) = 1 ∧ Mgt (i, j) = 1 ,           (2)
+                              P                                    
+                  F Ppix =     i,j I M̂ (i, j) = 1 ∧ Mgt (i, j) = 0 ,           (3)
+                              P                                    
+                  F Npix =     i,j I M̂ (i, j) = 0 ∧ Mgt (i, j) = 1 .           (4)
+                                   DocQT for Forgery Localization Robustness      13
+
+Localization on Tampered Images. On images containing at least one al-
+tered pixel, localization performance is jointly measured by the pixel-level F1
+score and Intersection over Union (IoU) [12,4]:
+
+                        2 T Ppix                              T Ppix
+    F1pix =                              ,   IoU =                            .   (5)
+              2 T Ppix + F Ppix + F Npix             T Ppix + F Ppix + F Npix
+    Both metrics are computed per image and averaged across the evaluation set.
+
+False Positive Rate on Unaltered Images. For unaltered reference sets,
+the ground-truth mask is identically zero (Mgt = 0), so every predicted positive
+pixel is by definition a false positive. The pixel-level false positive rate is
+defined as:
+                                           F Ppix
+                                  FPRpix =        ,                            (6)
+                                          H ×W
+    where H ×W is the total number of pixels. This quantity is computed per im-
+age and reported as a mean across the reference set [5]. A low FPRpix combined
+with high F1 and IoU on tampered images constitutes the primary robustness
+criterion of this study: it captures whether a model can accurately localize tam-
+pered regions without being misled by unfamiliar JPEG compression profiles
+into flagging authentic documents.
+
+
+5    Results
+Quantization Table Distribution as a Primary Source of Generalization Failure.
+Across all DocTamper subsets, evaluation without recompression (Orig.) consis-
+tently yields the highest scores, with substantial drops under both recompression
+conditions. The benefit of operational training is, however, strongly conditioned
+on the model’s capacity to exploit this distributional alignment explicitly. On
+DT-Test under Real-QT evaluation, FFDN-Real gains 14.5 F1 points over
+FFDN-Std (0.853 vs. 0.708), with consistent improvements across FCD and
+SCD. By contrast, Mesorch-Real and Mesorch-Std achieve nearly identical scores
+under the same condition (0.704 vs. 0.703). This contrast directly reflects the
+architectural distinction identified in Section 2.1: FFDN’s Frequency Perception
+Head can exploit the distributional match through its explicit quantization ta-
+ble input, whereas Mesorch has no mechanism to bind its representations to a
+specific quantization matrix [2,20]. Architectures that explicitly condition
+on the quantization table therefore provide a meaningful robustness
+advantage in operational compression pipelines [9,17].
+
+Standard Quality Factor Augmentation Is Not a Sufficient Proxy for Opera-
+tional Conditions. Real-QT evaluation consistently yields higher localization
+scores than Standard-QT, challenging the assumption—common across the mod-
+els reviewed in Section 2.2—that broad quality factor augmentation adequately
+14       K. Ronfleux–Corail et al.
+
+
+Table 2: Pixel-level F1 score on tampered evaluation sets. Columns correspond
+to model variants trained under Standard-QT (suffix -Std ) or Real-QT (suffix
+-Real ). Rows report three evaluation conditions per dataset subset: Orig. (no
+recompression), Std (Standard-QT recompression), Real (Real-QT recompres-
+sion). Bold: best result per row within each architecture family (FFDN and
+Mesorch separately).
+                                   FFDN-Std [2] FFDN-Real [2] Mesorch-Std [20] Mesorch-Real [20]
+                          Orig.       0.927        0.954           0.751            0.818
+                     Test Std         0.633        0.647          0.676             0.578
+                          Real        0.708        0.853           0.703            0.704
+                        Orig.          0.942        0.951           0.555            0.509
+DocTamper [15]
+                     FCD Std           0.536        0.537           0.556            0.476
+                         Real          0.630        0.832           0.540            0.530
+                          Orig.       0.879         0.900           0.591            0.709
+                     SCD Std          0.516         0.542           0.514            0.472
+                          Real        0.604         0.776           0.537            0.587
+                          Orig.       0.048         0.040           0.058            0.074
+RTM [11]             –    Std         0.034         0.031           0.048            0.042
+                          Real        0.030         0.023           0.051            0.057
+                          Orig.       0.900         0.893           0.873            0.865
+T-SROIE [18]         –    Std         0.746         0.798           0.833            0.754
+                          Real        0.727         0.827           0.838            0.798
+                          Orig.       0.296         0.418           0.309            0.364
+Find-it [1]          –    Std         0.168         0.216           0.223            0.189
+                          Real        0.186         0.303           0.252            0.253
+                          Orig.       0.130         0.158           0.068            0.212
+                     Test Std         0.052         0.058           0.059            0.077
+                          Real        0.073         0.067           0.075            0.125
+Find-it Again [13]
+                           Orig.      0.204         0.201           0.063            0.259
+                     Val   Std        0.071         0.078           0.069            0.064
+                           Real       0.114         0.076           0.043            0.183
+
+
+
+
+proxies real-world compression variability. Two factors explain this. First, qual-
+ity factor augmentation covers only the discrete subset of libjpeg-compatible
+matrices, missing the application-specific tables that dominate the operational
+distribution (Section 3.2). Second, the low-quality end of the [30, 100] range is
+unrepresentative of operational documents, which concentrate around moderate
+quality values and therefore preserve more forensic signal than the Standard-QT
+distribution implies [3].
+
+The Synthetic-to-Real Gap Remains an Open Problem. On RTM [11], excluded
+from training, all variants achieve near-zero performance (peak F1: 0.074 for
+Mesorch-Real ), revealing a limitation orthogonal to the compression distribu-
+tion question investigated here. The forensic traces exploited by models trained
+on synthetic manipulations — double-quantization residuals and boundary dis-
+continuities — are largely absent in images tampered manually by professional
+editors [9,19]. Addressing this gap requires either large-scale manual tamper-
+ing data or architectures reasoning on semantic inconsistencies independently of
+low-level artifacts [20,5].
+                                 DocQT for Forgery Localization Robustness        15
+
+
+Table 3: Mean pixel-level false positive rate (FPRpix , lower is better) on unaltered
+reference sets. Same column and row structure as Table 2. Bold: best (lowest)
+result per row within each architecture family.
+                FFDN-Std [2] FFDN-Real [2] Mesorch-Std [20] Mesorch-Real [20]
+           Orig. 3.50 × 10−5  2.82 × 10−5    3.21 × 10−5      1.60 × 10−5
+ SROIE [6] Std 2.77 × 10−5     2.36 × 10−5   4.12 × 10−5      2.88 × 10−5
+           Real 4.65 × 10−5   1.69 × 10−5    4.06 × 10−5      4.00 × 10−5
+           Orig. 2.49 × 10−4  6.01 × 10−5    1.48 × 10−4      5.98 × 10−5
+ FUNSD [7] Std 7.63 × 10  −5
+                               1.42 × 10−4
+                                             1.76 × 10 −4
+                                                               1.78 × 10−4
+           Real 8.53 × 10−4   7.79 × 10−5    1.87 × 10−4      1.47 × 10−4
+           Orig. 5.64 × 10−4  1.46 × 10−4    2.06 × 10−4      9.66 × 10−5
+ MAIF      Std   2.39 × 10−4  1.30 × 10−4    2.03 × 10−4      1.84 × 10−4
+                          −4             −5           −4
+           Real 2.32 × 10     8.69 × 10      2.37 × 10        1.84 × 10−4
+
+
+
+Benchmark Diversity Does Not Reflect Operational Diversity. Models achieve
+substantially higher scores on T-SROIE (F1 up to 0.900) than on Find-it (best
+F1: 0.418) and Find-it Again (best F1: 0.259), despite equal training exposure.
+T-SROIE’s uniform JPEG configuration aligns with the DocTamper training
+signal, whereas the multi-tool structure of Find-it and the lossless format of
+Find-it Again expose failure modes that single-configuration benchmarks ob-
+scure [4,12]. This observation reinforces the quantization table diversity analysis
+in Section 3.2: benchmarks relying on a single quantization table provide an
+overly optimistic estimate of model performance in real-world deployment sce-
+narios.
+
+False Positive Rates. On the operational corpus, FFDN-Real under Real-
+QT achieves a FPRpix of 8.69 × 10−5 , nearly an order of magnitude lower
+than FFDN-Std at Orig. (5.64 × 10−4 ). Mesorch-Real attains its lowest FPR
+without recompression (9.66 × 10−5 ), while recompression increases it, peaking
+on FUNSD under Real-QT (1.87 × 10−3 ). Across all conditions, FPR remains
+at most in the 10−3 range, confirming that both models produce acceptably low
+false positive rates on unaltered documents. Critically, the reduction achieved by
+Real-QT training validates the hypothesis of Section 1.2: quantization table
+mismatch significantly contributes to false alarms in deployment.
+
+
+5.1   Limitations and Perspectives
+
+The comparison is restricted to two architectures selected for structural con-
+trast (Section 4.3). Preliminary CAT-Net runs under the same protocol followed
+the same qualitative trend as FFDN under Real-QT, but with lower absolute
+performance and weaker cross-dataset generalization, so broader architectural
+validation remains needed [9]. The operational table distribution derives from a
+single insurance corpus which, despite 859 distinct configurations, may not repre-
+sent industries. Finally, the threshold τ = 0.5 may be suboptimal in deployment
+scenarios with asymmetric false positive / false negative costs [5,12].
+16       K. Ronfleux–Corail et al.
+
+
+Table 4: Pixel-level IoU score on tampered evaluation sets. Bold: best result per
+row within each architecture family.
+                                   FFDN-Std [2] FFDN-Real [2] Mesorch-Std [20] Mesorch-Real [20]
+                          Orig.       0.882        0.923           0.692            0.762
+                     Test Std         0.579        0.597          0.617             0.525
+                          Real        0.653        0.809           0.644            0.647
+                        Orig.          0.895        0.913           0.505            0.469
+DocTamper [15]
+                     FCD Std           0.484        0.489           0.505            0.432
+                         Real          0.574        0.776           0.488            0.480
+                          Orig.       0.806         0.837           0.498            0.618
+                     SCD Std          0.439         0.466           0.430            0.402
+                          Real        0.524         0.699           0.450            0.505
+                          Orig.       0.039         0.032           0.046            0.061
+RTM [11]             –    Std         0.026         0.024           0.037            0.033
+                          Real        0.023         0.018           0.040            0.046
+                          Orig.       0.766         0.827           0.803            0.799
+T-SROIE [18]         –    Std         0.663         0.720           0.755            0.677
+                          Real        0.643         0.753           0.761            0.724
+                          Orig.       0.257         0.370           0.275            0.321
+Find-it [1]          –    Std         0.147         0.192           0.196            0.167
+                          Real        0.165         0.269           0.223            0.223
+                          Orig.       0.096         0.123           0.051            0.158
+                     Test Std         0.036         0.045           0.044            0.057
+                          Real        0.053         0.048           0.057            0.092
+Find-it Again [13]
+                           Orig.      0.153         0.152           0.044            0.191
+                     Val   Std        0.051         0.057           0.049            0.045
+                           Real       0.083         0.053           0.030            0.136
+
+
+
+    Future work should extend this analysis to architectures with intermediate
+frequency conditioning, test chrominance-table and chrominance-DCT condi-
+tioning alongside luminance cues, construct benchmarks from pristine PNG doc-
+uments with controlled recompression and manually edited documents [4,12], and
+explore domain adaptation techniques that do not require access to operational
+documents at training time.
+
+
+6    Conclusion
+This paper investigated the impact of JPEG quantization table distribution
+shifts on document manipulation localization models deployed in operational
+insurance workflows. Through a controlled factorial study comparing FFDN [2]
+and Mesorch [20], selected for contrasting quantization table awareness (Sec-
+tion 4.3), we showed that training under operationally calibrated quantization
+tables yields substantial localization gains—up to 14.5 F1 points on DocTam-
+per [15]—but only for architectures explicitly ingesting the quantization table as
+input. On the false positive side, this protocol reduces FPRpix on the MAIF
+operational image corpus by nearly an order of magnitude (8.69 × 10−5 vs.
+5.64 × 10−4 ). These findings show that standard quality factor augmentation
+does not adequately proxy operational compression diversity, and that archi-
+tectures conditioning on quantization tables provide a meaningful robustness
+                                 DocQT for Forgery Localization Robustness          17
+
+advantage for real-world deployment. Additionally, near-zero performance on
+RTM [11] confirms that the synthetic-to-real manipulation gap remains an open
+problem orthogonal to compression, motivating future benchmarks built from
+pristine documents, controlled recompression, and manually edited forgeries.
+
+Acknowledgments. This research was supported by the CIFRE PhD program
+funded by the ANRT.
+
+Disclosure of Interests. Kylian Ronfleux–Corail and Guillaume Bernard are em-
+ployed by MAIF, which provided the operational corpus. Mickaël Coustaty and Nicolas
+Sidère declare no additional competing interests.
+
+
+References
+ 1. Artaud, C., Sidère, N., Doucet, A., Ogier, J.M., Poulain d’Andecy, V.Y.: Find it!
+    fraud detection contest report. In: 2018 24th International Conference on Pattern
+    Recognition (ICPR). pp. 13–18. IEEE (2018). https://doi.org/10.1109/ICPR.201
+    8.8545428
+ 2. Chen, Z., Chen, S., Yao, T., Sun, K., Ding, S., Lin, X., Cao, L., Ji, R.: Enhancing
+    tampered text detection through frequency feature fusion and decomposition. In:
+    Computer Vision – ECCV 2024, Lecture Notes in Computer Science, vol. 15091, pp.
+    200–217. Springer, Cham (2025). https://doi.org/10.1007/978-3-031-73414-4_12
+ 3. Dong, L., Liang, W., Wang, R.: Robust text image tampering localization via
+    forgery traces enhancement and multiscale attention. IEEE Transactions on Con-
+    sumer Electronics 70(1), 3495–3507 (2024). https://doi.org/10.1109/TCE.2024.3
+    367947
+ 4. Du, B., Zhu, X., Ma, X., Qu, C., Feng, K., Yang, Z., Pun, C.M., Liu, J., Zhou, J.:
+    ForensicHub: A unified benchmark & codebase for all-domain fake image detection
+    and localization (2025). https://doi.org/10.48550/arXiv.2505.11003
+ 5. Guillaro, F., Cozzolino, D., Sud, A., Dufour, N., Verdoliva, L.: TruFor: Leveraging
+    all-round clues for trustworthy image forgery detection and localization. In: 2023
+    IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR).
+    pp. 20606–20615. IEEE (2023). https://doi.org/10.1109/CVPR52729.2023.01974
+ 6. Huang, Z., Chen, K., He, J., Bai, X., Karatzas, D., Lu, S., Jawahar, C.V.: IC-
+    DAR2019 competition on scanned receipt OCR and information extraction. In:
+    2019 International Conference on Document Analysis and Recognition (ICDAR).
+    pp. 1516–1520. IEEE (2019). https://doi.org/10.1109/ICDAR.2019.00244
+ 7. Jaume, G., Ekenel, H.K., Thiran, J.P.: FUNSD: A dataset for form understanding
+    in noisy scanned documents (2019). https://doi.org/10.48550/arXiv.1905.13538
+ 8. Krawetz, N.: A picture’s worth (2007)
+ 9. Kwon, M.J., Nam, S.H., Yu, I.J., Lee, H.K., Kim, C.: Learning JPEG compression
+    artifacts for image manipulation detection and localization. International Journal
+    of Computer Vision 130(8), 1875–1895 (2022). https://doi.org/10.1007/s11263-0
+    22-01617-5
+10. Liu, X., Liu, Y., Chen, J., Liu, X.: PSCC-Net: Progressive spatio-channel corre-
+    lation network for image manipulation detection and localization. IEEE Transac-
+    tions on Circuits and Systems for Video Technology 32(11), 7505–7517 (2022).
+    https://doi.org/10.1109/TCSVT.2022.3189545
+18      K. Ronfleux–Corail et al.
+
+11. Luo, D., Liu, Y., Yang, R., Liu, X., Zeng, J., Zhou, Y., Bai, X.: Toward real text
+    manipulation detection: New dataset and new solution. Pattern Recognition 157,
+    110828 (2025). https://doi.org/10.1016/j.patcog.2024.110828
+12. Ma, X., Zhu, X., Su, L., Du, B., Jiang, Z., Tong, B., Lei, Z., Yang, X., Pun, C.M.,
+    Lv, J., Zhou, J.: IMDL-BenCo: A comprehensive benchmark and codebase for
+    image manipulation detection & localization. In: Advances in Neural Information
+    Processing Systems (NeurIPS 2024), Track on Datasets and Benchmarks. vol. 37,
+    pp. 134591–134613 (2024)
+13. Martínez Tornès, B., Taburet, T., Boros, E., Rouis, K., Gomez-Krämer, P., Sidere,
+    N., Doucet, A., Poulain d’Andecy, V.: Jeu de données de tickets de caisse pour
+    la détection de fraude documentaire. In: Actes de CORIA-TALN 2023, vol. 4. pp.
+    140–147. ATALA, Paris, France (2023)
+14. Nayef, N., Luqman, M.M., Prum, S., Eskenazi, S., Chazalon, J., Ogier, J.M.:
+    SmartDoc-QA: A dataset for quality assessment of smartphone captured document
+    images – single and multiple distortions. In: 2015 13th International Conference
+    on Document Analysis and Recognition (ICDAR). pp. 1231–1235. IEEE (2015).
+    https://doi.org/10.1109/ICDAR.2015.7333960
+15. Qu, C., Liu, C., Liu, Y., Chen, X., Peng, D., Guo, F., Jin, L.: Towards ro-
+    bust tampered text detection in document image: New dataset and new solu-
+    tion. In: 2023 IEEE/CVF Conference on Computer Vision and Pattern Recog-
+    nition (CVPR). pp. 5937–5946. IEEE, Vancouver, BC, Canada (2023). https:
+    //doi.org/10.1109/CVPR52729.2023.00575
+16. Song, Y., Jiang, W., Chai, X., Gan, Z., Zhou, M., Chen, L.: Cross-attention based
+    two-branch networks for document image forgery localization in the metaverse.
+    ACM Transactions on Multimedia Computing, Communications and Applications
+    21(2), 55:1–55:24 (2025). https://doi.org/10.1145/3686158
+17. Wan, K.: An overview of double JPEG compression detection and anti-detection.
+    Journal of Information Hiding and Privacy Protection 4(2), 89–101 (2023). https:
+    //doi.org/10.32604/jihpp.2022.039764
+18. Wang, Y., Zhang, B., Xie, H., Zhang, Y.: Tampered text detection via RGB and
+    frequency relationship modeling. Journal of Cybersecurity 8, 29–40 (2022)
+19. Wu, Y., AbdAlmageed, W., Natarajan, P.: ManTra-Net: Manipulation tracing
+    network for detection and localization of image forgeries with anomalous fea-
+    tures. In: 2019 IEEE/CVF Conference on Computer Vision and Pattern Recog-
+    nition (CVPR). pp. 9535–9544. IEEE, Long Beach, CA, USA (2019). https:
+    //doi.org/10.1109/CVPR.2019.00977
+20. Zhu, X., Ma, X., Su, L., Jiang, Z., Du, B., Wang, X., Lei, Z., Feng, W., Pun, C.M.,
+    Zhou, J.: Mesoscopic insights: Orchestrating multi-scale & hybrid architecture for
+    image manipulation localization (2024). https://doi.org/10.48550/arXiv.2412.13
+    753
+

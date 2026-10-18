@@ -122,7 +122,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Reuse the exact strings forensic.check_document_text looks for, so the
 # watermark-inject tamper is guaranteed to exercise that cue rather than a
 # copy that could drift out of sync with it.
-from forensic import _GENERATOR_WATERMARKS, _PLACEHOLDER_NAMES  # noqa: E402
+from semantic import _GENERATOR_WATERMARKS, _PLACEHOLDER_NAMES  # noqa: E402
 
 TAMPER_NAMES: Dict[int, str] = {
     0: "patch-recompress", 1: "copy-move", 2: "flat-overwrite",

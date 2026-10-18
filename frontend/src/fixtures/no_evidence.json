@@ -1,0 +1,40 @@
+{
+  "verdict": "no_evidence",
+  "verdict_label": "No evidence of editing found",
+  "risk_score": 0.09,
+  "reasons": [
+    "No word was measured as inconsistent with its neighbours on the same line.",
+    "The amounts, dates and reference numbers read from the image agree with each other."
+  ],
+  "regions": [],
+  "findings": [],
+  "limitations": [
+    "This tool looks for inconsistencies between words inside one image. It cannot show that an image is untouched.",
+    "A screenshot of an edited image (a re-screenshot) can hide most traces of the edit.",
+    "Small text, heavy compression and unusual fonts can cause false alarms.",
+    "Only text is examined. Changes to icons, photos, logos or layout are not detected.",
+    "This is an automated screening aid, not a certified forensic opinion. Do not rely on it alone for disputes or legal decisions."
+  ],
+  "image": {
+    "width": 750,
+    "height": 1334,
+    "format": "PNG"
+  },
+  "stats": {
+    "ocr_words": 38,
+    "measured_words": 35,
+    "top_word_probability": 0.12,
+    "thresholds": {
+      "suspicious": 0.4,
+      "evidence": 0.8
+    }
+  },
+  "meta": {
+    "sha256": "c7e2145ab90d3f68e1b4a7c25d09f386b1e4d7a02c95f8631ab0d4e7c2958f13",
+    "processing_ms": 6988.4,
+    "model": "word-forensics-gbm-v2"
+  },
+  "fake_score": 0.09,
+  "is_fake": false,
+  "verdict_text": "No evidence of editing found"
+}

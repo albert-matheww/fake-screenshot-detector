@@ -1,0 +1,37 @@
+Per-image verdicts of the second hand-collected set (scored 2026-10-16 with the shipped model). Words and reasons are omitted because the images are private.
+
+[authentic]
+bank_statements__bank_statements__Screenshot_2026-10-15_213040.png	suspicious	risk=0.405
+bank_statements__bank_statements__WhatsApp_Image_2026-10-15_at_8.32.01_PM.jpeg	no_evidence	risk=0.0492
+bank_statements__bank_statements__bank_stmt_real.webp	no_evidence	risk=0.0044
+laptop_web__laptop_web__Screenshot_2026-10-15_212622.png	no_evidence	risk=0.1668
+laptop_web__laptop_web__Screenshot_2026-10-15_212733.png	no_evidence	risk=0.0706
+laptop_web__laptop_web__ecommerce_real.png	no_evidence	risk=0.0427
+order_or_invoice__order_or_invoice__Screenshot_2026-10-15_205930.png	no_evidence	risk=0.0716
+order_or_invoice__order_or_invoice__Screenshot_2026-10-15_210811.png	no_evidence	risk=0.0404
+order_or_invoice__order_or_invoice__Screenshot_2026-10-15_210853.png	no_evidence	risk=0.0185
+payment_incoming__payment_incoming__WhatsApp_Image_2026-10-15_at_9.03.02_PM.jpeg	no_evidence	risk=0.0687
+payment_incoming__payment_incoming__WhatsApp_Image_2026-10-15_at_9.03.03_PM.jpeg	no_evidence	risk=0.1132
+payment_incoming__payment_incoming__WhatsApp_Image_2026-10-15_at_9.04.45.jpeg	suspicious	risk=0.4939
+payment_incoming__payment_incoming__WhatsApp_Image_2026-10-15_at_9.04.45_PM.jpeg	no_evidence	risk=0.3692
+payment_tranfer__payment_tranfer__WhatsApp_Image_2026-10-15_at_8.31.56_PM.jpeg	no_evidence	risk=0.0317
+payment_tranfer__payment_tranfer__WhatsApp_Image_2026-10-15_at_9.03.02.jpeg	no_evidence	risk=0.3413
+payment_tranfer__payment_tranfer__WhatsApp_Image_2026-10-15_at_9.03.02_PM.jpeg	no_evidence	risk=0.1943
+payment_tranfer__payment_tranfer__WhatsApp_Image_2026-10-15_at_9.06.33_PM.jpeg	no_evidence	risk=0.3164
+social_media,_email,_notification__social_media,_email,_notification__WhatsApp_Image_2026-10-15_at_9.21.08.jpeg	no_evidence	risk=0.1468
+social_media,_email,_notification__social_media,_email,_notification__WhatsApp_Image_2026-10-15_at_9.21.08_PM.jpeg	suspicious	risk=0.4757
+social_media,_email,_notification__social_media,_email,_notification__WhatsApp_Image_2026-10-15_at_9.23.43_PM.jpeg	no_evidence	risk=0.3677
+social_media,_email,_notification__social_media,_email,_notification__group_chat_real.png	no_evidence	risk=0.004
+social_media,_email,_notification__social_media,_email,_notification__notification_real.jpeg	no_evidence	risk=0.0654
+social_media,_email,_notification__social_media,_email,_notification__social_post_real.jpeg	no_evidence	risk=0.321
+
+[edited]
+E_01.jpg	no_evidence	risk=0.012
+E_02.png	no_evidence	risk=0.1769
+E_03.webp	no_evidence	risk=0.0211
+I_01.png	no_evidence	risk=0.1959
+I_02.png	suspicious	risk=0.4648
+I_03.png	no_evidence	risk=0.3906
+O_01.png	suspicious	risk=0.4642
+O_02.png	no_evidence	risk=0.1147
+O_03.png	no_evidence	risk=0.0168

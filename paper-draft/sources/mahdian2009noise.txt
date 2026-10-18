@@ -1,0 +1,5 @@
+Using noise inconsistencies for blind image forensics
+Mahdian, Babak, Saic, Stanislav (2009). Image and Vision Computing. doi:10.1016/j.imavis.2009.02.001
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+

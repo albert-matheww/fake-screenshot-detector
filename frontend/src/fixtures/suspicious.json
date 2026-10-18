@@ -1,0 +1,74 @@
+{
+  "verdict": "suspicious",
+  "verdict_label": "Suspicious - review recommended",
+  "risk_score": 0.52,
+  "reasons": [
+    "The word \"$50.90\" may be edited: stroke thickness is slightly heavier than neighbouring words on the same line (z=3.4).",
+    "The image metadata names an editing program (Adobe Photoshop 24.1)."
+  ],
+  "regions": [
+    {
+      "x": 558,
+      "y": 990,
+      "w": 132,
+      "h": 44,
+      "text": "$50.90",
+      "score": 0.58,
+      "level": "suspicious",
+      "reasons": [
+        "Stroke thickness is slightly heavier than neighbouring words on the same line (z=3.4)."
+      ]
+    },
+    {
+      "x": 558,
+      "y": 540,
+      "w": 132,
+      "h": 44,
+      "text": "Coffee",
+      "score": 0.31,
+      "level": "weak",
+      "reasons": [
+        "Marginally different anti-aliasing from the word before it (z=2.1). Treat as noise unless other signs agree."
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "metadata.editor_software",
+      "severity": "medium",
+      "message": "The Software field in the metadata names an image editor. Screenshots are not normally saved through one.",
+      "evidence": {
+        "software": "Adobe Photoshop 24.1"
+      }
+    }
+  ],
+  "limitations": [
+    "This tool looks for inconsistencies between words inside one image. It cannot show that an image is untouched.",
+    "A screenshot of an edited image (a re-screenshot) can hide most traces of the edit.",
+    "Small text, heavy compression and unusual fonts can cause false alarms.",
+    "Only text is examined. Changes to icons, photos, logos or layout are not detected.",
+    "This is an automated screening aid, not a certified forensic opinion. Do not rely on it alone for disputes or legal decisions."
+  ],
+  "image": {
+    "width": 750,
+    "height": 1334,
+    "format": "PNG"
+  },
+  "stats": {
+    "ocr_words": 38,
+    "measured_words": 34,
+    "top_word_probability": 0.58,
+    "thresholds": {
+      "suspicious": 0.4,
+      "evidence": 0.8
+    }
+  },
+  "meta": {
+    "sha256": "a0b47d92e3f158c6b5d1e8097f4a2c63d9e50b1f87c4a6d2e39f1058b7c4d6ea",
+    "processing_ms": 7310.2,
+    "model": "word-forensics-gbm-v2"
+  },
+  "fake_score": 0.52,
+  "is_fake": false,
+  "verdict_text": "Suspicious - review recommended"
+}

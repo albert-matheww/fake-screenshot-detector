@@ -1,0 +1,5 @@
+Probable Inference, the Law of Succession, and Statistical Inference
+Wilson, Edwin B. (1927). Journal of the American Statistical Association. doi:10.1080/01621459.1927.10502953
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+(1927). Probable Inference, the Law of Succession, and Statistical Inference. Journal of the American Statistical Association: Vol. 22, No. 158, pp. 209-212.

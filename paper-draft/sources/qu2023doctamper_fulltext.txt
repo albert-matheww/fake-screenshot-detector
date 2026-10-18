@@ -1,0 +1,623 @@
+                         This CVPR paper is the Open Access version, provided by the Computer Vision Foundation.
+                                      Except for this watermark, it is identical to the accepted version;
+                                the final published version of the proceedings is available on IEEE Xplore.
+
+
+
+
+Towards Robust Tampered Text Detection in Document Image: New dataset and
+                              New Solution
+
+         Chenfan Qu1 , Chongyu Liu1 , Yuliang Liu2 , Xinhong Chen1 , Dezhi Peng1 , Fengjun Guo3 ,
+                                              Lianwen Jin1,*
+       1
+         South China University of Technology, 2 Huazhong University of Science and Technology,
+                                      3
+                                        IntSig Information Co., Ltd
+                            202221012612@mail.scut.edu.cn, eelwjin@scut.edu.cn
+
+
+
+                        Abstract
+
+   Recently, tampered text detection in document image has
+attracted increasingly attention due to its essential role on
+information security. However, detecting visually consis-
+tent tampered text in photographed document images is still
+a main challenge. In this paper, we propose a novel frame-
+work to capture more fine-grained clues in complex scenar-
+ios for tampered text detection, termed as Document Tam-
+pering Detector (DTD), which consists of a Frequency Per-
+ception Head (FPH) to compensate the deficiencies caused
+by the inconspicuous visual features, and a Multi-view It-
+erative Decoder (MID) for fully utilizing the information
+of features in different scales. In addition, we design a
+new training paradigm, termed as Curriculum Learning for          Figure 1. Tampered text in document images usually have rela-
+Tampering Detection (CLTD), which can address the con-            tively small areas and few visual tampering clue.
+fusion during the training procedure and thus to improve
+the robustness for image compression and the ability to           poses such as defraud, causing serious information security
+generalize. To further facilitate the tampered text detec-        risks [33,42,48,50]. Therefore, detecting tampering in doc-
+tion in document images, we construct a large-scale docu-         ument images has become an important research topic in re-
+ment image dataset, termed as DocTamper, which contains           cent years [18,47]. It is crucial to develop effective methods
+170,000 document images of various types. Experiments             to examine whether a document image is modified, mean-
+demonstrate that our proposed DTD outperforms previous            while identifying the exact location of the tampered text.
+state-of-the-art by 9.2%, 26.3% and 12.3% in terms of                Most text tamper methods in documents images can be
+F-measure on the DocTamper testing set, and the cross-            generally categorized into three types: (1) Splicing, which
+domain testing sets of DocTamper-FCD and DocTamper-               copies regions from one image and paste to other images;
+SCD, respectively. Codes and dataset will be available at         (2) Copy-move, which shifts the spatial locations of objects
+https://github.com/qcf-568/DocTamper.                             within images; (3) Generation, which replaces regions of
+                                                                  images with visually plausible but different contents, As
+                                                                  shown in Fig. 1. Though tampering detection in natural
+1. Introduction                                                   images has been studied for years [14, 49], it differs a lot
+                                                                  from that in document images. For natural images, tam-
+   Document images are one of the most essential media            pering detection mainly relies on the relatively obvious vi-
+for information transmission in modern society, which con-        sual tampered clues on edge or surface of the object, which
+tains amounts of sensitive and privacy information such           hardly exist in documents, especially for copy-move and
+as telephone numbers. As the rapid development of the             splicing [1, 47]. This is because document images mostly
+image editing technologies, such sensitive text informa-          have the same background color, and text within clusters
+tion can be more easily to be tampered for malicious pur-         usually has the same font and size. Therefore, the tampered
+
+
+
+                                                                5937
+text regions can not be effectively detected based only on vi-            unlabeled document images.
+sual clues. To this end, in this paper we propose to incorpo-
+                                                                        • We construct a comprehensive large-scale dataset with
+rate both visual and frequency clues to improve the ability
+                                                                          various scenarios and tampering methods to further fa-
+on identifying the tampered text regions in documents.
+                                                                          cilitate the research on tampered text detection task.
+   Recently, some promising methods have been proposed
+for tampered text detection [8,18,47] by analysing the text’s
+                                                                   2. Related Works
+appearance on scanned documents. Though significant pro-
+gresses have been achieved on simple and clean documents,          2.1. Natural Image Manipulation Detection
+detecting elaborately tampered text regions in various pho-
+                                                                      Early studies on natural image manipulation detection
+tographed documents is still an open challenge.
+                                                                   mainly focused on detecting a specific type of manipula-
+   In this paper, we propose a multi-modality Transformer-
+                                                                   tion [12, 13]. Gradually, the rapid development of neu-
+based method, termed as Document Tampering Detector
+                                                                   ral networks boosts the general manipulation detection re-
+(DTD), for Document Image Tampering Detection (DITD).
+                                                                   search considerably [4, 17, 49]. Zhou et al. [51] introduced
+The proposed model utilizes features from both visual do-
+                                                                   to add SRM kernel [15] to Faster-RCNN [31] and located
+main and frequency domain. The former one are extracted
+                                                                   forgeries with bounding boxes. Bappy et al. [4] proposed to
+from Visual Perception Head with the original image as in-
+                                                                   use SRM kernel [15] as long as constrained convolution [6]
+put. For the latter one, different from the previous work [43]
+                                                                   in feature extraction and detected manipulations in pixel-
+that leveraged the high-pass filtered results of RGB images,
+                                                                   wise manner. Kwon et al. [19] utilized HRNet [39] to local-
+we utilize the DCT coefficients as the input of our model’s
+                                                                   ize tampered regions in both RGB domain and frequency
+Frequency Perception Head to obtain the corresponding em-
+                                                                   domain. Dong et al. [14] extracted features with a two-
+bedding. Through a fusion module with a concatenation op-
+                                                                   stream CNN and constrained convolution [6], they intro-
+eration and an attention module, the features in these two
+                                                                   duced Edge-Supervised Branch to enhance the feature maps
+modules are incorporated effectively and then fed into a
+                                                                   and used Dual Attention Module to fuse the output of the
+Swin-Transformer [27] based encoder. Finally, we intro-
+                                                                   two-stream CNN. Liu et al. [26] introduced a novel atten-
+duce a new Multi-view Iterative Decoder to progressively
+                                                                   tion mechanism to improve performance. Wang et al. [43]
+perceive the tampered text regions.
+                                                                   used both images and their high-pass filter results as the in-
+   From our experiments, we find image compression can
+                                                                   put of their two-stream CNN and introduced a set of queries
+cover up some of tampering clues and models usually lack
+                                                                   to help the model localize manipulation in object-level. Al-
+robustness to it at start. Training in randomly compressed
+                                                                   though the above methods achieved significant progress,
+images will bring confusion to models and they couldn’t
+                                                                   they may not work very well in document image tampering
+work well on the challenging DITD tasks. Therefore, we
+                                                                   detection as the tampered text regions usually have much
+further propose a new training paradigm, termed as Curricu-
+                                                                   more visual consistency with the authentic regions.
+lum Learning for Tampering Detection (CLTD), to train the
+models in an easy-to-hard manner. In such way, the model           2.2. Document Image Tampering Detection
+can firstly learn how to spot tampering clues accurately and
+then gradually gain the robustness to image compression.               Early document image tampering detection was mainly
+   As there lack large-scale tampered document dataset, We         achieved by printer classification [20, 30, 36] or template
+introduce a new method to create realistic tampered text           matching [2]. Some works [5,8,53] used font features to dis-
+data and construct a large-scale dataset, termed as DocTam-        tinguish between real texts and tampered texts. Beusekom
+per, with 170k tampered document images of diverse types.          et al. [41] analyzed whether the position of a text line in the
+   We conduct sufficient experiments on both our proposed          document image is aligned with other text lines to determine
+DocTamper and the T-SROIE dataset [47]. Both the qualita-          whether a text line has been tampered. James et al. [18]
+tive and quantitative results demonstrate that our DTD can         used graph neural network (GNN) to detect tampered re-
+significantly outperform previous state-of-the-art methods.        gions in document images with the help of the graph at-
+   In summary, our main contributions are as follows:              tention mechanism. The above methods only work well on
+                                                                   very clear and neat documents, such as scanned documents.
+   • We introduce DTD, a powerful multi-modality model             Abramova et.al. [1] detected copy-move tampering in doc-
+     for tampered text detection in document images.               ument images based on double quantization artifacts, which
+                                                                   doesn’t works well when document images are compressed
+   • We propose CLTD, a new training paradigm to en-
+                                                                   more than once after tampering. Wang et al. [47] used a
+     hance the generalization ability and robustness of the
+                                                                   two-stream Faster-RCNN [31] network to capture the high
+     proposed tampering detection model
+                                                                   frequency clues the SRNet [48] left. However, this type
+   • We propose a novel data synthetic method to gener-            of tampering clues mostly exists on generative tampering
+     ate realistic tampered documents efficiently with only        and could hardly be find on careful copy-paste tampering.
+
+
+
+                                                                 5938
+Figure 2. We collect 50562 document images in various types from public websites and public datasets. We apply copy-move, splicing,
+and generation to create tampered patches and construct the DocTamper dataset.
+
+                                                                     method, we construct a comprehensive large-scale dataset
+                                                                     to promote the research of the tampered text detection task.
+
+                                                                     3.1. Proposed data synthesis method
+                                                                     Selective Tampering Synthesis In traditional image ma-
+                                                                     nipulation detection task, copy-move and splicing data are
+                                                                     synthesised by copying objects from images and pasting
+                                                                     them to random target regions [29, 43, 51]. In the field of
+                                                                     tampered text detection in document images, however, ran-
+                                                                     dom copy-paste will generate obvious visual inconsistency,
+                                                                     which will cause a huge gap between the synthetic data and
+                                                                     real-world text tampering. Therefore, we propose selec-
+                                                                     tive tampering synthesis to generate realistic tampered doc-
+                                                                     ument images. It contains selective copy-paste and selec-
+                                                                     tive generation. The former obtains text groups with similar
+                                                                     styles and does copy-paste within the grouped text instances
+                                                                     to generate tampered text. The latter first erases their orig-
+                                                                     inal text contents with OpenCV [9] or G’MIC [40], then
+                                                                     prints new text with the pre-set similar style and font. As
+                                                                     we can’t directly access the exact text font of the document
+Figure 3. The pipeline of the proposed data synthesis method. We     images in various scenarios, we propose to represent them
+first record size, foreground color and background color of each
+                                                                     with the size (including height and width), foreground color
+text and then do selective synthesis based on that.
+                                                                     and background color of these text.
+The above methods have made promising progress, but they             Overall Pipeline As shown in Fig. 3, the proposed data
+are mostly designed for some specific scenarios. Therefore,          synthesis pipeline for text tampering can be described as
+they lack enough robustness and cross-domain generaliza-             follows: (1) We get the bounding boxes of the words and
+tion ability when encountering some complex scenarios on             characters with powerful open-source OCR tools, such as
+various photographed documents.                                      Paddle-OCR [21] and TesseractOCR [37]. (2) We separate
+                                                                     the foreground of the document images from their back-
+3. DocTamper Dataset                                                 ground using SAUVOLA algorithm [35] and record the
+                                                                     foreground color and background color for each text. (3)
+    In this section, we propose a novel data synthesis ap-           We apply both selective copy-paste and selective generation
+proach to generate realistic tampered document images ef-            to obtain the tampered document images. (4) Finally, post
+ficiently with only unlabeled document images. With this             processing is also applied to improve visual consistency.
+
+
+
+                                                                   5939
+Table 1. Comparison between DocTamper and other public tampered text detection datasets. ‘G‘ denotes Generative tampering, ‘C‘
+denotes Copy-move, and ‘S‘ denotes Splicing.
+
+    Dataset           Year                   Scenario                            Language                Number of images             Tampering Method
+ T-SROIE [47]         2022                   Receipts                              English                    986                            G
+ T-IC13* [46]         2022                  Scene Text                             English                    462                            G
+  DocTamper           2022      Contracts, Invoices, Receipts, etc.            English+Chinese              170,000                        CSG
+   *Although T-IC13 is a tampered dataset for scene text rather than document text, we still list it here for reference to the community.
+
+Table 2. Basic configuration about the DocTamper Dataset,                       ent from the training set in texture and document styles.
+‘DocTamper-FCD‘ denotes the first cross-domain subset,                             The main features of the proposed DocTamper dataset
+‘DocTamper-SCD‘ denotes the second cross-domain subset.
+                                                                                can be summarized as follows:
+                DocTamper                           Number of images                • Large Scale. As shown in Table 1, the public datasets
+                              English                   95,000                        in previous works only have less than 1k images, while
+     Language
+                              Chinese                   75,000                        DocTamper has total 170k images. Such a large scale
+                            Copy-move                   60,000                        dataset is more likely to be a better benchmark for the
+ Tampering Type              Splicing                   50,000                        DITD task.
+                            Generation                  60,000
+                            Training set               120,000                      • Board Diversity. As shown in Fig. 2, to build the Doc-
+                            Testing set                 30,000                        Tamper Dataset, we collect 50,562 document images
+     Data Split                                                                       from various publicly available websites and document
+                          DocTamper-FCD                  2,000
+                          DocTamper-SCD                 18,000                        image datasets [10, 16, 23, 38]. Various bilingual real-
+                                                                                      world document images including contracts, invoices,
+                                                                                      receipts, etc., are included in the source images of our
+3.2. Proposed Dataset                                                                 dataset (Some representative source images of Doc-
+                                                                                      Tamper are shown in appendix). It’s worth mentioning
+   Considering the small-scale of the existing datasets [46,                          that the previous datasets contains only one scenario
+47], we construct a large-scale dataset for tampered text de-                         respectively, as shown in Table 1.
+tection task, termed as DocTamper.
+                                                                                    • Comprehensiveness. All the three commonly used
+Dataset Description As shown in Table 2, DocTamper                                    text tampering methods are included in our dataset to
+has a total number of 170k tampered document images, in-                              imitate the real-world applications. In Addition, we in-
+cluding both Chinese and English. Copy-move, splicing                                 troduce two cross-domain testing subsets to fully eval-
+and generation are all included and applied approximately                             uate the generalization ability of different methods.
+uniform in out dataset. Moreover, we split the dataset into
+four subsets: a training set with 120k samples; a general
+testing set of 30k samples, and two cross-domain testing                        4. Proposed Model
+sets of 2k and 18k samples, respectively. All of the tam-
+pered images are stored without compression, thus they                             In this section, we propose Document Tampering Detec-
+could be trained or tested with customized compression                          tor (DTD), a novel model for document image tampering
+configurations. For all the images, we provide pixel-level                      detection. The overall architecture is shown in Fig. 4. It
+annotations denoting the tampered text regions.                                 consists of four modules: (1) Visual Perception Head to ex-
+                                                                                tract visual features from the original images; (2) Frequency
+Cross-domain Testing Sets Most of the previous works                            Perception Head to convert the Discrete Cosine Transform
+[14,19,26,49] tested their models in a cross-domain manner,                     (DCT) coefficients of the images to frequency domain fea-
+by which the image source and style of testing sets are dif-                    ture embeddings; (3) a Multi-Modality Encoder and (4) a
+ferent from training sets. Such cross-domain evaluation can                     Multi-view Iterative Decoder for final prediction.
+further evaluate the generalization ability of the methods.                     4.1. Visual Perception Head
+It motivates us to introduce two cross-domain testing sets.
+The image source of our first cross-domain (FCD) testing                           We apply seven stacked convolution blocks as our Visual
+set is from the Noisy Office Dataset [10], while the image                      Perception Head (VPH) to extract visual features. Given
+source of the second cross-domain (SCD) testing set is from                     an input image I ∈ RH×W ×3 , we first extract two visual
+                                                                                                                           H    W
+HUAWEI Cloud [11]. Compared to the common testing set,                          feature embeddings of I, including Ff 0 ∈ R 4 × 4 ×C0 and
+                                                                                        H  W
+the images in cross-domain testing sets will be much differ-                    Fv ∈ R 8 × 8 ×Cv through the VPH.
+
+
+
+                                                                             5940
+Figure 4. The overall architecture of our model. We extract visual domain features from image with Visual Perception Head and extract
+frequency domain features from DCT coefficients with Frequency Perception Head. Then fuse them and extract multi-modality features
+by multi-modality Transformer. At last, we utilize Multi-view Iterative Decoder to get predictions with encoder’s output features.
+
+
+4.2. Frequency Perception Head
+    During the process that images are captured by digital
+devices such as cameras and smart phones, they will be
+patched and compressed by quantifying their DCT coeffi-
+cients, which will cause Block Artifact Grids (BAG) [22].
+Tampering on images will mostly disturb the original distri-
+bution of their DCT coefficients, causing the BAG’s discon-
+tinuities between tampered regions and authentic regions.
+Therefore, DCT coefficients’ features are good at captur-
+ing the BAG’s discontinuities and can serve as another im-
+portant clue for locating the tampered regions and make up
+for the deficiencies caused by the inconspicuous visual fea-         Figure 5. The structure of our Frequency Perception Head. It
+tures. Accordingly, we design Frequency Perception Head              takes DCT coefficients with the quantization table of the image I
+(FPH) to capture tampering clues in frequency domain. Our            as input, and outputs frequency feature embeddings.
+DTD benefits a lot in identifying the tampered texts that
+have few visual tampering trace from the proposed FPH.               the input image. Additionally, we apply position embed-
+    As shown in Fig. 5, the structure of the proposed FPH            ding on Fp3 by CoordConv [25] to enhance their position
+follows a dual-head design. Given an input image I ∈                 information, for their better alignment with visual features.
+RH×W ×3 , we first convert it to YCrCb color space and               Then three MoblieConv Layers [34], which effectively en-
+compute its Y channel DCT coefficient map of size H ×W .             large the receptive field and enhance the features, are ap-
+Then the first head embeds the DCT coefficient map us-               plied on Fp3 to obtain the frequency feature embedding Fd .
+ing a set of orthonormal basis before obtaining features
+                                                                     4.3. Multi-Modality Modeling
+Fp1 ∈ RH×W ×Cp1 with two stacked convolution layers.
+For the second head, we first extract Y -channel quantiza-              We propose to fuse the features of frequency domain and
+tion table from the image I. Subsequently, we expand the             visual domain by multi-modality Transformer. As shown in
+quantization table to match the DCT coefficients and then            Fig. 4, given the visual perception head’s output Fv and Fre-
+embed them using a set of learnable parameters. Then                 quency Perception Head’s output Fd , we concatenate and
+we multiply the quantization table embeddings with Fp1               incorporate them together by a scSE module [32]. Then a
+and get Fp2 ∈ RH×W ×Cp2 . With Fp1 and Fp2 , we di-                  1 × 1 convolution layer is applied for dimension reduction
+                                                                                        H  W
+rectly concatenate them together and down-sample them to             to get Ff 1 ∈ R 8 × 8 ×C1 . Through several Swin Trans-
+          H   W
+Fp3 ∈ R 8 × 8 ×Cp3 using a convolution layer with stride 8.          former [27] blocks, two higher level multi-modality fea-
+                                                                                      H   W                     H   W
+In this way, each pixel of Fp3 can represent each 8×8 block          tures, Ff 2 ∈ R 16 × 16 ×C2 and Ff 3 ∈ R 32 × 32 ×C3 , are ex-
+from the original DCT coefficients, matching the BAG of              tracted for the decoder.
+
+
+
+                                                                  5941
+4.4. Multi-view Iterative Decoder
+    When people analyze whether a small region on an im-
+age is abnormal, they always zoom it in an out over and over
+again, combining multi-view of information iteratively to
+get a final conclusion. To mimic the human perception way,
+we propose a new decoder framework termed Multi-view
+Iterative Decoder (MID) to make the best use of the differ-
+ent features in sizes so that to predict more accurate results.
+The structure of our MID is shown in Fig. 6. Given the en-
+coder’s output features Ff 0 , Ff 1 , Ff 2 , Ff 3 , we calculate the
+decoder features D0,n for n = 0, 1, 2, 3 by four cascaded
+iteration operations. Finally, the D0,n for n = 0, 1, 2, 3 are
+concatenated together to predict the final results Mp . The              Figure 6. The structure of our Multi-view Iterative Decoder. It
+                                                                         mimics the process people do careful analysis and utilizes the en-
+process can be formulated by eq. (1) and (2):
+                                                                         coder’s output features in different resolution iteratively to find out
+                                                                         subtle tampering clues.
+              D0,n = MID(Ff n ), n = 0, 1, 2, 3                 (1)
+
+        Mp = Project(Cat(D0,0 , D0,1 , D0,2 , D0,3 ))           (2)
+                                                                         5.1. Evaluation Metric
+   where Cat(.) means concatenate operation and
+                                                                            Following the previous works in image manipulation de-
+P roject(.) denotes a convolution layer to get the final
+                                                                         tection [14, 19, 26, 49], we model the tampering detection
+predictions.
+                                                                         task as binary semantic segmentation and adopt IoU, Pre-
+4.5. Loss Function                                                       cision, Recall and F-score as the evaluation metric of our
+                                                                         DocTamper dataset. For the T-SROIE dataset, we use Pre-
+   Given a prediction mask Mp of an input image I, whose                 cision, Recall and F-score following the previous work [47].
+ground-truth mask is Mg . We train our model with the fol-
+lowing loss function: L = Lce (Mp , Mg ) + Llov (Mp , Mg ),              5.2. Implementation Details
+where Lce means Cross-Entropy Loss and Llov means Lo-
+                                                                             We set the input size of our model as 512×512, and uti-
+vasz Loss [7].
+                                                                         lize the last three stages of the Swin-small [27] for multi-
+4.6. Curriculum Learning for Tampering Detection                         modality modeling. We use AdamW [28] for optimization
+                                                                         with an initial learning rate of 3e-4. We train our mod-
+    Curriculum learning (CL) is a training strategy that trains          els 100k iterations with a batch-size of 12, and the learn-
+a machine learning model from easier data to harder data,                ing rate is decayed to 1e-5 monotonically in a cosine-curve
+which imitates the meaningful learning order in human                    manner. T is set to 8192 for CLTD. All models are trained
+curricula [44]. In the section, we design a new training                 with dynamically JPEG compression to match the testing
+paradigm, termed as Curriculum Learning for Tampering                    sets’ configuration. The quality factors of JPEG compres-
+Detection (CLTD) to train tampered text detection models                 sion are randomly choiced from 75 to 100 and the compres-
+in such an easy-to-hard manner by controlling the quality of             sion times are randomly choiced from 1 to 3. Predictions
+image compression augmentation dynamically. We find that                 are binarized with a threshold of 0.5. For the experiment
+it could significantly boost the model’s robustness regrad-              on T-SROIE dataset [47], we get the inference result in a
+ing to different image compression and its cross-domain                  sliding-window manner due to the large sizes of the images.
+generalization ability. In the concrete implement, we dy-
+namically choose random JPEG compression quality fac-                    5.3. Ablation Analysis
+tors from range (B1 , 100), where B1 is randomly and dy-
+namically chosen from (100-S/T, 100), S is the number of                     The Frequency Perception Head (FPH) is designed to
+current training steps and T is a constant manually pre-set.             find out tampering clues in frequency domain with DCT co-
+Compared to uniformly choosing random quality factors                    efficients, while the Multi-view Iterative Decoder (MID) is
+during the whole training process, models with CLTD are                  utilized to make full use of the encoder’s output features and
+more likely to meet uncompressed images in the beginning.                capture subtle tampering clues. The proposed Curriculum
+                                                                         Learning for Tampering Detection (CLTD) is to help model
+5. Experiments                                                           obtain more robustness and generalization ability. To eval-
+                                                                         uate the effectiveness of FPH, MID and CLTD, we remove
+  We evaluate our models on the testing set of the Doc-                  them separately from our DTD and evaluate the tampered
+Tamper dataset and the public T-SROIE dataset [47].                      text detection performance on the DocTamper dataset. DTD
+
+
+
+                                                                       5942
+Table 3. Ablation study on DocTamper dataset. All images in the testing sets are compressed randomly one to three times with random
+quality factors choiced from 75 to 100 and the same random seed. ‘P‘ denotes precision, ‘R‘ denotes recall and ‘F‘ denotes F-score.
+
+                                 Testing set                       DocTamper-FCD                      DocTamper-SCD
+      Method
+                     IoU         P        R       F       IoU         P      R    F            IoU       P      R    F
+     Baseline       0.616      0.562 0.495      0.526    0.318      0.565 0.347 0.430         0.481    0.509 0.521 0.515
+     w/o FPH        0.745      0.697 0.638      0.666    0.528      0.649 0.588 0.617         0.576    0.626 0.653 0.639
+     w/o MID        0.724      0.708 0.634      0.669    0.710      0.835 0.742 0.786         0.560    0.622 0.621 0.622
+    w/o CLTD        0.600      0.750 0.689      0.718    0.601      0.813 0.611 0.698         0.620    0.681 0.683 0.682
+    DTD (Ours)      0.828      0.814 0.771      0.792    0.749      0.849 0.786 0.816         0.691    0.745 0.762 0.754
+
+Table 4. Comparison on DocTamper dataset. All images in the testing sets are compressed randomly one to three times using random
+quality factors with a lowest bound 75 and the same random seed. ‘P‘ denotes precision, ‘R‘ denotes recall and ‘F‘ denotes F-score.
+‘Params‘ denotes the number of parameters of the models.
+
+                                          Testing set            DocTamper-FCD               DocTamper-SCD
+               Method                                                                                                Params
+                                    P          R      F         P      R      F             P      R      F
+        Mantra-Net [49]           0.123     0.204 0.153       0.175 0.261 0.209           0.124 0.218 0.157            4M
+        MVSS-Net [14]             0.494     0.383 0.431       0.480 0.381 0.424           0.478 0.366 0.414           143M
+        PSCC-Net [26]             0.309     0.506 0.384       0.330 0.580 0.420           0.286 0.540 0.374            4M
+         BEiT-Uper [3]            0.564     0.451 0.501       0.550 0.436 0.487           0.408 0.395 0.402           120M
+        Swin-Uper [27]            0.671     0.608 0.638       0.642 0.475 0.546           0.541 0.612 0.574           121M
+         CAT-Net [19]             0.737     0.666 0.700       0.644 0.484 0.553           0.645 0.618 0.631           114M
+      CAT-Net [19] + CLTD         0.768     0.680 0.721       0.795 0.695 0.741           0.674 0.665 0.670           114M
+          DTD (Ours)              0.814     0.771 0.792       0.849 0.786 0.816           0.745 0.762 0.754            66M
+
+
+Table 5. Ablation study on DocTamper dataset with different com-          We can observe that without FPH, the model’s perfor-
+pression quality. IoU metric is used in all the experiments. ‘Q‘      mance have a significant drop in all the experiments. This
+denotes the lowest compression quality factor. ‘D-FCD’ denotes        indicates that the frequency domain features extracted by
+DocTamper-FCD, ‘D-SCD‘ denotes DocTamper-SCD.
+                                                                      FPH can greatly help our model capture invisible tampering
+                  Testing set       D-FCD          D-SCD              traces in document images. Moreover, the model’s cross-
+    Method                                                            domain generalization ability suffers a much more drop
+                  Q75 Q90         Q75 Q90        Q75 Q90
+  Baseline        0.62 0.67       0.32 0.38      0.48 0.54            without the proposed FPH. This explains the proposed FPH
+  w/o FPH         0.75 0.80       0.53 0.61      0.58 0.64            could help model learn the essential feature of tampering
+  w/o MID         0.72 0.84       0.71 0.81      0.56 0.70            instead of over-fitting specific visual patterns unrelated to
+ w/o CLTD         0.60 0.70       0.60 0.78      0.62 0.74            tampering operation.
+ DTD (Ours)       0.83 0.89       0.75 0.83      0.69 0.78                In the ablation studies about the proposed MID module,
+                                                                      we replace it with a common FPN [24] structure decoder
+Table 6. Comparison on public T-SROIE dataset. ‘P‘ denotes pre-       with comparable parameters. The model also shows a sig-
+cision, ‘R‘ denotes recall and ‘F‘ denotes F-score.                   nificant performance drop in all the experiments. It shows
+                                                                      that the MID could help model capture subtle tampering
+    Method               P          R         F                       traces and distinguish tampering features from unrelated vi-
+  EAST [52]           0.9191     0.8960    0.9075                     sual patterns by interacting the features of multi-view in a
+  ATRR [45]           0.9471     0.9249    0.9359                     thorough and efficient way.
+ Wang et al. [47]     0.9607     0.9755    0.9680                         When the dynamic image compression’s quality factors
+  DTD (Ours)          0.9923     0.9930    0.9927                     are choiced uniformly from a random range, instead of us-
+                                                                      ing the proposed CLTD, both the model’s performance and
+                                                                      generalization ability on all dataset tested shows an obvious
+without any of the proposed FPH, MID and CLTD serves as               degradation. That is because the model are too confused to
+the baseline model in the ablation studies. The quantitative          learn to extract features well. It is notable that the previous
+results are listed in Table 3. We also conduct ablation ex-           state-of-the-art model in this dataset, CAT-Net [19], could
+periments on testing sets with different image compression            also benefit a lot from CLTD, as shown in Table 4, which
+settings, results are shown in Table 5.                               showing the promising generalization capability of CLTD.
+
+
+
+                                                                   5943
+Table 7. Comparison on DocTamper dataset with different image compression settings. IoU metric is used in all the experiments. ‘Q‘
+denotes the lowest compression quality factor in a series image compression.
+
+                                       Testing set                       DocTamper-FCD                     DocTamper-SCD
+          Method
+                              Q 75    Q 80 Q 85        Q 90       Q 75    Q 80 Q 85 Q 90            Q 75    Q 80 Q 85 Q 90
+    Mantra-Net [49]           0.18    0.18 0.18        0.19       0.17     0.17 0.18 0.18           0.16     0.16 0.16 0.17
+    MVSS-Net [14]             0.43    0.43 0.44        0.45       0.41     0.41 0.41 0.42           0.40     0.41 0.41 0.42
+    PSCC-Net [26]             0.17    0.18 0.18        0.18       0.16     0.16 0.17 0.17           0.19     0.20 0.21 0.23
+     BEiT-Uper [3]            0.59    0.59 0.60        0.60       0.35     0.35 0.35 0.36           0.34     0.34 0.35 0.35
+    Swin-Uper [27]            0.70    0.71 0.72        0.74       0.41     0.41 0.41 0.44           0.51     0.51 0.52 0.55
+     CAT-Net [19]             0.74    0.76 0.77        0.78       0.42     0.44 0.43 0.51           0.55     0.56 0.58 0.61
+  CAT-Net [19] + CLTD         0.71    0.72 0.74        0.76       0.60     0.65 0.66 0.75           0.54     0.57 0.61 0.66
+      DTD (Ours)              0.83    0.85 0.87        0.89       0.75     0.79 0.80 0.83           0.69     0.72 0.75 0.78
+
+
+
+
+Figure 7. Qualitative results on DocTamper of comparing DTD with state-of-the-art methods. ‘D-FCD‘ denotes the DocTamper-FCD,
+‘D-SCD‘ denotes the DocTamper-SCD. ‘GT‘ denotes ground-truth labels. ‘CAT-Net*‘ denotes CAT-Net trained with the proposed CLTD.
+
+5.4. Comparison with state-of-the-art methods                            6. Conclusion
+   We compare our methods with some state-of-the-art im-                    In this paper, we propose a novel tampered text detec-
+age manipulation detection methods [14, 19, 26, 49] and se-              tion framework, termed as the Document Tampering Detec-
+mantic segmentation methods [3,27] with their officially re-             tor (DTD). To be specific, DTD designs a Frequency Per-
+leased codes, as shown in Table 4. We also implement them                ception Head for making up for the deficiencies caused by
+with the same training configuration as ours and choose the              the inconspicuous visual features. With the incorporation of
+better results as the final results. The results show that our           visual and frequency features, DTD adopts a Multi-view It-
+DTD outperforms all other methods with a significant mar-                erative Decoder to progressively perceive the tampered text
+gin in both document image tampering detection ability and               regions to predict more accurate results. Besides, to im-
+cross-domain generalization ability. We also observe that                prove the robustness and generalization ability, Curriculum
+other models, especially for those pure visual models, are               Learning for Tampering Detection is introduced into DTD’s
+more likely to over-fit some specific visual patterns in train-          optimization process to address the confusion caused by im-
+ing data instead of learning the ability to find out tamper-             age compression. To facilitate the tampered text detection
+ing clues. As a result, on the two cross-domain subsets,                 in documents, we further propose a novel selective tamper-
+they show bad cross-domain generalization ability, which is              ing synthesis method to generate sufficient realistic data and
+crucial in real-world document image tampering detection                 construct a large-scale dataset, termed as DocTamper, with
+applications. The qualitative results for visual comparisons             170k document images in various types. Extensive experi-
+are illustrated in Fig.7. Moreover, we conduct the experi-               ments demonstrate the superior performance of our model,
+ments using testing sets with different compression config-              which can achieve the state-of-the-art results on both Doc-
+urations, as given in Table 7. We find that our method shows             Tamper and T-SROIE benchmarks.
+excellent performance, robustness and outstanding general-                  Acknowledgement This research is supported in part by
+ization ability in various scenarios. As shown in Table 6,               NSFC (Grant No.: 61936003), Zhuhai Industry Core and
+our model also outperforms other methods significantly on                Key Technology Research Project (no. 2220004002350)
+the public T-SROIE dataset.                                              and GD-NSF (No.2021A1515011870).
+
+
+
+                                                                   5944
+References                                                                  works for image manipulation detection. IEEE Transactions
+                                                                            on Pattern Analysis and Machine Intelligence, 2022.
+ [1] Svetlana Abramova et al. Detecting copy–move forgeries in
+                                                                       [15] Jessica Fridrich and Jan Kodovsky. Rich models for steganal-
+     scanned text documents. Electronic Imaging, 2016(8):1–9,
+                                                                            ysis of digital images. IEEE Transactions on information
+     2016.
+                                                                            Forensics and Security, 7(3):868–882, 2012.
+ [2] Amr Gamal Hamed Ahmed and Faisal Shafait. Forgery de-             [16] Adam W Harley, Alex Ufkes, and Konstantinos G Derpanis.
+     tection based on intrinsic document contents. In 2014 11th             Evaluation of deep convolutional nets for document image
+     IAPR International Workshop on Document Analysis Sys-                  classification and retrieval. In 2015 13th International Con-
+     tems, pages 252–256. IEEE, 2014.                                       ference on Document Analysis and Recognition (ICDAR),
+ [3] Hangbo Bao, Li Dong, Songhao Piao, and Furu Wei. BEit:                 pages 991–995. IEEE, 2015.
+     BERT pre-training of image transformers. In International         [17] Xuefeng Hu, Zhihan Zhang, Zhenye Jiang, Syomantak
+     Conference on Learning Representations, 2022.                          Chaudhuri, Zhenheng Yang, and Ram Nevatia. Span: Spa-
+ [4] Jawadul H Bappy, Cody Simons, Lakshmanan Nataraj, BS                   tial pyramid attention network for image manipulation local-
+     Manjunath, and Amit K Roy-Chowdhury. Hybrid lstm and                   ization. In European conference on computer vision, pages
+     encoder–decoder architecture for detection of image forg-              312–328. Springer, 2020.
+     eries. IEEE Transactions on Image Processing, 28(7):3286–         [18] Hailey James, Otkrist Gupta, and Dan Raviv. Learning docu-
+     3300, 2019.                                                            ment graphs with attention for image manipulation detection.
+ [5] Bilal Bataineh, Siti Norul Huda Sheikh Abdullah, and                   In International Conference on Pattern Recognition and Ar-
+     Khairudin Omar. A statistical global feature extraction                tificial Intelligence, pages 263–274. Springer, 2022.
+     method for optical font recognition. In Asian Conference on       [19] Myung-Joon Kwon, Seung-Hun Nam, In-Jae Yu, Heung-
+     Intelligent Information and Database Systems, pages 257–               Kyu Lee, and Changick Kim. Learning jpeg compression
+     267. Springer, 2011.                                                   artifacts for image manipulation detection and localization.
+ [6] Belhassen Bayar and Matthew C Stamm. Constrained con-                  International Journal of Computer Vision, pages 1875–1895,
+     volutional neural networks: A new approach towards general             2022.
+     purpose image manipulation detection. IEEE Transactions           [20] Christoph H Lampert, Lin Mei, and Thomas M Breuel. Print-
+     on Information Forensics and Security, 13(11):2691–2706,               ing technique classification for document counterfeit detec-
+     2018.                                                                  tion. In 2006 International Conference on Computational
+ [7] Maxim Berman, Amal Rannen Triki, and Matthew B                         Intelligence and Security, volume 1, pages 639–644. IEEE,
+     Blaschko. The lovász-softmax loss: A tractable surrogate for          2006.
+     the optimization of the intersection-over-union measure in        [21] Chenxia Li, Weiwei Liu, Ruoyu Guo, Xiaoting Yin, Kaitao
+     neural networks. In Proceedings of the IEEE conference on              Jiang, Yongkun Du, Yuning Du, Lingfeng Zhu, Baohua Lai,
+     computer vision and pattern recognition, pages 4413–4421,              Xiaoguang Hu, et al. Pp-ocrv3: More attempts for the im-
+     2018.                                                                  provement of ultra lightweight ocr system. arXiv preprint
+ [8] Romain Bertrand, Oriol Ramos Terrades, Petra Gomez-                    arXiv:2206.03001, 2022.
+     Krämer, Patrick Franco, and Jean-Marc Ogier. A conditional       [22] Weihai Li, Yuan Yuan, and Nenghai Yu. Passive detection of
+     random field model for font forgery detection. In 2015 13th            doctored jpeg image via block artifact grid extraction. Signal
+     International Conference on Document Analysis and Recog-               Processing, 89(9):1821–1829, 2009.
+     nition (ICDAR), pages 576–580. IEEE, 2015.                        [23] Xiaoyu Li, Bo Zhang, Jing Liao, and Pedro V Sander. Docu-
+ [9] G. Bradski. The OpenCV Library. Dr. Dobb’s Journal of                  ment rectification and illumination correction using a patch-
+     Software Tools, 2000.                                                  based cnn. ACM Transactions on Graphics (TOG), 38(6):1–
+[10] Maria Jose Castro-Bleda, Salvador España-Boquera, Joan                11, 2019.
+     Pastor-Pellicer, and Francisco Zamora-Martı́nez. The noisy-       [24] Tsung-Yi Lin, Piotr Dollár, Ross Girshick, Kaiming He,
+     office database: A corpus to train supervised machine learn-           Bharath Hariharan, and Serge Belongie. Feature pyra-
+     ing filters for image processing. The Computer Journal,                mid networks for object detection. In Proceedings of the
+     63(11):1658–1667, 2020.                                                IEEE conference on computer vision and pattern recogni-
+[11] HuaWei Cloud. Huawei cloud visual information extraction               tion, pages 2117–2125, 2017.
+     competition. 2022.                                                [25] Rosanne Liu, Joel Lehman, Piero Molino, Felipe Pet-
+[12] Davide Cozzolino, Giovanni Poggi, and Luisa Verdo-                     roski Such, Eric Frank, Alex Sergeev, and Jason Yosinski.
+     liva. Efficient dense-field copy–move forgery detection.               An intriguing failing of convolutional neural networks and
+     IEEE Transactions on Information Forensics and Security,               the coordconv solution. Advances in neural information pro-
+     10(11):2284–2297, 2015.                                                cessing systems, 31, 2018.
+[13] Davide Cozzolino, Giovanni Poggi, and Luisa Verdoliva.            [26] Xiaohong Liu, Yaojie Liu, Jun Chen, and Xiaoming Liu.
+     Splicebuster: A new blind image splicing detector. In 2015             Pscc-net: Progressive spatio-channel correlation network for
+     IEEE International Workshop on Information Forensics and               image manipulation detection and localization. IEEE Trans-
+     Security (WIFS), pages 1–6. IEEE, 2015.                                actions on Circuits and Systems for Video Technology, 2022.
+[14] Chengbo Dong, Xinru Chen, Ruohan Hu, Juan Cao, and                [27] Ze Liu, Han Hu, Yutong Lin, Zhuliang Yao, Zhenda Xie,
+     Xirong Li. Mvss-net: Multi-view multi-scale supervised net-            Yixuan Wei, Jia Ning, Yue Cao, Zheng Zhang, Li Dong, et al.
+
+
+
+
+                                                                     5945
+     Swin transformer v2: Scaling up capacity and resolution. In       [41] Joost Van Beusekom, Faisal Shafait, and Thomas M Breuel.
+     Proceedings of the IEEE/CVF Conference on Computer Vi-                 Text-line examination for document forgery detection. In-
+     sion and Pattern Recognition, pages 12009–12019, 2022.                 ternational Journal on Document Analysis and Recognition
+[28] Ilya Loshchilov and Frank Hutter. Decoupled weight decay               (IJDAR), 16(2):189–207, 2013.
+     regularization. arXiv preprint arXiv:1711.05101, 2017.            [42] Luisa Verdoliva. Media forensics and deepfakes: An
+[29] Gaël Mahfoudi, Badr Tajini, Florent Retraint, Frederic                overview. IEEE Journal of Selected Topics in Signal Pro-
+     Morain-Nicolier, Jean Luc Dugelay, and PIC Marc. Defacto:              cessing, 14(5):910–932, 2020.
+     Image and face manipulation dataset. In 2019 27th Euro-           [43] Junke Wang, Zuxuan Wu, Jingjing Chen, Xintong Han, Ab-
+     pean Signal Processing Conference (EUSIPCO), pages 1–5.                hinav Shrivastava, Ser-Nam Lim, and Yu-Gang Jiang. Ob-
+     IEEE, 2019.                                                            jectformer for image manipulation detection and localiza-
+[30] Aravind K Mikkilineni, Pei-Ju Chiang, Gazi N Ali, George               tion. In Proceedings of the IEEE/CVF Conference on Com-
+     T-C Chiu, Jan P Allebach, and Edward J Delp. Printer iden-             puter Vision and Pattern Recognition, pages 2364–2373,
+     tification based on texture features. In NIP & digital fabri-          2022.
+     cation conference, volume 2004, pages 306–311. Society for        [44] Xin Wang, Yudong Chen, and Wenwu Zhu. A survey on
+     Imaging Science and Technology, 2004.                                  curriculum learning. IEEE Transactions on Pattern Analysis
+[31] Shaoqing Ren, Kaiming He, Ross Girshick, and Jian Sun.                 and Machine Intelligence, 44(9):4555–4576, 2022.
+     Faster r-cnn: Towards real-time object detection with region      [45] Xiaobing Wang, Yingying Jiang, Zhenbo Luo, Cheng-Lin
+     proposal networks. In C. Cortes, N. Lawrence, D. Lee, M.               Liu, Hyunsoo Choi, and Sungjin Kim. Arbitrary shape scene
+     Sugiyama, and R. Garnett, editors, Advances in Neural Infor-           text detection with adaptive text region representation. In
+     mation Processing Systems, volume 28. Curran Associates,               Proceedings of the IEEE/CVF Conference on Computer Vi-
+     Inc., 2015.                                                            sion and Pattern Recognition (CVPR), June 2019.
+[32] Abhijit Guha Roy, Nassir Navab, and Christian Wachinger.          [46] Yuxin Wang, Hongtao Xie, Mengting Xing, Jing Wang,
+     Concurrent spatial and channel ‘squeeze excitation’ in fully           Shenggao Zhu, and Yongdong Zhang. Detecting tampered
+     convolutional networks. In International conference on med-            scene text in the wild. In European Conference on Computer
+     ical image computing and computer-assisted intervention,               Vision, pages 215–232. Springer, 2022.
+     pages 421–429. Springer, 2018.                                    [47] Yuxin Wang, Boqiang Zhang, Hongtao Xie, and Yongdong
+[33] Prasun Roy, Saumik Bhattacharya, Subhankar Ghosh, and                  Zhang. Tampered text detection via rgb and frequency rela-
+     Umapada Pal. Stefann: Scene text editor using font adaptive            tionship modeling. Chinese Journal of Network and Infor-
+     neural network. In Proceedings of the IEEE/CVF Conference              mation Security, 8(3):29–40.
+     on Computer Vision and Pattern Recognition, pages 13228–
+                                                                       [48] Liang Wu, Chengquan Zhang, Jiaming Liu, Junyu Han, Jing-
+     13237, 2020.
+                                                                            tuo Liu, Errui Ding, and Xiang Bai. Editing text in the wild.
+[34] Mark Sandler, Andrew Howard, Menglong Zhu, Andrey Zh-
+                                                                            In Proceedings of the 27th ACM international conference on
+     moginov, and Liang-Chieh Chen. Mobilenetv2: Inverted
+                                                                            multimedia, pages 1500–1508, 2019.
+     residuals and linear bottlenecks. In Proceedings of the
+                                                                       [49] Yue Wu, Wael AbdAlmageed, and Premkumar Natarajan.
+     IEEE conference on computer vision and pattern recogni-
+                                                                            Mantra-net: Manipulation tracing network for detection and
+     tion, pages 4510–4520, 2018.
+                                                                            localization of image forgeries with anomalous features. In
+[35] Jaakko Sauvola and Matti Pietikäinen. Adaptive document
+                                                                            Proceedings of the IEEE/CVF Conference on Computer Vi-
+     image binarization. Pattern recognition, 33(2):225–236,
+                                                                            sion and Pattern Recognition, pages 9543–9552, 2019.
+     2000.
+                                                                       [50] Qiangpeng Yang, Jun Huang, and Wei Lin. Swaptext:
+[36] Christian Schulze, Marco Schreyer, Armin Stahl, and
+                                                                            Image based texts transfer in scenes. In Proceedings of
+     Thomas Breuel. Using dct features for printing technique
+                                                                            the IEEE/CVF Conference on Computer Vision and Pattern
+     and copy detection. In IFIP International Conference on
+                                                                            Recognition, pages 14700–14709, 2020.
+     Digital Forensics, pages 95–106. Springer, 2009.
+[37] Ray Smith et al. Tesseract ocr engine. Lecture. Google Code.      [51] Peng Zhou, Xintong Han, Vlad I Morariu, and Larry S Davis.
+     Google Inc, 2007.                                                      Learning rich features for image manipulation detection. In
+                                                                            Proceedings of the IEEE conference on computer vision and
+[38] Hongbin Sun, Zhanghui Kuang, Xiaoyu Yue, Chenhao
+                                                                            pattern recognition, pages 1053–1061, 2018.
+     Lin, and Wayne Zhang. Spatial dual-modality graph rea-
+     soning for key information extraction. arXiv preprint             [52] Xinyu Zhou, Cong Yao, He Wen, Yuzhi Wang, Shuchang
+     arXiv:2103.14470, 2021.                                                Zhou, Weiran He, and Jiajun Liang. East: An efficient and
+[39] Ke Sun, Bin Xiao, Dong Liu, and Jingdong Wang. Deep                    accurate scene text detector. In Proceedings of the IEEE
+     high-resolution representation learning for human pose es-             Conference on Computer Vision and Pattern Recognition
+     timation. In Proceedings of the IEEE/CVF conference on                 (CVPR), July 2017.
+     computer vision and pattern recognition, pages 5693–5703,         [53] Abdelwahab Zramdini and Rolf Ingold. Optical font recog-
+     2019.                                                                  nition using typographical features. IEEE Transactions on
+[40] David Tschumperlé and Sébastien Fourey. Gmic: Greycs                 pattern analysis and machine intelligence, 20(8):877–882,
+     magic for image computing: A full-featured open-source                 1998.
+     framework for image processing. ]. URL: https://gmic. eu (
+     : 07.04. 2021), 2016.
+
+
+
+
+                                                                     5946
+

@@ -1,0 +1,5 @@
+An Overview of the Tesseract OCR Engine
+Smith, R. (2007). Ninth International Conference on Document Analysis and Recognition (ICDAR 2007) Vol 2. doi:10.1109/icdar.2007.4376991
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+The Tesseract OCR engine, as was the HP Research Prototype in the UNLV Fourth Annual Test of OCR Accuracy, is described in a comprehensive overview. Emphasis is placed on aspects that are novel or at least unusual in an OCR engine, including in particular the line finding, features/classification methods, and the adaptive classifier.

@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+pytest-cache-files-*/
+.scratch_forge/
+tests/
+tools/
+legacy/
+*.pyc

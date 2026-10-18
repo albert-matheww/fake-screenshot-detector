@@ -1,0 +1,9 @@
+3024x1964 (5.9 MP): 3348 ms, measured words 250
+3024x1964 (5.9 MP): 3272 ms, measured words 250
+3024x1964 (5.9 MP): 3259 ms, measured words 253
+3024x1964 (5.9 MP): 3922 ms, measured words 207
+3024x1964 (5.9 MP): 4163 ms, measured words 208
+3024x1964 (5.9 MP): 6805 ms, measured words 364
+3024x1964 (5.9 MP): 6690 ms, measured words 367
+3024x1964 (5.9 MP): 1687 ms, measured words 94
+largest 8 full-size genuine screenshots: median 3635 ms, max 6805 ms

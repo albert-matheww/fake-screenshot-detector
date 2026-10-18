@@ -13,3 +13,7 @@ vite.config.js.timestamp-*
 
 # Office lock files (created while a .pptx/.docx is open in PowerPoint/Word)
 ~$*
+
+# generated corpora (may contain derivatives of private screenshots)
+data/
+backend/.scratch_forge/

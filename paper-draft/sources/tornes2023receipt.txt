@@ -1,0 +1,5 @@
+Receipt Dataset for Document Forgery Detection
+Tornés, Beatriz Martínez, Taburet, Théo, Boros, Emanuela, Rouis, Kais, Doucet, Antoine, Gomez-Krämer, Petra, Sidere, Nicolas, d’Andecy, Vincent Poulain (2023). Lecture Notes in Computer Science. doi:10.1007/978-3-031-41682-8_28
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+

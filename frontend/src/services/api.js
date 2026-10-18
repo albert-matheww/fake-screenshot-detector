@@ -16,22 +16,112 @@ const API_BASE_URL = import.meta.env.VITE_API_HOST
 
 const client = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  // Large screenshots can take 5-15 s to analyse; leave generous headroom.
+  timeout: 60000,
 });
 
-export async function analyzeImage(file, { onUploadProgress } = {}) {
+/**
+ * Error thrown by this module. `kind` is a stable machine-readable category
+ * the UI can switch on; `message` is safe to show to the user.
+ */
+export class ApiError extends Error {
+  constructor(kind, message, { status = null, retryable = true } = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.kind = kind;
+    this.status = status;
+    this.retryable = retryable;
+  }
+}
+
+/** Map an axios error (or anything thrown) to an ApiError. Pure. */
+export function toApiError(err) {
+  if (err instanceof ApiError) return err;
+
+  if (axios.isCancel?.(err) || err?.code === "ERR_CANCELED") {
+    return new ApiError("canceled", "Analysis cancelled.");
+  }
+
+  const status = err?.response?.status ?? null;
+  if (status == null) {
+    if (err?.code === "ECONNABORTED" || err?.code === "ETIMEDOUT") {
+      return new ApiError(
+        "timeout",
+        "The analysis took too long and was stopped. Try a smaller or cropped screenshot.",
+      );
+    }
+    if (err?.request || err?.code === "ERR_NETWORK") {
+      return new ApiError(
+        "network",
+        "Could not reach the analysis server. Check your connection and that the backend is running, then try again.",
+      );
+    }
+    return new ApiError("unknown", err?.message || "Something went wrong. Please try again.");
+  }
+
+  // Only trust a plain-text error from the API itself (nginx error pages are HTML).
+  const serverMessage =
+    typeof err.response.data?.error === "string" ? err.response.data.error : null;
+
+  if (status === 413) {
+    return new ApiError("too_large", "That image is too large for the server (limit 10 MB). Try a smaller file.", {
+      status,
+      retryable: false,
+    });
+  }
+  if (status === 400 || status === 415 || status === 422) {
+    return new ApiError(
+      "invalid_image",
+      serverMessage || "The server could not read that file as an image. Use a PNG, JPEG or WebP screenshot.",
+      { status, retryable: false },
+    );
+  }
+  if (status === 429) {
+    return new ApiError("rate_limited", "Too many requests right now. Wait a moment and try again.", { status });
+  }
+  if (status >= 500) {
+    return new ApiError(
+      "server",
+      "The analysis server hit an error while processing this image. Try again; if it keeps failing, try a different screenshot.",
+      { status },
+    );
+  }
+  return new ApiError("unknown", serverMessage || `Unexpected response from the server (HTTP ${status}).`, { status });
+}
+
+export async function analyzeImage(file, { onUploadProgress, signal } = {}) {
   const formData = new FormData();
   formData.append("image", file);
 
-  const response = await client.post("/analyze", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
-    onUploadProgress,
-  });
-  return response.data;
+  try {
+    const response = await client.post("/analyze", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      onUploadProgress,
+      signal,
+    });
+    return response.data;
+  } catch (err) {
+    throw toApiError(err);
+  }
 }
 
-export async function getStatus() {
-  const response = await client.get("/status");
+export async function compareImages(original, suspect, { signal } = {}) {
+  const formData = new FormData();
+  formData.append("original", original);
+  formData.append("suspect", suspect);
+  try {
+    const response = await client.post("/compare", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      signal,
+    });
+    return response.data;
+  } catch (err) {
+    throw toApiError(err);
+  }
+}
+
+export async function getStatus({ signal } = {}) {
+  const response = await client.get("/status", { timeout: 8000, signal });
   return response.data;
 }
 

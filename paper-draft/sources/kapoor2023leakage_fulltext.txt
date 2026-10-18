@@ -1,0 +1,1785 @@
+                                                         Leakage and the Reproducibility Crisis in ML-based Science
+
+                                                                                    Sayash Kapoor 1 Arvind Narayanan 1
+
+
+                                                                   Abstract                                 1. Overview
+                                                                                                            There has been a marked shift towards the paradigm of pre-
+                                                The use of machine learning (ML) methods                    dictive modeling across quantitative science fields. This
+                                                for prediction and forecasting has become                   shift has been facilitated by the widespread use of machine
+                                                widespread across the quantitative sciences. How-           learning (ML) methods. However, pitfalls in using ML
+                                                ever, there are many known methodological pit-              methods have led to exaggerated claims about their perfor-
+
+
+
+
+arXiv:2207.07048v1 [cs.LG] 14 Jul 2022
+                                                falls, including data leakage, in ML-based sci-             mance. Such errors can lead to a feedback loop of overop-
+                                                ence. In this paper, we systematically investigate          timism about the paradigm of prediction—especially as
+                                                reproducibility issues in ML-based science. We              non-replicable publications tend to be cited more often than
+                                                show that data leakage is indeed a widespread               replicable ones (Serra-Garcia & Gneezy, 2021). It is there-
+                                                problem and has led to severe reproducibility fail-         fore important to examine the reproducibility of findings in
+                                                ures. Specifically, through a survey of literature          communities adopting ML methods.
+                                                in research communities that adopted ML meth-               Scope. We focus on reproducibility issues in ML-based
+                                                ods, we find 17 fields where errors have been               science, which involves making a scientific claim using the
+                                                found, collectively affecting 329 papers and in             performance of the ML model as evidence. There is a much
+                                                some cases leading to wildly overoptimistic con-            better known reproducibility crisis in research that uses tra-
+                                                clusions. Based on our survey, we present a fine-           ditional statistical methods (Open Science Collaboration,
+                                                grained taxonomy of 8 types of leakage that range           2015). We also situate our work in contrast to other ML
+                                                from textbook errors to open research problems.             domains, such as methods research (creating and improving
+                                                                                                            widely-applicable ML methods), ethics research (studying
+                                                We argue for fundamental methodological                     the ethical implications of ML methods), engineering ap-
+                                                changes to ML-based science so that cases of                plications (building or improving a product or service), and
+                                                leakage can be caught before publication. To that           modeling contests (improving predictive performance on a
+                                                end, we propose model info sheets for reporting             fixed dataset created by an independent third party). Investi-
+                                                scientific claims based on ML models that would             gating the validity of claims in all of these areas is important,
+                                                address all types of leakage identified in our sur-         and there is ongoing work to address reproducibility issues
+                                                vey. To investigate the impact of reproducibility           in these domains (Hullman et al., 2022; Pineau et al., 2020;
+                                                errors and the efficacy of model info sheets, we            Erik Gundersen, 2021; Bell & Kampman, 2021).
+                                                undertake a reproducibility study in a field where
+                                                                                                            We define a research finding as reproducible if the code and
+                                                complex ML models are believed to vastly out-
+                                                                                                            data used to obtain the finding are available and the data
+                                                perform older statistical models such as Logistic
+                                                                                                            is correctly analyzed (Hofman et al., 2021a; Leek & Peng,
+                                                Regression (LR): civil war prediction. We find
+                                                                                                            2015; Pineau et al., 2020). This is a broader definition than
+                                                that all papers claiming the superior performance
+                                                                                                            computational reproducibility — when the results in a paper
+                                                of complex ML models compared to LR models
+                                                                                                            can be replicated using the exact code and dataset provided
+                                                fail to reproduce due to data leakage, and com-
+                                                                                                            by the authors (see Appendix A).
+                                                plex ML models don’t perform substantively bet-
+                                                ter than decades-old LR models. While none of               Leakage. Data leakage has long been recognized as a lead-
+                                                these errors could have been caught by reading              ing cause of errors in ML applications (Nisbet et al., 2009).
+                                                the papers, model info sheets would enable the              In formative work on leakage, Kaufman et al. (2012) provide
+                                                detection of leakage in each case.                          an overview of different types of errors and give several rec-
+                                                                                                            ommendations for mitigating these errors. Since this paper
+                                                                                                            was published, the ML community has investigated leak-
+                                            1                                                               age in several engineering applications and modeling com-
+                                              Department of Computer Science and Center for Informa-
+                                         tion Technology Policy, Princeton University. Correspondence to:   petitions (Fraser, 2016; Ghani et al., 2020; Becker, 2018;
+                                         Sayash Kapoor <sayashk@princeton.edu>.                             Brownlee, 2016; Collins-Thompson). However, leakage oc-
+                                                                                                            curring in ML-based science has not been comprehensively
+Leakage and the Reproducibility Crisis in ML-based Science                                                          Kapoor and Narayanan
+
+                                                             Nu  m  b
+                                                             Nu e r o
+                                                                 m  be pap f
+                                                              [L        ro
+                                                                  1.1 f pap rev     ers
+                                                              [L No
+                                                                  1.2 ]       t     ers iew
+                                                                                        wi ed
+                                                              [L      ] P est s th p
+                                                                  1.3 re-p et                    itfall
+                                                              [L      ] F ro
+                                                                  1.4 eatu . on      c                 s
+                                                                      ]
+                                                              [L Du e se trai
+                                                                  2]         pl   r      l        n-
+                                                                      I
+                                                              [L lleg ate n tr st
+                                                                  3.1       itim ic . o s          aite
+                                                                      ]
+                                                              [L Te ate
+                                                                  3.2 mp                             n- tes t
+                                                              [L      ] N or         al  fea tu r
+                                                                  3. on
+                                                             Co 3] S -ind aka            le es
+                                                                 m am . b
+                                                                    p
+                                                             Da ut. r plin w tr           /     ge
+                                                                 ta  q pr  e
+                                                             M ual oduc ias -tes      g b ai       n
+                                                             St etr ity
+                                                                    ic  c               i
+                                                                                iss bilit      yi         t
+                                                               an hoic ues
+                                                                   da  rd       e iss             ss ue s
+                                                                          da  t as s
+                                                                                   et ue
+  Field                     Paper                                                     us  ed?
+  Medicine                  Bouwmeester et al. (2012)         71 27      ◦                                                 ◦
+  Neuroimaging              Whelan & Garavan (2014)           – 14       ◦          ◦
+  Autism Diagnostics        Bone et al. (2015)                – 3                        ◦                      ◦          ◦    ◦     ◦
+  Bioinformatics            Blagus & Lusa (2015)              – 6             ◦
+  Nutrition Research        Ivanescu et al. (2016)            – 4        ◦                                                 ◦    ◦
+  Software Eng.             Tu et al. (2018)                  58 11                                  ◦                ◦    ◦          ◦
+  Toxicology                Alves et al. (2019)               – 1                        ◦                            ◦    ◦
+  Satellite Imaging         Nalepa et al. (2019)              17 17                                       ◦                ◦          ◦
+  Tractography              Poulin et al. (2019)              4 2        ◦                                            ◦    ◦    ◦     ◦
+  Clinical Epidem.          Christodoulou et al. (2019)       71 48                 ◦                                      ◦
+  Brain-computer Int.       Nakanishi et al. (2020)           – 1        ◦                                                            ◦
+  Histopathology            Oner et al. (2020)                – 1                                         ◦
+  Neuropsychiatry           Poldrack et al. (2020)            100 53     ◦    ◦                                            ◦    ◦
+  Medicine                  Vandewiele et al. (2021)          24 21                 ◦                     ◦     ◦     ◦    ◦          ◦
+  Radiology                 Roberts et al. (2021)             62 62      ◦               ◦                      ◦     ◦               ◦
+  IT Operations             Lyu et al. (2021)                 9 3                                    ◦                                ◦
+  Medicine                  Filho et al. (2021)               – 1                              ◦
+  Neuropsychiatry           Shim et al. (2021)                – 1                   ◦                                 ◦
+  Genomics                  Barnett et al. (2022)             41 23                 ◦                                      ◦
+  Computer Security         Arp et al. (2022)                 30 30      ◦    ◦     ◦          ◦          ◦     ◦          ◦    ◦
+
+Table 1. Survey of 20 papers that identify pitfalls in the adoption of ML methods across 17 fields, collectively affecting 329 papers. In
+each field, papers adopting ML methods suffer from data leakage. The column headings for types of data leakage, shown in bold, are
+based on our taxonomy of data leakage. We also highlight other issues that are reported in the papers, including issues with computational
+reproducibility (the availability of code, data, and computing environment to reproduce the exact results reported in the paper), data
+quality (for example, small size or large amounts of missing data), metric choice (using incorrect metrics for the task at hand, for example,
+using accuracy for measuring model performance in the presence of heavy class imbalance), and standard dataset use, where issues are
+found despite the use of standard datasets in a field.
+
+investigated. As a result, mitigations for data leakage in               problems (Section 2.4).
+scientific applications of ML remain understudied.
+                                                                        2) Model info sheets to detect and prevent leakage. Cur-
+In this paper, we systematically investigate reproducibility            rent standards for reporting model performance in ML-based
+issues in ML-based science due to data leakage. We make                 science often fall short in addressing issues due to leakage.
+three main contributions:                                               Specifically, checklists and model cards are one way to pro-
+                                                                        vide standard best practices for reporting details about ML
+1) A survey and taxonomy of reproducibility issues due
+                                                                        models (Mongan et al., 2020; Collins et al., 2015; Mitchell
+to leakage. We provide evidence for a growing reproducibil-
+                                                                        et al., 2019). However, current efforts do not address issues
+ity crisis in ML-based science. Through a survey of litera-
+                                                                        arising due to leakage. Further, most checklists currently
+ture in research communities that adopted ML methods, we
+                                                                        in use are not developed for ML-based science in general,
+find 20 papers across 17 fields where errors have been found,
+                                                                        but rather for specific scientific or research communities
+collectively affecting 329 papers (Table 1). Each of these
+                                                                        (Pineau et al., 2020; Mongan et al., 2020). As a result,
+fields suffers from leakage. We highlight that data leakage
+                                                                        best practices for model reporting in ML-based science are
+mitigation strategies developed for other ML applications
+                                                                        underspecified.
+such as modeling contests and engineering applications of-
+ten do not translate to ML-based science. Based on our                   In this paper, we introduce model info sheets to detect and
+survey, we present a fine-grained taxonomy of 8 types of                 prevent leakage in ML-based science (Section 3). They are
+leakage that range from textbook errors to open research                 inspired by the model cards in Mitchell et al. (2019). Filling
+Leakage and the Reproducibility Crisis in ML-based Science                                                                                                               Kapoor and Narayanan
+
+          1.0                             Logistic Regression 1                            Logistic Regression
+                                          Logistic Regression 2                            Random Forests 1
+                                          Logistic Regression 3                            Random Forests 2
+          0.9                             Random Forests
+
+
+
+          0.8
+
+
+          0.7
+                                                                                                                                         AdaBoost                                        AdaBoost
+                                                                                                                                         GBT                                             Extratrees
+          0.6                                                                                                                            Logistic Regression 1                           Lasso
+                                                                                                                                         Logistic Regression 2                           Logistic Regression
+                                                                                                                                         Logistic Regression 3                           Random Forest
+          0.5                                                                                                                            Random Forests                                  SVM
+
+                 Reported results    Corrected results            Reported results   Corrected results           Reported results      Corrected results          Reported results    Corrected results
+                     (AUC)                (AUC)                       (AUC)               (AUC)                      (AUC)                  (AUC)                   (Accuracy)          (Accuracy)
+
+
+ Paper                  Muchlinski et al.                          Colaresi and Mahmood                                         Wang                                          Kaufman et al.
+ Claim          Random Forests model                        Random Forests models drastically                Adaboost and Gradient Boosted                       Adaboost outperforms other models
+                drastically outperforms Logistic            outperform Logistic regression                   Trees (GBT) drastically outperform
+                regression models                           model                                            other models
+ Error          [L1.2] Pre-proc. on train-test               [L1.2] Pre-proc. on train-test                  [L1.2] Pre-proc. on train-test.                     [L2] Illegitimate features (Data
+                (Incorrect imputation)                      (Incorrect reuse of an imputed                   (Incorrect reuse of an imputed dataset)             leakage due to proxy variables)
+                                                            dataset)                                         [L3.1] Temporal leakage (k-fold cross               [L3.1] Temporal leakage (k-fold
+                                                                                                             validation with temporal data)                      cross validation with temporal data)
+ Impact         Random Forests perform no                   Random Forests perform no better                 Difference in AUC between Adaboost                  Adaboost no longer outperforms
+                better than Logistic Regression             than Logistic Regression                         and Logistic Regression drops from                  Logistic Regression.
+                                                                                                             0.14 to 0.01                                        None of the models outperform a
+                                                                                                                                                                 baseline model that predicts the
+                                                                                                                                                                 outcome of the previous year
+ Discussion     Impact of the incorrect                     Re-use the dataset provided by                   Re-use the dataset provided by                      Use several proxy variables for
+                imputation is severe since 95%              Muchlinski et al., which uses an                 Muchlinski et al., which uses an                    the outcome as predictors (e.g.,
+                of the out-of-sample dataset is             incorrect imputation method                      incorrect imputation method                         colwars, cowwars, sdwars, all
+                missing and is filled in using the                                                                                                               proxies for civil war), leading to
+                incorrect imputation method                                                                                                                      near perfect accuracy
+
+Figure 1. A comparison of reported and corrected results in civil war prediction papers published in top political science journals. The
+main findings of each of these papers are invalid due to various forms of data leakage: Muchlinski et al. (2016) impute the training and
+test data together, Colaresi & Mahmood (2017) and Wang (2019) incorrectly reuse an imputed dataset, and Kaufman et al. (2019) use
+proxies for the target variable which causes data leakage. The use of model info sheets (Section 3) would detect leakage in every paper.
+When we correct these errors, complex ML models (such as Adaboost and Random Forests) do not perform substantively better than
+decades-old Logistic Regression models for civil war prediction in each case. Each column in the table outlines the impact of leakage on
+the results of a paper. The figure above each column shows the difference in performance that results from fixing leakage issues.
+
+
+out a model info sheet requires the researcher to provide                                                 top political science journals. Further, when the errors are
+precise arguments to justify that models used towards mak-                                                corrected, ML models don’t perform substantively better
+ing scientific claims do not suffer from leakage. Model info                                              than decades-old Logistic Regression models, calling into
+sheets address all types of leakage identified in our survey.                                             question the shift from explanatory modeling to predictive
+We advocate for model info sheets to be included with every                                               modeling in this field. While none of these errors could
+paper making a scientific claim using an ML model.                                                        have been caught by reading the papers, model info sheets
+                                                                                                          enable the detection of leakage in each case.
+3) Empirical case study of leakage in civil war predic-
+tion. For an in-depth look at the impact of reproducibility
+errors and the efficacy of model info sheets, we undertake a                                              2. Evidence of a reproducibility crisis
+reproducibility study in civil war prediction, a subfield of
+                                                                                                         Many scientific fields have adopted ML methods and the
+political science where ML models are believed to vastly
+                                                                                                         paradigm of predictive modeling (Athey & Imbens, 2019;
+outperform older statistical models such as Logistic Regres-
+                                                                                                         Schrider & Kern, 2018; Valletta et al., 2017; Iniesta et al.,
+sion. We perform a systematic review to find papers on
+                                                                                                         2016; Tonidandel et al., 2018; Yarkoni & Westfall, 2017).
+civil war prediction and find that all papers in our review
+                                                                                                         We find at least three main uses of ML models in scien-
+claiming the superior performance of ML models compared
+                                                                                                         tific literature. First, models which are better at prediction
+to Logistic Regression models fail to reproduce due to data
+                                                                                                         are thought to enable an improved understanding of scien-
+leakage (Figure 1)1 . Each of these papers was published in
+                                                                                                         tific phenomena (Hofman et al., 2021b). Second, especially
+    1                                                                                                    when used in medical fields, models with higher predictive
+      A note on terminology. We use “ML models” as a shorthand
+for models other than Logistic Regression, specifically, Random
+Forests, Gradient-Boosted Trees, and Adaboost. To be clear, all                                           terminology we use is common in fields that distinguish ML from
+of these models including Logistic Regression involve learning                                            statistical methods that invoke an assumption about the true data
+from data in the predictive modeling approach. However, the                                               generating process, such as Logistic Regression (Christodoulou
+                                                                                                          et al., 2019).
+Leakage and the Reproducibility Crisis in ML-based Science                                                Kapoor and Narayanan
+
+accuracy can aid in research and development of better di-          ing settings or predictive modeling competitions (Kaufman
+agnostic tools (McDermott et al., 2021). Finally, ML-based          et al., 2012). However, the taxonomy of data leakage out-
+methods have also been used to investigate the inherent pre-        lined in this body of work does not address all kinds of
+dictability of phenomena, especially for predicting social          leakage that we identify in our survey. In particular, we
+outcomes (Salganik et al., 2020). The increased adoption            find that leakage can result from a difference between the
+of ML methods in science motivates our investigation of             distribution of the test set and the distribution of scientific
+reproducibility issues in ML-based science.                         interest (Section 2.4). Robustness to distribution shift is an
+                                                                    area of ongoing research in ML methods, and is as such
+2.1. Data leakage causes irreproducible results                     an open problem (Geirhos et al., 2020). Additionally, prior
+                                                                    work primarily focuses on mitigating leakage in modeling
+Data leakage is a spurious relationship between the indepen-        competitions and engineering applications. Both of these
+dent variables and the target variable that arises as an artifact   settings are very different from scientific research, and miti-
+of the data collection, sampling, or pre-processing strategy.       gations for data leakage in modeling competitions as well as
+Since the spurious relationship won’t be present in the dis-        engineering applications of ML often do not translate into
+tribution about which scientific claims are made, leakage           strategies for mitigating data leakage in ML-based science.
+usually leads to inflated estimates of model performance.
+                                                                    Leakage in modeling competitions. In predictive model-
+Researchers in many communities have already documented             ing competitions, dataset creation and model evaluation is
+reproducibility failures in ML-based science within their           left to impartial third parties who have the expertise and
+fields. Here we conduct a cross-disciplinary analysis by            incentives to avoid errors. Within this framework, none of
+building on these individual reviews. This enables us to            the participants have access to the held-out evaluation set
+highlight the scale and scope of the crisis, identify common        before the competition ends. In contrast, in most ML-based
+patterns, and make progress toward a solution.                      science the researcher has access to the entire dataset while
+When searching for past literature that documents repro-            creating the ML models. Leakage often occurs due to the
+ducibility failures in ML-based science, we found that dif-         researcher having access to the entire dataset during the
+ferent fields often use different terms to describe pitfalls and    modeling process.
+errors. This makes it difficult to conduct a systematic search      Leakage in engineering applications. One of the most
+to find papers with errors. Therefore, we do not present            common recommendations for detecting and mitigating
+our results as a systematic meta-review of leakage from a           leakage is to deploy the ML model at a limited scale in
+coherent sample of papers, but rather as a lower bound of           production. This advice is only applicable to engineering
+reproducibility issues in ML-based science. Additionally,           applications of ML, where the end goal is not to gain in-
+most reviews only look at the content of the papers, and            sights about a particular process, but rather to serve as a
+not the code and data provided with the papers to check             component in a product. Often, a rough idea of model perfor-
+for errors. This leads to under-counting the number of af-          mance is enough to decide whether a model is good enough
+fected papers, since the code might have errors that are not        to be deployed in a product. Contrarily, ML-based science
+apparent from reading the papers.                                   involves making a scientific claim using the performance of
+Our findings present a worrying trend for the reproducibility       the ML model as evidence. In addition, engineering applica-
+of ML-based science. We find 20 papers from 17 fields that          tions of ML often operate in a rapidly changing context and
+outline errors in ML-based science in their field, collectively     have access to large datasets, so small differences in perfor-
+affecting 329 papers. A prominent finding that emerges is           mances are often not as important, whereas scientific claims
+that data leakage is a pitfall in every single case. The results    are sensitive to small performance differences between ML
+from our survey are presented in Table 1. Columns in bold           models.
+represent different types of leakage (Section 2.4). The last
+four columns represent other common trends in the papers            2.3. Why do we call it a reproducibility crisis?
+we study (Section 2.5). For systematic reviews, we report
+                                                                    We say that ML-based science is suffering from a repro-
+the number of papers reviewed. Each paper in our survey
+                                                                    ducibility crisis for two related reasons: First, our results
+highlights issues with leakage, with 6 papers highlighting
+                                                                    show that reproducibility failures in ML-based science are
+the presence of multiple types of leakage in their field.
+                                                                    systemic. In nearly every scientific field that has carried
+                                                                    out a systematic study of reproducibility issues, papers are
+2.2. Data leakage mitigations for other ML                          plagued by common pitfalls. In many systematic reviews,
+     applications do not apply to scientific research               a majority of the papers reviewed suffer from these pitfalls.
+Most previous research and writing on data leakage has              Thus, we find that similar problems are likely to arise in
+focused on mitigating data leakage primarily for engineer-          many fields that are adopting ML methods. Second, despite
+Leakage and the Reproducibility Crisis in ML-based Science                                              Kapoor and Narayanan
+
+the urgency of addressing reproducibility failures, there are    is used for the purposes of training and evaluating an ML
+no systemic solutions that have been deployed for these          model, the same data could exist in the training as well as
+failures. Scientific communities are discovering the same        test set.
+failure modes across disciplines, but have yet to converge
+                                                                 [L2] Model uses features that are not legitimate. If the
+on best practices for avoiding reproducibility failures.
+                                                                 model has access to features that should not be legitimately
+Calling attention to and addressing these widespread fail-       available for use in the modeling exercise, this could result in
+ures is vital to maintaining public confidence in ML-based       leakage. One instance when this can happen is if a feature is
+science. At the same time, the use of ML methods is still        a proxy for the outcome variable (Kaufman et al., 2012). For
+in its infancy in many scientific fields. Addressing repro-      example, Filho et al. (2021) find that a recent study included
+ducibility failures pre-emptively in such fields can correct a   the use of anti-hypertensive drugs as a feature for predicting
+lot of scientific research that would otherwise be flawed.       hypertension. Such a feature could lead to leakage because
+                                                                 the model would not have access to this information when
+2.4. Towards a solution: A taxonomy of data leakage              predicting the health outcome for a new patient. Further, if
+                                                                 the fact that a patient uses anti-hypertensive drugs is already
+We now provide our taxonomy of data leakage errors in            known at prediction time, the prediction of hypertension
+ML-based science. Such a taxonomy can enable a better un-        becomes a trivial task.
+derstanding of why leakage occurs and inform potential so-
+lutions. Our taxonomy is comprehensive and addresses data        The judgement of whether the use of a given feature is
+leakage arising during the data collection, pre-processing,      legitimate for a modeling task requires domain knowledge
+modeling and evaluation steps. In particular, our taxonomy       and can be highly problem specific. As a result, we do not
+addresses all cases of data leakage that we found in our         provide sub-categories for this sort of leakage. Instead, we
+survey (Table 1).                                                suggest that researchers decide which features are suitable
+                                                                 for a modeling task and justify their choice using domain
+[L1] Lack of clean separation of training and test               expertise.
+dataset. If the training dataset is not separated from the
+test dataset during all pre-processing, modeling and evalu-      [L3] Test set is not drawn from the distribution of sci-
+ation steps, the model has access to information in the test     entific interest. The distribution of data on which the per-
+set before its performance is evaluated. Since the model         formance of an ML model is evaluated differs from the
+has access to information from the test set at training time,    distribution of data about which the scientific claims are
+the model learns relationships between the predictors and        made. The performance of the model on the test set does
+the outcome that would not be available in additional data       not correspond to its performance on data drawn from the
+drawn from the distribution of interest. The performance of      distribution of scientific interest.
+the model on this data therefore does not reflect how well       [L3.1] Temporal leakage. When an ML model is used to
+the model would perform on a new test set drawn from the         make predictions about a future outcome of interest, the
+same distribution of data.                                       test set should not contain any data from a date before the
+[L1.1] No test set. Using the same dataset for training as       training set. If the test set contains data from before the
+well as testing the model is a text-book example of overfit-     training set, the model is built using data “from the future”
+ting, which leads to overoptimisic performance estimates         that it should not have access to during training, and can
+(Kuhn & Johnson, 2013).                                          cause leakage.
+[L1.2] Pre-processing on training and test set. Using the en-    [L3.2] Nonindependence between train and test samples.
+tire dataset for any pre-processing steps such as imputation     Nonindependence between train and test samples constitutes
+or over/under sampling. For instance, using oversampling         leakage, unless the scientific claim is about a distribution
+before splitting the data into training and test sets leads to   that has the same dependence structure. In the extreme (but
+an imperfect separation between the training and test sets       unfortunately common) case, train and test samples come
+since data generated using oversampling from the training        from the same people or units. For example, Oner et al.
+set will also be present in the test set.                        (2020) find that a recent study on histopathology uses differ-
+                                                                 ent observations of the same patient in the training and test
+[L1.3] Feature selection on training and test set. Feature       sets. In this case, the scientific claim is being made about
+selection on the entire dataset results in using information     the ability to predict gene mutations in new patients; how-
+about which feature performs well on the test set to make        ever, it is evaluated on data from old patients (i.e., data from
+a decision about which features should be included in the        patients in the training set), leading to a mismatch between
+model.                                                           the test set distribution and the scientific claim. The train-
+[L1.4] Duplicates in datasets. If a dataset with duplicates      test split should account for the dependencies in the data
+Leakage and the Reproducibility Crisis in ML-based Science                                               Kapoor and Narayanan
+
+ to ensure correct performance evaluation. Methods such as         2.5. Other issues identified in our survey (Table 1)
+‘block cross validation’ can partition the dataset strategically
+                                                                   Computational reproducibility issues. Computational re-
+ so that the performance evaluation does not suffer from data
+                                                                   producibility of a finding refers to sharing the complete
+ leakage and overoptimism (Roberts et al., 2017; Valavi et al.,
+                                                                   code and data needed to reproduce the findings reported
+ 2021). Handling nonindependence between the training and
+                                                                   in a paper exactly. This is important to enable external re-
+ test sets in general—i.e., without any assumptions about in-
+                                                                   searchers to reproduce results and verify their correctness.
+ dependence in the data—is a hard problem, since we might
+                                                                   Five papers in our survey outlined the lack of computational
+ not know the underlying dependency structure of the task in
+                                                                   reproducibility in their field.
+ many cases (Malik, 2020).
+                                                                   Data quality issues. Access to good quality data is essential
+[L3.3] Sampling bias in test distribution. Sampling bias
+                                                                   for creating ML models (Paullada et al., 2020; Scheuerman
+in the choice of test dataset can lead to data leakage. One
+                                                                   et al., 2021). Issues with the quality of the dataset could
+example of sampling bias is spatial bias, which refers to
+                                                                   affect the results of ML-based science. 10 papers in our sur-
+choosing the test data from a geographic location but mak-
+                                                                   vey highlighted data quality issues such as not addressing
+ing claims about model performance in other geographic
+                                                                   missing values in the data, the small size of datasets com-
+locations as well. Another example is selection bias, which
+                                                                   pared to the number of predictors, and the outcome variable
+entails choosing a non-representative subset of the dataset
+                                                                   being a poor proxy for the phenomenon being studied.
+for evaluation. For example, Bone et al. (2015) highlight
+that in a study on predicting autism using ML models, ex-          Metric choice issues. A mismatch between the metric used
+cluding the data corresponding to borderline cases of autism       to evaluate performance and the scientific problem of inter-
+leads to leakage since the test set is no longer representative    est leads to issues with performance claims. For example,
+of the general population about which claims are made. In          using accuracy as the evaluation metric with a heavily im-
+addition, borderline cases of autism are often the most tricky     balanced dataset leads to overoptimistic results, since the
+to diagnose, so excluding them the evaluation set is likely        model can get a high accuracy score by always predicting
+to lead to overoptimistic results. Cases of leakage due to         the majority class. Four papers in our survey highlighted
+sampling bias can often be subtle. For example, Zech et al.        metric choice issues.
+(2018) find that models for pneumonia prediction trained on
+                                                                   Use of standard datasets. Reproducibility issues arose
+images from one hospital do not generalize to images from
+                                                                   despite the use of standard, widely-used datasets, often be-
+another hospital due to subtle differences in how images are
+                                                                   cause of the lack of standard modeling and evaluation proce-
+generated in each hospital.
+                                                                   dures such as fixing the train-test split and evaluation metric
+A model may have leakage when the distribution about               for the dataset. Seven papers in our survey highlighted that
+which the scientific claim is made does not match the distri-      issues arose despite the use of standard datasets.
+bution from which the evaluation set is drawn. ML models
+may also suffer from a related, but distinct limitation: the
+                                                                   3. Model info sheets for detecting and
+lack of generalization when we try to apply a result about
+one population to another similar but distinct population.            preventing leakage
+Several issues with the generalization of ML models op-            Our taxonomy of data leakage highlights several failure
+erating under a distribution shift have been highlighted in        modes which are prevalent in ML-based science. To detect
+ML methods research, such as fragility towards adversarial         cases of leakage, we provide a template for a model info
+examples (Szegedy et al., 2014), image distortion and tex-         sheet to accompany scientific claims using predictive mod-
+ture (Geirhos et al., 2018), and overinterpretation (Carter        eling 2 . The template consists of precise arguments needed
+et al., 2021). Robustness to distribution shift is an ongoing      to justify the absence of leakage. Model info sheets would
+area of work in ML methods research. Even slight shifts            address every type of leakage identified in our survey.
+in the target distribution can cause performance estimates
+to change drastically (Recht et al., 2019). Despite ongoing        3.1. Prior work on model cards and reporting
+work to create ML methods that are robust to distribution               standards
+shift, best practices to deal with distribution shift currently
+include testing the ML models on the data from the distribu-       Our proposal is inspired by prior work on model cards and
+tion we want to make claims about (Geirhos et al., 2020). In       checklists, which we now review.
+ML-based science, where the aim is to create generalizable         Mitchell et al. (2019) introduced model cards for reporting
+knowledge, we should take results that claim to generalize to      details about ML models, with a focus on precisely reporting
+a different population from the one models were evaluated
+                                                                      2
+on with caution.                                                      The model info sheet template is available on our website:
+                                                                   https://reproducible.cs.princeton.edu
+Leakage and the Reproducibility Crisis in ML-based Science                                                   Kapoor and Narayanan
+
+the intended use cases of ML models. They also addressed               about the correctness of the features used, since the incorrect
+fairness and transparency concerns: they require that the              use of a single feature in the model can cause leakage. That
+performance of ML models on different groups of users                  said, the same argument for why a feature is legitimate can
+(e.g., on the basis of race, gender, age) is reported and              often apply to a whole set of features. For example, for a
+documented transparently. These model cards complement                 study using individuals’ location history as a feature vector,
+the datasheets introduced by Gebru et al. (2021) to document           the use of the entire vector can be justified together. Note
+details about datasets in a standard format.                           that we do not ask for the researcher to list each feature used
+                                                                       in their model. Rather, we ask that the justification provided
+The use of checklists has also been impactful in improving
+                                                                       for the legitimacy of the features used in their model should
+reporting practices in the few fields that have adopted them
+                                                                       cover every feature used in their model.
+(Han et al., 2017). While checklists and model cards pro-
+vide concrete best practices for reporting standards (Mongan           [L3] Test set is drawn from the distribution of scientific
+et al., 2020; Collins et al., 2015; Mitchell et al., 2019; Garbin      interest. If the distribution about which the scientific claims
+& Marques, 2022), current efforts do not address pitfalls              are made is different from the one on which the model is
+arising due to leakage. Further, even though several sci-              tested, then any claims about the performance of an ML
+entific fields—especially those related to medicine—have               model on the evaluation step fall short. The researcher needs
+adopted checklists to improve reporting standards, most                to justify that the test set is drawn from the distribution of
+checklists are developed for specific scientific or research           scientific interest and there is no selection or sampling bias
+communities instead of ML-based science in general.                    in the data collection process. This step can help clarify the
+                                                                       distribution about which scientific claims are being made
+3.2. Scientific arguments to surface and prevent                       and detect temporal leakage.
+     leakage
+                                                                       3.3. Model info sheets and our theory of change
+When ML models are used to make scientific claims, it is
+not enough to simply separate the training and test sets and           Model info sheets can influence research practices in two
+report performance metrics on the test set. Unlike research            ways: first, researchers who introduce a scientific model
+in ML methods, where a model’s performance on a hypo-                  alongside a paper can use model info sheets to detect and
+thetical task (i.e., one that is not linked to a specific scientific   prevent leakage in their models. These info sheets can
+claim) is still of interest to the researcher in some cases (Raji      be included as supplementary materials with their paper
+et al., 2021), in ML-based science, claims about a model’s             for transparently reporting details about their models. In
+performance need to be connected to scientific claims using            scientific fields where the use of ML methods is not yet
+explicit arguments. The burden of proof for ensuring the               widespread, using transparent reporting practices at an early
+correctness of these arguments is on the researcher making             stage could enable easier adoption and more trust in ML
+the scientific claims (Lundberg et al., 2021).                         methods. This would also help assuage reviewer concerns
+                                                                       about reproducibility.
+In our models, we ask researchers to present three arguments
+that are essential for determining that scientific results which       Second, journal submission guidelines could encourage or
+use ML methods do not suffer from data leakage. Note that              require authors to fill out model info sheets if a paper does
+most ML-based science papers do not present any of the                 not transparently report how the model was created. In this
+three arguments, although they sometimes partially address             case, model info sheets can be used to start a conversation
+the first argument (clean train-test separation) by report-            between authors and reviewers about the details of the mod-
+ing out-of-sample prediction performance. The arguments                els introduced in a paper. Current peer-review practices
+below are based on our taxonomy of data leakage issues                 often do not require the authors to disclose any code or data
+presented in Section 2.4, and inform the main sections of              during the review process (Liu & Salganik, 2019). Even if
+the model info sheet.                                                  the code and data are available to reviewers, reproducing re-
+                                                                       sults and spotting errors in code is a time consuming process
+[L1] Clean train-test separation. The researcher needs to
+                                                                       that often cannot be carried out under current peer-review
+argue why the test set does not interact with training data
+                                                                       practices. Model info sheets offer a middle ground: they
+during any of the preprocessing, modeling or evaluation
+                                                                       could enable a closer scrutiny of methods without making
+steps to ensure a clean train-test separation.
+                                                                       the process onerous for reviewers.
+[L2] Each feature in the model is legitimate. The re-
+searcher needs to argue why each feature used in their model           3.4. Limitations of model info sheets
+is legitimate, i.e., a claim made using each feature is of scien-
+tific interest. Note that some models might use hundreds of            While model info sheets can enable the detection of all types
+features. In such cases, it is even more important to reason           of leakage we identify in our survey, they suffer from limi-
+                                                                       tations owing to the lack of computational reproducibility
+Leakage and the Reproducibility Crisis in ML-based Science                                                Kapoor and Narayanan
+
+of results in scientific research, incorrect claims made in         switched to predictive modeling using complex ML mod-
+model info sheets, and the lack of expertise of authors and         els such as Random Forests and Adaboost instead of LR
+reviewers.                                                          (see Figure 2), with several papers claiming near-perfect
+                                                                    performance of these models for civil war prediction (Much-
+First, the claims made in model info sheets cannot be veri-
+                                                                    linski et al., 2016; Colaresi & Mahmood, 2017; Wang, 2019;
+fied in the absence of computational reproducibility. That is,
+                                                                    Kaufman et al., 2019). While the literature we reviewed in
+unless the code, data and computing environment required
+                                                                    our survey highlighted the pitfalls in adopting ML methods
+to reproduce the results in a paper are made available, there
+                                                                    (Table 1), we go further than most previous research to in-
+is no way to ascertain if model info sheets are filled out
+                                                                    vestigate whether the claims made in the reviewed studies
+correctly. Ensuring the computational reproducibility of
+                                                                    survive once the errors are corrected.
+results therefore remains an important goal for improving
+scientific research standards.                                      Systematic search of predictive modeling literature in
+                                                                    civil war research. We conducted a systematic search to
+Second, incorrect claims made in model info sheets might
+                                                                    find relevant literature (detailed in Appendix B.1). This
+provide false assurances to reviewers about the correctness
+                                                                    yielded 124 papers. We narrowed this list to the 12 papers
+of the claims made in a paper. However, by requiring au-
+                                                                    that focused on predicting civil war, evaluated performance
+thors to precisely state details about their modeling process,
+                                                                    using a train-test split, and shared the complete code and
+model info sheets enable incorrect claims to be challenged
+                                                                    data. For these 12, we attempted to identify errors and
+more directly than in status quo, where details about the
+                                                                    reproducibility issues from the text and through reviewing
+modeling process are often left undisclosed.
+                                                                    the code provided with the papers. When we identified
+Filling out and evaluating model info sheets requires some          errors, we re-analyzed the data with the errors corrected.
+expertise in ML. In fields where both authors and reviewers
+                                                                    Finding 1: Data leakage causes irreproducible results.
+lack any ML expertise, subtle cases of leakage might slip
+                                                                    We present our results in Figure 1. We found errors in 4
+under the radar despite the use of model info sheets. In
+                                                                    of the 12 papers—exactly the 4 papers that claimed supe-
+such cases, we hope that model info sheets released publicly
+                                                                    rior performance of complex ML models over baseline LR
+along with papers will enable discourse within scientific
+                                                                    models for predicting civil war. All papers suffer from dif-
+communities on the shortcomings of scientific models.
+                                                                    ferent forms of leakage. All 4 papers were published in
+Finally, we acknowledge that our understanding of leakage           top-10 journals in the field of “Political Science and Interna-
+may evolve, and model info sheets may need to evolve with           tional Relations” (sci, 2020). When the errors are corrected,
+it. To that end, we have versioned model info sheets, and           complex ML models perform no better than baseline LR
+plan to update them as we continue to better understand             models in each case except Wang (2019), where the dif-
+leakage in ML-based science.                                        ference between the AUC of the complex ML models and
+                                                                    LR models drops from 0.14 to 0.01. Further, while none
+4. A case study of civil war prediction                             of these errors could have been caught by reading the pa-
+                                                                    per, model info sheets enable the detection of leakage in
+To understand the impact of data leakage and the efficacy           each case (Appendix C). Beyond reproducibility, our results
+of model info sheets in addressing it, we undertake a repro-        show that complex ML models are not substantively better
+ducibility study in a field where ML models are believed to         at civil war prediction than decades old LR models. This
+vastly outperform older statistical models such as Logistic         is consistent with similar sobering findings in other tasks
+Regression (LR) for predictive modeling: civil war predic-          involving predicting social outcomes such as children’s life
+tion (Bara, 2020). Over the last few years, this field has          outcomes (Salganik et al., 2020) and recidivism (Dressel
+                                                                    & Farid, 2018). Our findings strongly suggest the need for
+                                                                    tempering the optimism about predictive modeling in the
+                                                                    field of civil war prediction and question the use of ML
+                                                                    models in this field. We provide a detailed overview of our
+                                                                    methodology for correcting the errors and show that our
+                                                                    results hold under several robustness checks in Appendix B.
+                                                                    Finding 2: No significance testing or uncertainty quan-
+                                                                    tification. We found that 9 of the 12 papers for which com-
+                                                                    plete code and data were available included no significance
+Figure 2. Number of political science papers containing the terms   tests or uncertainty quantification for classifier performance
+"civil war" AND "machine learning" in the dimensions database       comparison (Table A6). Especially when sample sizes are
+of academic research (Hook et al., 2018). Note the sharp increase   small, significance testing and uncertainty quantification are
+in papers using ML methods in the last few years.
+Leakage and the Reproducibility Crisis in ML-based Science                                                     Kapoor and Narayanan
+
+important steps towards reproducibility (McDermott et al.,                Error Rate for a task), then once the achievable accuracy
+2021; Gorman & Bedrick, 2019). As an illustration, we                     has been reached, we can avoid a futile effort to increase it
+examine this issue in detail in the case of Blair & Sambanis              further and can apply increased skepticism towards results
+(2020) since their test dataset has a particularly small num-             that claim to violate known bounds.
+ber of instances of civil war onset (only 11). They propose
+                                                                          [D2] Hype, overoptimism and publication biases. The
+a model of civil war onset that uses theoretically informed
+                                                                          hype about commercial AI applications can spill over into
+features and report that it outperforms other baseline models
+                                                                          ML-based science, leading to overoptimism about their per-
+of civil war onset using the AUC metric on an out-of-sample
+                                                                          formance. Non-replicable findings are cited more than repli-
+dataset. We find that the performance of their model is not
+                                                                          cable ones (Serra-Garcia & Gneezy, 2021), which can result
+significantly better than other baseline models for civil war
+                                                                          in feedback loops of overoptimism in ML-based science.
+prediction.3 Further, all models have large confidence in-
+                                                                          Besides, publication biases that have been documented in
+tervals for their out-of-sample performance. For instance,
+                                                                          several scientific fields (Shi & Lin, 2019; Gurevitch et al.,
+while the smoothed AUC performance reported by the au-
+                                                                          2018) can also affect ML-based science (Hofman et al.,
+thors is 0.85, the 95% confidence interval calculated using
+                                                                          2017; Islam et al., 2017).
+bootstrapped test set re-sampling is [0.66-0.95].
+                                                                          [R2] Treat results from ML-based science as tentative.
+5. Beyond leakage: enhancing the                                          When overoptimism is prevalent in a field, it is important
+                                                                          to engage with results emerging from the field critically.
+   reproducibility of ML-based science                                    Until reproducibility issues in ML-based science are widely
+We have outlined how the use of model info sheets can                     addressed and resolved, results from this body of work
+address data leakage in ML-based science. In addition to                  should be treated with caution.
+leakage, we found a number of other reproducibility issues                [D3] Inadequate expertise. The rapid adoption of ML
+in our survey. Here, we present five diagnoses for repro-                 methods in a scientific field can lead to errors. These can
+ducibility failures in fields adopting ML methods. Each of                be caused due to the lack of expertise of domain experts in
+our diagnoses is paired with a recommendation to address                  using ML methods and vice-versa.
+it.
+                                                                          [R3] Inter-disciplinary collaborations and communica-
+[D1] Lack of understanding of the limits to prediction.                   tion of best-practices. Literature in the ML community
+Recent research for predicting social outcomes has shown                  should address the different failure modes that arise during
+that even with complex models and large datasets, there                   the modeling process. Researchers with expertise in ML
+are strong limits to predictive performance (Salganik et al.,             methods should clearly communicate best practices in de-
+2020; Dressel & Farid, 2018). However, results like the                   ploying ML for scientific research (Lones, 2021). Having an
+better-than-human performance of ML models in perception                  interdisciplinary team consisting of researchers with domain
+tasks such as image classification (He et al., 2015; Szeliski,            expertise as well as ML expertise can avoid errors.
+2021) give the impression of ML models surpassing human
+performance across tasks, which can confuse researchers                   [D4] Lack of standardization. Several applied ML fields,
+about the performance they should realistically expect from               such as engineering applications and modeling contests,
+ML models.                                                                have adopted practices such as standardized train-test splits,
+                                                                          evaluation metrics, and modeling tasks to ensure the validity
+[R1] Understand and communicate limits to prediction.                     of the modeling and evaluation process (Russakovsky et al.,
+A research agenda which investigates the efficacy of ML                   2015; Koh et al., 2021). However, many of these have not
+models in tasks across scientific fields would increase our               yet been adopted widely in ML-based science. This leads
+understanding of the limits to prediction. This can alleviate             to subtle errors in the modeling process that can be hard to
+the overoptimism that arises from confusing progress in one               detect.
+task (e.g., image classification) with another (e.g., predicting
+social outcomes). If we can identify upper bounds on the                  [R4] Adopt the common task framework when possible.
+predictive accuracy of tasks (i.e., lower bound the Bayes                 The common task framework allows us to compare the per-
+                                                                          formance of competing ML models using an agreed-upon
+    3
+      Z = 0.64, 1.09, 0.42, 0.67; p = 0.26, 0.14, 0.34, 0.25 for a one-   training dataset and evaluation metrics, a secret holdout
+tailed significance test comparing the smoothed AUC performance
+                                                                          dataset, and a public leaderboard (Rocca & Yarkoni, 2021;
+of the model proposed in the paper—the escalation model—with
+other baseline models reported in their paper—quad, goldstein,            Donoho, 2017). Dataset creation and model evaluation is
+cameo and average respectively. We implement the comparison               left to impartial third parties who have the expertise and in-
+test for smoothed ROC curves detailed by Robin et al. (Robin et al.,      centives to avoid errors. However, one undesirable outcome
+2011). Note that we do not correct for multiple comparisons; such         that has been observed in communities that have adopted the
+a correction would further reduce the significance of the results.
+                                                                          common task framework is a singular focus on optimizing a
+Leakage and the Reproducibility Crisis in ML-based Science                                            Kapoor and Narayanan
+
+particular accuracy metric to the exclusion of other scientific   References
+and normatively desirable properties of models (Paullada
+                                                                  Imputation before or after splitting into train and test? (URL:
+et al., 2020; Marie et al., 2021; Gorman & Bedrick, 2019).
+                                                                    https://stats.stackexchange.com/questions/95083/imputation-
+[D5] Lack of computational reproducibility. The lack of             before-or-after-splitting-into-train-and-test).
+computational reproducibility hinders verification of results
+by independent researchers (Section 2.5). While computa-          Easing the burden of code review. Nature Methods,
+tional reproducibility does not mean that the code is error-        15(9):641–641, September 2018. ISSN 1548-7105.
+free, it can make the process of finding errors easier, since       Bandiera_abtest: a Cg_type: Nature Research Journals
+researchers attempting to reproduce results do not have to          Number: 9 Primary_atype: Editorial Publisher: Na-
+spend time getting the code to run.                                 ture Publishing Group Subject_term: Computational bi-
+                                                                    ology and bioinformatics;Publishing Subject_term_id:
+[R5] Ensure computational reproducibility. Platforms                computational-biology-and-bioinformatics;publishing.
+such as CodeOcean (Clyburne-Sherin et al., 2019), a cloud
+computing platform which replicates the exact computa-            Scimago Journal and Country Rank. http://archive.
+tional environment used to create the original results, can         today/oUs4K, 2020.
+be used to ensure the long term reproducibility of results.
+                                                                  Alves, V. M., Borba, J., Capuzzi, S. J., Muratov, E., An-
+We follow several academic journals and researchers in rec-
+                                                                    drade, C. H., Rusyn, I., and Tropsha, A. Oy Vey! A
+ommending that future research in fields using ML methods
+                                                                    Comment on “Machine Learning of Toxicological Big
+should use similar methods to ensure computational repro-
+                                                                    Data Enables Read-Across Structure Activity Relation-
+ducibility (noa, 2018; Liu & Salganik, 2019).
+                                                                    ships Outperforming Animal Test Reproducibility”. Tox-
+                                                                    icological Sciences, 167(1):3–4, January 2019. ISSN
+6. Conclusion                                                       1096-6080.
+The attractiveness of adopting ML methods in scientific           Arp, D., Quiring, E., Pendlebury, F., Warnecke, A., Pierazzi,
+research is in part due to the widespread availability of off-      F., Wressnegger, C., Cavallaro, L., and Rieck, K. Dos
+the-shelf tools to create models without expertise in ML            and Don’ts of Machine Learning in Computer Security.
+methods (Hutson, 2019). However, this laissez faire ap-             USENIX Security Symposium, 2022.
+proach leads to common pitfalls spreading to all scientific
+fields that use ML. So far, each research community has           Athey, S. and Imbens, G. W. Machine Learning Meth-
+independently rediscovered these pitfalls. Without funda-           ods That Economists Should Know About.           An-
+mental changes to research and reporting practices, we risk         nual Review of Economics, 11(1):685–725, 2019.
+losing public trust owing to the severity and prevalence of         _eprint:   https://doi.org/10.1146/annurev-economics-
+the reproducibility crisis across disciplines. Our paper is         080217-053433.
+a call for interdisciplinary efforts to address the crisis by
+developing and driving the adoption of best practices for         Bara, C. Forecasting civil war and political violence. Rout-
+ML-based science. Model info sheets for detecting and               ledge, May 2020. ISBN 978-1-00-302242-8. Pages:
+preventing leakage are a first step in that direction.              177-193 Publication Title: The Politics and Science of
+                                                                    Prevision.
+Materials and methods. The code and data required to
+reproduce our case study on civil war prediction is up-           Barnett, E., Onete, D., Salekin, A., and Faraone, S. V. Ge-
+loaded to a CodeOcean capsule (https://doi.org/                     nomic Machine Learning Meta-regression: Insights on
+10.24433/CO.4899453.v1). Appendix B contains a                      Associations of Study Features with Reported Model
+detailed description of our methods and results from addi-          Performance. Technical report, medRxiv, January 2022.
+tional robustness checks.                                           Type: article.
+
+Acknowledgements. We are grateful to Jessica Hullman,             Becker, D. Data Leakage, 2018.
+Matthew J. Salganik and Brandon Stewart for their valuable
+feedback on drafts of this paper. We thank Robert Blair,          Beger, A. @andybeega (Andreas Beger): This is great. One
+Aaron Kaufman, David Muchlinski and Yu Wang for quick               thing I’d add is that for the @DMuchlinski et al data...
+and helpful responses to drafts of this paper. We are espe-         http://archive.today/VV9nC, 2021.
+cially thankful to Matthew Sun, who reviewed our code and         Beger, A., Morgan, R. K., and Ward, M. D. Reassessing
+provided helpful suggestions and corrections for ensuring           the Role of Theory and Machine Learning in Forecast-
+the computational reproducibility of our own results, and           ing Civil Conflict. Journal of Conflict Resolution, pp.
+to Angelina Wang, Orestis Papakyriakopolous, and Anne               0022002720982358, July 2021. ISSN 0022-0027. Pub-
+Kohlbrenner for their feedback on model info sheets.                lisher: SAGE Publications Inc.
+Leakage and the Reproducibility Crisis in ML-based Science                                              Kapoor and Narayanan
+
+Bell, S. J. and Kampman, O. P. Perspectives on Machine             Colaresi, M. and Mahmood, Z. Do the robot: Lessons from
+  Learning from Psychology’s Reproducibility Crisis. April           machine learning to improve conflict forecasting. Journal
+  2021.                                                              of Peace Research, 54(2):193–214, March 2017. ISSN
+                                                                     0022-3433. Publisher: SAGE Publications Ltd.
+Blagus, R. and Lusa, L. Joint use of over- and under-
+  sampling techniques and cross-validation for the develop-        Collier, P. and Hoeffler, A. On the Incidence of Civil War
+  ment and assessment of prediction models. BMC Bioin-               in Africa. Journal of Conflict Resolution, 46(1):13–28,
+  formatics, 16(1):363, November 2015. ISSN 1471-2105.               February 2002. ISSN 0022-0027. Publisher: SAGE
+                                                                     Publications Inc.
+Blair, R. A. and Sambanis, N. Forecasting Civil Wars: The-
+  ory and Structure in an Age of “Big Data” and Machine            Collins, G. S., Reitsma, J. B., Altman, D. G., and Moons,
+  Learning. Journal of Conflict Resolution, 64(10):1885–             K. G. Transparent reporting of a multivariable prediction
+  1915, November 2020. ISSN 0022-0027. Publisher:                    model for individual prognosis or diagnosis (TRIPOD):
+  SAGE Publications Inc.                                             the TRIPOD Statement. BMC Medicine, 13(1):1, January
+                                                                     2015. ISSN 1741-7015.
+Blair, R. A. and Sambanis, N. Is Theory Useful for Conflict
+  Prediction? A Response to Beger, Morgan, and Ward.               Collins-Thompson, K. Data Leakage - Module 4: Super-
+  Journal of Conflict Resolution, pp. 00220027211026748,             vised Machine Learning - Part 2.
+  July 2021. ISSN 0022-0027. Publisher: SAGE Publica-
+  tions Inc.                                                       Dietterich, T. G. Approximate statistical tests for comparing
+                                                                     supervised classification learning algorithms. Neural
+Bone, D., Goodwin, M. S., Black, M. P., Lee, C.-C., Au-              computation, 10(7):1895–1923, 1998.
+  dhkhasi, K., and Narayanan, S. Applying Machine
+  Learning to Facilitate Autism Diagnostics: Pitfalls and          Donders, A. R. T., van der Heijden, G. J. M. G., Stijnen,
+  Promises. Journal of Autism and Developmental Dis-                T., and Moons, K. G. M. Review: A gentle introduction
+  orders, 45(5):1121–1136, May 2015. ISSN 0162-3257,                 to imputation of missing values. Journal of Clinical
+ 1573-3432.                                                         Epidemiology, 59(10):1087–1091, October 2006. ISSN
+                                                                     0895-4356.
+Bouwmeester, W., Zuithoff, N. P. A., Mallett, S., Geerlings,
+  M. I., Vergouwe, Y., Steyerberg, E. W., Altman, D. G.,           Donoho, D.         50 Years of Data Science.     Jour-
+  and Moons, K. G. M. Reporting and Methods in Clin-                 nal of Computational and Graphical Statistics,
+  ical Prediction Research: A Systematic Review. PLOS                26(4):745–766, October 2017.            ISSN 1061-
+  Medicine, 9(5):e1001221, May 2012. ISSN 1549-1676.                 8600.        Publisher:   Taylor & Francis _eprint:
+  Publisher: Public Library of Science.                              https://doi.org/10.1080/10618600.2017.1384734.
+
+Brownlee, J. Data Leakage in Machine Learning, August              Dressel, J. and Farid, H. The accuracy, fairness, and limits
+  2016.                                                              of predicting recidivism. Science advances, 4(1), 2018.
+
+Carter, B., Jain, S., Mueller, J., and Gifford, D. Overinterpre-   Erik Gundersen, O. The fundamental principles of repro-
+  tation reveals image classification model pathologies. Ad-         ducibility. Philosophical Transactions of the Royal Soci-
+  vances in Neural Information Processing Systems, 2021.             ety A: Mathematical, Physical and Engineering Sciences,
+                                                                     379(2197):20200210, May 2021. Publisher: Royal Soci-
+Chiba, D. and Gleditsch, K. S. The shape of things to come?          ety.
+  Expanding the inequality and grievance model for civil
+  war forecasts with event data. Journal of Peace Research,        Fawcett, T. An introduction to ROC analysis. Pattern
+  54(2):275–297, March 2017. ISSN 0022-3433. Publisher:              Recognition Letters, 27(8):861–874, June 2006. ISSN
+  SAGE Publications Ltd.                                             0167-8655.
+
+Christodoulou, E., Ma, J., Collins, G. S., Steyerberg, E. W.,      Fearon, J. D. and Laitin, D. D. Ethnicity, Insurgency, and
+  Verbakel, J. Y., and Van Calster, B. A systematic review           Civil War. The American Political Science Review, 97
+  shows no performance benefit of machine learning over              (1):75–90, 2003. ISSN 0003-0554. Publisher: [Ameri-
+  logistic regression for clinical prediction models. Journal        can Political Science Association, Cambridge University
+  of Clinical Epidemiology, 110:12–22, June 2019. ISSN               Press].
+  0895-4356.
+                                                                   Filho, A. C., Batista, A. F. D. M., and Santos, H. G. d. Data
+Clyburne-Sherin, A., Fei, X., and Green, S. A. Computa-               Leakage in Health Outcomes Prediction With Machine
+  tional reproducibility via containers in social psychology.         Learning. Comment on “Prediction of Incident Hyper-
+  Meta-Psychology, 3, 2019.                                           tension Within the Next Year: Prospective Study Using
+Leakage and the Reproducibility Crisis in ML-based Science                                          Kapoor and Narayanan
+
+  Statewide Electronic Health Records and Machine Learn-        Han, S., Olonisakin, T. F., Pribis, J. P., Zupetic, J., Yoon,
+  ing”. Journal of Medical Internet Research, 23(2):e10969,       J. H., Holleran, K. M., Jeong, K., Shaikh, N., Rubio,
+  February 2021. Company: Journal of Medical Internet             D. M., and Lee, J. S. A checklist is associated with
+  Research Distributor: Journal of Medical Internet Re-           increased quality of reporting preclinical biomedical re-
+  search Institution: Journal of Medical Internet Research        search: A systematic review. PLoS ONE, 12(9):e0183591,
+  Label: Journal of Medical Internet Research Publisher:          September 2017. ISSN 1932-6203.
+  JMIR Publications Inc., Toronto, Canada.
+                                                                He, K., Zhang, X., Ren, S., and Sun, J. Delving deep
+Fraser, C. The Treachery of Leakage, August 2016.                 into rectifiers: Surpassing human-level performance on
+                                                                  imagenet classification. CoRR, abs/1502.01852, 2015.
+Garbin, C. and Marques, O. Assessing Methods and Tools
+  to Improve Reporting, Increase Transparency, and Re-          Hegre, H. and Sambanis, N. Sensitivity Analysis of Em-
+  duce Failures in Machine Learning Applications in Health        pirical Results on Civil War Onset:. Journal of Conflict
+  Care. Radiology: Artificial Intelligence, 4(2):e210127,         Resolution, 2006. Publisher: Sage PublicationsSage CA:
+  March 2022.                                                     Thousand Oaks, CA.
+Gebru, T., Morgenstern, J., Vecchione, B., Vaughan, J. W.,      Hegre, H., Buhaug, H., Calvin, K. V., Nordkvelle, J., Wald-
+ Wallach, H., III, H. D., and Crawford, K. Datasheets for         hoff, S. T., and Gilmore, E. Forecasting civil conflict
+  datasets. Communications of the ACM, 64(12):86–92,              along the shared socioeconomic pathways. Environmen-
+  November 2021. ISSN 0001-0782.                                  tal Research Letters, 11(5):054002, April 2016. ISSN
+                                                                 1748-9326. Publisher: IOP Publishing.
+Geirhos, R., Rubisch, P., Michaelis, C., Bethge, M., Wich-
+  mann, F. A., and Brendel, W. ImageNet-trained CNNs are        Hegre, H., Allansson, M., Basedau, M., Colaresi, M.,
+  biased towards texture; increasing shape bias improves          Croicu, M., Fjelde, H., Hoyles, F., Hultman, L., Hög-
+  accuracy and robustness. September 2018.                        bladh, S., Jansen, R., Mouhleb, N., Muhammad, S. A.,
+                                                                  Nilsson, D., Nygård, H. M., Olafsdottir, G., Petrova, K.,
+Geirhos, R., Jacobsen, J.-H., Michaelis, C., Zemel, R., Bren-
+                                                                  Randahl, D., Rød, E. G., Schneider, G., Uexkull, N. v.,
+  del, W., Bethge, M., and Wichmann, F. A. Shortcut
+                                                                  and Vestby, J. ViEWS: A political violence early-warning
+  learning in deep neural networks. Nature Machine Intelli-
+                                                                  system:. Journal of Peace Research, February 2019a. Pub-
+  gence, 2(11):665–673, November 2020. ISSN 2522-5839.
+                                                                  lisher: SAGE PublicationsSage UK: London, England.
+  Bandiera_abtest: a Cg_type: Nature Research Journals
+  Number: 11 Primary_atype: Reviews Publisher: Na-              Hegre, H., Hultman, L., and Nygård, H. M. Evaluating
+  ture Publishing Group Subject_term: Computational sci-          the Conflict-Reducing Effect of UN Peacekeeping Oper-
+  ence;Human behaviour;Information technology;Network             ations. The Journal of Politics, 81(1):215–232, January
+  models Subject_term_id: computational-science;human-            2019b. ISSN 0022-3816. Publisher: The University of
+  behaviour;information-technology;network-models.                Chicago Press.
+Ghani, R., Walsh, J., and Wang, J. Top 10 ways your             Hegre, H., Nygård, H. M., and Landsverk, P. Can We Predict
+  Machine Learning models may have leakage (URL:                  Armed Conflict? How the First 9 Years of Published
+  http://www.rayidghani.com/2020/01/24/top-10-ways-               Forecasts Stand Up to Reality. International Studies
+ your-machine-learning-models-may-have-leakage/),                 Quarterly, (sqaa094), January 2021. ISSN 0020-8833.
+ January 2020.
+                                                                Hirose, K., Imai, K., and Lyall, J. Can civilian attitudes
+Gorman, K. and Bedrick, S. We Need to Talk about Stan-            predict insurgent violence? Ideology and insurgent tac-
+  dard Splits. In Proceedings of the 57th Annual Meet-            tical choice in civil war. Journal of Peace Research, 54
+  ing of the Association for Computational Linguistics, pp.       (1):47–63, January 2017. ISSN 0022-3433. Publisher:
+  2786–2791, Florence, Italy, July 2019. Association for          SAGE Publications Ltd.
+  Computational Linguistics.
+                                                                Hofman, J. M., Sharma, A., and Watts, D. J. Prediction
+Gurevitch, J., Koricheva, J., Nakagawa, S., and Stew-             and explanation in social systems. Science, 355(6324):
+  art, G.      Meta-analysis and the science of re-              486–488, February 2017. ISSN 0036-8075, 1095-9203.
+  search synthesis. Nature, 555(7695):175–182, March              Publisher: American Association for the Advancement
+  2018.     ISSN 1476-4687.         Bandiera_abtest: a            of Science Section: Essays.
+  Cg_type: Nature Research Journals Number: 7695
+  Primary_atype: Reviews Publisher: Nature Publishing           Hofman, J. M., Goldstein, D. G., Sen, S., Poursabzi-
+  Group Subject_term: Biodiversity;Outcomes research              Sangdeh, F., Allen, J., Dong, L. L., Fried, B., Gaur, H.,
+  Subject_term_id: biodiversity;outcomes-research.                Hoq, A., Mbazor, E., Moreira, N., Muso, C., Rapp, E.,
+Leakage and the Reproducibility Crisis in ML-based Science                                             Kapoor and Narayanan
+
+  and Terrero, R. Expanding the scope of reproducibility re-       Kaufman, S., Rosset, S., Perlich, C., and Stitelman, O. Leak-
+  search through data analysis replications. Organizational          age in data mining: Formulation, detection, and avoid-
+  Behavior and Human Decision Processes, 164:192–202,                ance. ACM Transactions on Knowledge Discovery from
+  May 2021a. ISSN 0749-5978.                                         Data, 6(4):15:1–15:21, December 2012. ISSN 1556-
+                                                                     4681.
+Hofman, J. M., Watts, D. J., Athey, S., Garip, F., Griffiths,
+ T. L., Kleinberg, J., Margetts, H., Mullainathan, S., Sal-        Koh, P. W., Sagawa, S., Marklund, H., Xie, S. M., Zhang,
+  ganik, M. J., Vazire, S., Vespignani, A., and Yarkoni,             M., Balsubramani, A., Hu, W., Yasunaga, M., Phillips,
+ T. Integrating explanation and prediction in computa-               R. L., Gao, I., Lee, T., David, E., Stavness, I., Guo, W.,
+  tional social science. Nature, 595(7866):181–188, July             Earnshaw, B., Haque, I., Beery, S. M., Leskovec, J., Kun-
+  2021b. ISSN 1476-4687. Bandiera_abtest: a Cg_type:                 daje, A., Pierson, E., Levine, S., Finn, C., and Liang, P.
+  Nature Research Journals Number: 7866 Primary_atype:              WILDS: A Benchmark of in-the-Wild Distribution Shifts.
+  Reviews Publisher: Nature Publishing Group Sub-                    In Proceedings of the 38th International Conference on
+  ject_term: Interdisciplinary studies;Scientific commu-             Machine Learning, pp. 5637–5664. PMLR, July 2021.
+  nity Subject_term_id: interdisciplinary-studies;scientific-        ISSN: 2640-3498.
+  community.
+                                                                   Kuhn, M. and Johnson, K. Applied Predictive Modeling.
+Hook, D. W., Porter, S. J., and Herzog, C. Dimensions:               Springer-Verlag, New York, 2013. ISBN 978-1-4614-
+  Building Context for Search and Evaluation. Frontiers              6848-6.
+  in Research Metrics and Analytics, 3, 2018. ISSN 2504-
+                                                                   Leek, J. T. and Peng, R. D. Opinion: Reproducible research
+  0537. Publisher: Frontiers.
+                                                                     can still be wrong: Adopting a prevention approach. Pro-
+Hullman, J., Kapoor, S., Nanayakkara, P., Gelman, A., and            ceedings of the National Academy of Sciences, 112(6):
+  Narayanan, A. The worst of both worlds: A comparative              1645–1646, February 2015. ISSN 0027-8424, 1091-6490.
+  analysis of errors in learning from data in psychology and         Publisher: National Academy of Sciences Section: Opin-
+  machine learning. arXiv:2203.06498 [cs], March 2022.               ion.
+  arXiv: 2203.06498.
+                                                                   Liu, D. M. and Salganik, M. J. Successes and struggles with
+Hutson, M. No coding required: Companies make it eas-                computational reproducibility: Lessons from the fragile
+  ier than ever for scientists to use artificial intelligence.       families challenge. Socius, 5:2378023119849803, 2019.
+ Science News, July 2019.                                          Lones, M. A. How to avoid machine learning pitfalls: a
+Imbens, G. W. Statistical Significance, p -Values, and the           guide for academic researchers. arXiv:2108.02497 [cs],
+  Reporting of Uncertainty. Journal of Economic Perspec-             August 2021. arXiv: 2108.02497.
+  tives, 35(3):157–174, August 2021. ISSN 0895-3309.               Lundberg, I., Johnson, R., and Stewart, B. M. What Is
+                                                                     Your Estimand? Defining the Target Quantity Connects
+Iniesta, R., Stahl, D., and McGuffin, P. Machine learning,
+                                                                     Statistical Evidence to Theory. American Sociological
+   statistical learning and the future of biological research in
+                                                                     Review, 86(3):532–565, June 2021. ISSN 0003-1224.
+   psychiatry. Psychological Medicine, 46(12):2455–2465,
+   September 2016. ISSN 0033-2917, 1469-8978. Publisher:           Lyu, Y., Li, H., Sayagh, M., Jiang, Z. M. J., and Hassan,
+   Cambridge University Press.                                       A. E. An Empirical Study of the Impact of Data Splitting
+                                                                     Decisions on the Performance of AIOps Solutions. ACM
+Islam, R., Henderson, P., Gomrokchi, M., and Precup, D.
+                                                                     Transactions on Software Engineering and Methodology,
+   Reproducibility of Benchmarked Deep Reinforcement
+                                                                     30(4):1–38, July 2021. ISSN 1049-331X, 1557-7392.
+   Learning Tasks for Continuous Control. August 2017.
+                                                                   Malik, M. M. A Hierarchy of Limitations in Machine Learn-
+Ivanescu, A. E., Li, P., George, B., Brown, A. W., Keith,
+                                                                    ing. February 2020.
+  S. W., Raju, D., and Allison, D. B. The importance of
+  prediction model validation and assessment in obesity            Marie, B., Fujita, A., and Rubino, R. Scientific Credibility
+  and nutrition research. International Journal of Obesity,         of Machine Translation Research: A Meta-Evaluation of
+  40(6):887–894, June 2016. ISSN 1476-5497. Number: 6               769 Papers. arXiv:2106.15195 [cs], June 2021. arXiv:
+  Publisher: Nature Publishing Group.                               2106.15195.
+Kaufman, A. R., Kraft, P., and Sen, M. Improving Supreme           McDermott, M. B. A., Wang, S., Marinsek, N., Ranganath,
+  Court Forecasting Using Boosted Decision Trees. Politi-           R., Foschini, L., and Ghassemi, M. Reproducibility in
+  cal Analysis, 27(3):381–387, July 2019. ISSN 1047-1987,           machine learning for health research: Still a ways to
+ 1476-4989. Publisher: Cambridge University Press.                  go. Science Translational Medicine, 13(586), March
+Leakage and the Reproducibility Crisis in ML-based Science                                         Kapoor and Narayanan
+
+  2021. ISSN 1946-6234, 1946-6242. Publisher: Ameri-           Oner, M. U., Cheng, Y.-C., Lee, H. K., and Sung, W.-K.
+  can Association for the Advancement of Science Section:       Training machine learning models on patient level data
+  Perspective.                                                   segregation is crucial in practical clinical applications.
+                                                                Technical report, April 2020. Company: Cold Spring
+Mitchell, M., Wu, S., Zaldivar, A., Barnes, P., Vasserman,       Harbor Laboratory Press Distributor: Cold Spring Harbor
+ L., Hutchinson, B., Spitzer, E., Raji, I. D., and Gebru,        Laboratory Press Label: Cold Spring Harbor Laboratory
+ T. Model Cards for Model Reporting. In Proceedings of           Press Type: article.
+ the Conference on Fairness, Accountability, and Trans-
+ parency, FAT* ’19, pp. 220–229, New York, NY, USA,            Open Science Collaboration. Estimating the reproducibility
+ January 2019. Association for Computing Machinery.              of psychological science. Science, 349(6251), August
+ ISBN 978-1-4503-6125-5.                                         2015. ISSN 0036-8075, 1095-9203. Publisher: Ameri-
+                                                                 can Association for the Advancement of Science Section:
+Mongan, J., Moy, L., and Kahn, C. E. Checklist for Artifi-       Research Article.
+ cial Intelligence in Medical Imaging (CLAIM): A Guide
+ for Authors and Reviewers. Radiology: Artificial Intelli-     Paullada, A., Raji, I. D., Bender, E. M., Denton, E., and
+ gence, 2(2):e200029, March 2020. Publisher: Radiologi-          Hanna, A. Data and its (dis) contents: A survey of dataset
+ cal Society of North America.                                   development and use in machine learning research. arXiv
+                                                                 preprint arXiv:2012.05345, 2020.
+Muchlinski, D., Siroky, D., He, J., and Kocher, M. Com-
+ paring Random Forest with Logistic Regression for Pre-        Pineau, J., Vincent-Lamarre, P., Sinha, K., Larivière,
+ dicting Class-Imbalanced Civil War Onset Data. Political        V., Beygelzimer, A., d’Alché Buc, F., Fox, E., and
+ Analysis, 24(1):87–103, 2016. ISSN 1047-1987, 1476-             Larochelle, H. Improving Reproducibility in Machine
+ 4989. Publisher: Cambridge University Press.                    Learning Research (A Report from the NeurIPS 2019
+                                                                 Reproducibility Program). arXiv:2003.12206 [cs, stat],
+Muchlinski, D. A., Siroky, D., He, J., and Kocher, M. A.
+                                                                 December 2020. arXiv: 2003.12206.
+ Seeing the Forest through the Trees. Political Analysis, 27
+ (1):111–113, January 2019. ISSN 1047-1987, 1476-4989.         Poldrack, R. A., Huckins, G., and Varoquaux, G. Estab-
+ Publisher: Cambridge University Press.                          lishment of Best Practices for Evidence for Prediction
+Nakanishi, M., Xu, M., Wang, Y., Chiang, K.-J., Han, J.,         A Review. JAMA psychiatry, 77(5):534–540, May 2020.
+  and Jung, T.-P. Questionable Classification Accuracy           ISSN 2168-622X.
+  Reported in “Designing a Sum of Squared Correlations
+                                                               Poulin, P., Jörgens, D., Jodoin, P.-M., and Descoteaux, M.
+  Framework for Enhancing SSVEP-Based BCIs”. IEEE
+                                                                 Tractography and machine learning: Current state and
+ Transactions on Neural Systems and Rehabilitation Engi-
+                                                                 open challenges. Magnetic Resonance Imaging, 64:37–
+  neering, 28(4):1042–1043, April 2020. ISSN 1558-0210.
+                                                                 48, December 2019. ISSN 0730-725X.
+  Conference Name: IEEE Transactions on Neural Systems
+  and Rehabilitation Engineering.
+                                                               Raji, D., Denton, E., Bender, E. M., Hanna, A., and Paullada,
+Nalepa, J., Myller, M., and Kawulok, M. Validating Hy-           A. AI and the Everything in the Whole Wide World
+  perspectral Image Segmentation. IEEE Geoscience and            Benchmark. Proceedings of the Neural Information Pro-
+  Remote Sensing Letters, 16(8):1264–1268, August 2019.          cessing Systems Track on Datasets and Benchmarks, 1,
+  ISSN 1558-0571. Conference Name: IEEE Geoscience               December 2021.
+  and Remote Sensing Letters.
+                                                               Recht, B., Roelofs, R., Schmidt, L., and Shankar, V. Do Im-
+National Academies of Sciences, E. Reproducibility and           ageNet Classifiers Generalize to ImageNet? In Proceed-
+  Replicability in Science. May 2019. ISBN 978-0-309-            ings of the 36th International Conference on Machine
+  48616-3.                                                       Learning, pp. 5389–5400. PMLR, May 2019.
+
+Neunhoeffer, M. and Sternberg, S. How Cross-Validation         Roberts, D. R., Bahn, V., Ciuti, S., Boyce, M. S.,
+  Can Go Wrong and What to Do About It. Political Anal-          Elith, J., Guillera-Arroita, G., Hauenstein, S., Lahoz-
+  ysis, 27(1):101–106, January 2019. ISSN 1047-1987,             Monfort, J. J., Schröder, B., Thuiller, W., Warton,
+ 1476-4989. Publisher: Cambridge University Press.               D. I., Wintle, B. A., Hartig, F., and Dormann, C. F.
+                                                                 Cross-validation strategies for data with temporal,
+Nisbet, R., Elder, J., and Miner, G. Handbook of Statistical     spatial, hierarchical, or phylogenetic structure. Ecogra-
+  Analysis and Data Mining Applications. Elsevier, 2009.         phy, 40(8):913–929, 2017. ISSN 1600-0587. _eprint:
+  ISBN 978-0-12-374765-5.                                        https://onlinelibrary.wiley.com/doi/pdf/10.1111/ecog.02881.
+Leakage and the Reproducibility Crisis in ML-based Science                                          Kapoor and Narayanan
+
+Roberts, M., Driggs, D., Thorpe, M., Gilbey, J., Ye-              Wang, J., Wang, F., Weissman, S., Whitaker, K., Wolters,
+  ung, M., Ursprung, S., Aviles-Rivero, A. I., Etmann,            M. K., Woon, W. L., Wu, J., Wu, C., Yang, K., Yin, J.,
+  C., McCague, C., Beer, L., Weir-McCall, J. R., Teng,            Zhao, B., Zhu, C., Brooks-Gunn, J., Engelhardt, B. E.,
+  Z., Gkrania-Klotsas, E., Rudd, J. H. F., Sala, E., and          Hardt, M., Knox, D., Levy, K., Narayanan, A., Stewart,
+  Schönlieb, C.-B. Common pitfalls and recommenda-                B. M., Watts, D. J., and McLanahan, S. Measuring the
+  tions for using machine learning to detect and prog-            predictability of life outcomes with a scientific mass col-
+  nosticate for COVID-19 using chest radiographs and              laboration. Proceedings of the National Academy of Sci-
+  CT scans. Nature Machine Intelligence, 3(3):199–217,            ences, 117(15):8398–8403, April 2020. ISSN 0027-8424,
+  March 2021. ISSN 2522-5839. Bandiera_abtest: a                  1091-6490. Publisher: National Academy of Sciences
+  Cc_license_type: cc_by Cg_type: Nature Research Jour-           Section: Social Sciences.
+  nals Number: 3 Primary_atype: Research Publisher: Na-
+                                                                Schafer, J. L. Multiple imputation: a primer. Statistical
+  ture Publishing Group Subject_term: Computational sci-
+                                                                  Methods in Medical Research, 8(1):3–15, February 1999.
+  ence;Diagnostic markers;Prognostic markers;SARS-CoV-
+                                                                  ISSN 0962-2802. Publisher: SAGE Publications Ltd
+  2 Subject_term_id: computational-science;diagnostic-
+                                                                  STM.
+  markers;prognostic-markers;sars-cov-2.
+                                                                Scheuerman, M. K., Hanna, A., and Denton, E. Do Datasets
+Robin, X., Turck, N., Hainard, A., Tiberti, N., Lisacek,
+                                                                  Have Politics? Disciplinary Values in Computer Vi-
+  F., Sanchez, J.-C., and Müller, M. pROC: an open-
+                                                                  sion Dataset Development. Proceedings of the ACM on
+  source package for R and S+ to analyze and compare
+                                                                  Human-Computer Interaction, 5(CSCW2):317:1–317:37,
+  ROC curves. BMC Bioinformatics, 12(1):77, March 2011.
+                                                                  October 2021.
+  ISSN 1471-2105.
+                                                                Schrider, D. R. and Kern, A. D. Supervised Machine Learn-
+Rocca, R. and Yarkoni, T. Putting Psychology to the Test:
+                                                                  ing for Population Genetics: A New Paradigm. Trends in
+  Rethinking Model Evaluation Through Benchmarking
+                                                                  Genetics, 34(4):301–312, April 2018. ISSN 0168-9525.
+  and Prediction. Advances in Methods and Practices
+  in Psychological Science, 4(3):251524592110268, July          Schutte, S. Regions at Risk: Predicting Conflict Zones in
+  2021. ISSN 2515-2459, 2515-2467.                                African Insurgencies*. Political Science Research and
+                                                                  Methods, 5(3):447–465, July 2017. ISSN 2049-8470,
+Russakovsky, O., Deng, J., Su, H., Krause, J., Satheesh, S.,      2049-8489. Publisher: Cambridge University Press.
+  Ma, S., Huang, Z., Karpathy, A., Khosla, A., Bernstein,
+  M., Berg, A. C., and Fei-Fei, L. ImageNet Large Scale         Serra-Garcia, M. and Gneezy, U. Nonreplicable publications
+  Visual Recognition Challenge. International Journal             are cited more than replicable ones. Science Advances, 7
+  of Computer Vision, 115(3):211–252, December 2015.              (21):eabd1705, May 2021. ISSN 2375-2548. Publisher:
+  ISSN 1573-1405.                                                 American Association for the Advancement of Science
+                                                                  Section: Research Article.
+Salganik, M. J., Lundberg, I., Kindel, A. T., Ahearn, C. E.,
+  Al-Ghoneim, K., Almaatouq, A., Altschul, D. M., Brand,        Shi, L. and Lin, L. The trim-and-fill method for publication
+  J. E., Carnegie, N. B., Compton, R. J., Datta, D., David-       bias: practical guidelines and recommendations based
+  son, T., Filippova, A., Gilroy, C., Goode, B. J., Jahani,       on a large database of meta-analyses. Medicine, 98(23):
+  E., Kashyap, R., Kirchner, A., McKay, S., Morgan, A. C.,        e15987, June 2019. ISSN 0025-7974.
+  Pentland, A., Polimis, K., Raes, L., Rigobon, D. E.,
+                                                                Shim, M., Lee, S.-H., and Hwang, H.-J. Inflated pre-
+  Roberts, C. V., Stanescu, D. M., Suhara, Y., Usmani, A.,
+                                                                  diction accuracy of neuropsychiatric biomarkers caused
+  Wang, E. H., Adem, M., Alhajri, A., AlShebli, B., Amin,
+                                                                  by data leakage in feature selection. Scientific Re-
+  R., Amos, R. B., Argyle, L. P., Baer-Bositis, L., Büchi,
+                                                                  ports, 11(1):7980, April 2021.       ISSN 2045-2322.
+  M., Chung, B.-R., Eggert, W., Faletto, G., Fan, Z., Freese,
+                                                                  Bandiera_abtest: a Cc_license_type: cc_by Cg_type:
+  J., Gadgil, T., Gagné, J., Gao, Y., Halpern-Manners, A.,
+                                                                  Nature Research Journals Number: 1 Primary_atype:
+  Hashim, S. P., Hausen, S., He, G., Higuera, K., Hogan, B.,
+                                                                  Research Publisher: Nature Publishing Group Sub-
+  Horwitz, I. M., Hummel, L. M., Jain, N., Jin, K., Jurgens,
+                                                                  ject_term: Biomarkers;Diagnostic markers;Predictive
+  D., Kaminski, P., Karapetyan, A., Kim, E. H., Leizman,
+                                                                  markers;Prognostic markers;Psychiatric disorders Sub-
+  B., Liu, N., Möser, M., Mack, A. E., Mahajan, M., Man-
+                                                                  ject_term_id: biomarkers;diagnostic-markers;predictive-
+  dell, N., Marahrens, H., Mercado-Garcia, D., Mocz, V.,
+                                                                  markers;prognostic-markers;psychiatric-disorders.
+  Mueller-Gastell, K., Musse, A., Niu, Q., Nowak, W.,
+  Omidvar, H., Or, A., Ouyang, K., Pinto, K. M., Porter, E.,    Szegedy, C., Zaremba, W., Sutskever, I., Bruna, J., Erhan,
+  Porter, K. E., Qian, C., Rauf, T., Sargsyan, A., Schaffner,     D., Goodfellow, I., and Fergus, R. Intriguing properties
+  T., Schnabel, L., Schonfeld, B., Sender, B., Tang, J. D.,       of neural networks. Proceedings of the International
+  Tsurkov, E., Loon, A. v., Varol, O., Wang, X., Wang, Z.,        Conference on Learning Representations, 2014.
+Leakage and the Reproducibility Crisis in ML-based Science        Kapoor and Narayanan
+
+Szeliski, R. Computer vision: algorithms and applications,
+  2nd ed. https://szeliski.org/Book, 2021.
+Tonidandel, S., King, E. B., and Cortina, J. M. Big Data
+  Methods: Leveraging Modern Data Analytic Techniques
+  to Build Organizational Science. Organizational Re-
+  search Methods, 21(3):525–547, July 2018. ISSN 1094-
+  4281. Publisher: SAGE Publications Inc.
+
+Tu, F., Zhu, J., Zheng, Q., and Zhou, M. Be careful of
+  when: an empirical study on time-related misuse of issue
+  tracking data. In Proceedings of the 2018 26th ACM Joint
+  Meeting on European Software Engineering Conference
+  and Symposium on the Foundations of Software Engineer-
+  ing, pp. 307–318, Lake Buena Vista FL USA, October
+  2018. ACM. ISBN 978-1-4503-5573-5.
+Valavi, R., Elith, J., Lahoz-Monfort, J., and Guillera-Arroita,
+  G. Block cross-validation for species distribution mod-
+  elling, 2021.
+
+Valletta, J. J., Torney, C., Kings, M., Thornton, A., and
+  Madden, J. Applications of machine learning in ani-
+  mal behaviour studies. Animal Behaviour, 124:203–220,
+  February 2017. ISSN 0003-3472.
+Vandewiele, G., Dehaene, I., Kovács, G., Sterckx, L.,
+  Janssens, O., Ongenae, F., De Backere, F., De Turck,
+  F., Roelens, K., Decruyenaere, J., Van Hoecke, S., and
+  Demeester, T. Overly optimistic prediction results on im-
+  balanced data: a case study of flaws and benefits when ap-
+  plying over-sampling. Artificial Intelligence in Medicine,
+  111:101987, January 2021. ISSN 0933-3657.
+
+Wang, Y. Comparing Random Forest with Logistic Regres-
+ sion for Predicting Class-Imbalanced Civil War Onset
+ Data: A Comment. Political Analysis, 27(1):107–110,
+ January 2019. ISSN 1047-1987, 1476-4989. Publisher:
+ Cambridge University Press.
+
+Whelan, R. and Garavan, H. When Optimism Hurts: Inflated
+ Predictions in Psychiatric Neuroimaging. Biological Psy-
+ chiatry, 75(9):746–748, May 2014. ISSN 0006-3223.
+Yarkoni, T. and Westfall, J. Choosing Prediction Over Expla-
+  nation in Psychology: Lessons From Machine Learning.
+  Perspectives on Psychological Science, 12(6):1100–1122,
+  November 2017. ISSN 1745-6916. Publisher: SAGE
+  Publications Inc.
+Zech, J. R., Badgeley, M. A., Liu, M., Costa, A. B., Ti-
+  tano, J. J., and Oermann, E. K. Variable generalization
+  performance of a deep learning model to detect pneumo-
+  nia in chest radiographs: A cross-sectional study. PLOS
+  Medicine, 15(11):e1002683, November 2018. ISSN 1549-
+  1676. Publisher: Public Library of Science.
+Leakage and the Reproducibility Crisis in ML-based Science                                             Kapoor and Narayanan
+
+Appendix
+Overview of the Appendix. In Appendix A, we justify our choice of the word reproducibility. In Appendix B, we provide
+a detailed description of the methods we used to select papers for our review of civil war prediction and fix reproducibility
+issues in the papers with errors. In Appendix C, we show that each type of leakage identified in our survey (Section 2.4) is
+addressed by model info sheets. We provide a template of model info sheets and a list of all 124 papers that we considered
+for our literature review in civil war prediction on our website (https://reproducible.cs.princeton.edu).
+
+A. Why do we call these reproducibility issues?
+We acknowledge that there isn’t consensus about the term reproducibility, and there have been a number of recent attempts
+to define the term and create consensus (National Academies of Sciences, 2019). One possible definition is computational
+reproducibility—when the results in a paper can be replicated using the exact code and dataset provided by the authors (Liu
+& Salganik, 2019). We argue that this definition is too narrow because even cases of outright bugs in the code would not be
+considered irreproducible under this definition. Therefore we advocate for a standard where bugs and other errors in data
+analysis that change or challenge a paper’s findings constitute irreproducibility.
+The goal of predictive modeling is to estimate (and improve) the accuracy of predictions that one might make in a real-world
+scenario. This is true regardless of the specific research question one wishes to study by building a predictive model. In
+practice one sets up the data analysis to mimic this real-world scenario as closely as possible. There are limits to how well
+we can do this and consequently there is always methodological debate on some issues, but there are also some clear rules.
+If an analysis choice can be shown to lead to incorrect estimates of predictive accuracy, there is usually consensus in the ML
+community that it is an error. For example, violating the train-test split (or the learn-predict separation) is an error because
+the test set is intended to provide an accurate estimate of ’out-of-sample’ performance—model performance on a dataset
+that was not used for training (Kuhn & Johnson, 2013). Thus, to define what is an error, we look to this consensus in the ML
+community (e.g. in textbooks) and offer our own arguments when necessary.
+
+B. Materials and Methods: Reproducibility issues in civil war prediction
+Different researchers might have different aims when comparing the performance on civil war prediction — determining the
+absolute performance, or comparing the relative performance of different models of civil war prediction. Whether the aim is
+to determine the relative or absolute performance of models of civil war prediction, data leakage causes a deeper issue in the
+findings of each of the 4 papers with errors that leads to inaccurate estimates of both relative and absolute out-of-sample
+performance.
+In correcting the papers with errors (Muchlinski et al., 2016; Colaresi & Mahmood, 2017; Wang, 2019; Kaufman et al.,
+2019), our aim is to report out-of-sample performance of the various models of civil war prediction after correcting the data
+leakage, while keeping all other factors as close to the original implementation as possible. Fixing the errors allows a more
+accurate estimate of out-of-sample performance.
+At the same time, we caution that just because our corrected results offer a more accurate estimate of out-of-sample
+performance doesn’t mean that we endorse all other methodological choices made in the papers. For example, to correct the
+results reported by Muchlinski et al. (2016), we use imputation on an out-of-sample dataset that has 95% missing values.
+While an imputation model created only using the training data avoids data leakage, it does not mean that using a dataset
+with 95% missing values to measure out-of-sample performance is desirable.
+
+B.1. Paper selection for review
+To find relevant papers on civil war prediction for our review, we used the search results from a dataset of academic literature
+(Hook et al., 2018) for papers with the terms ‘civil’ AND ‘war’ AND (‘prediction’ OR ‘predicting’ OR ‘forecast’) in their
+title or abstract, as well as papers that were cited in a recent review of the field (Bara, 2020). To keep the number of papers
+tractable, we limited ourselves to those that were published in the last 5 years, specifically, papers published between 1st
+January 2016 and 14th May 2021. This yielded 124 papers. We narrowed this list to the 15 papers that were focused on
+predicting civil war and evaluated performance using a train-test split. Of the 15 papers that meet our inclusion criteria, 12
+share the complete code and data. For these 12, we attempted to identify errors and reproducibility issues from the text and
+through reviewing the code provided with the papers. When we identified errors, we re-analyzed the data with the errors
+Leakage and the Reproducibility Crisis in ML-based Science                                                      Kapoor and Narayanan
+
+corrected. We now address the reproducibility issues we found in each paper in detail.
+
+B.2. Muchlinski et al. (2016)
+Imputation is commonly used to fill in missing values in datasets (Donders et al., 2006). Imputing the training and test
+datasets together refers to using data from the training as well as the test datasets to create an imputation model that fills in
+all missing values in the dataset. This is an erroneous imputation method for the predictive modeling paradigm, since it
+can lead to data leakage, which results in incorrect, over-optimistic performance claims. This pitfall is well known in the
+predictive modeling community — discussed in ML textbooks (Kuhn & Johnson, 2013), blogs (Ghani et al., 2020) and
+popular online forums (noa).
+Muchlinski et al. (2016) claim that a Random Forests model vastly outperforms Logistic Regression models in terms of
+out-of-sample performance using the AUC metric (Fawcett, 2006). However, since they impute the training and test datasets
+together, their results suffer from data leakage. The impact of leakage is especially severe because of the level of missingness
+in their out-of-sample test dataset: over 95% of the values are missing (which is not reported in the paper), and 70 of the 90
+variables used in their model are missing for all instances in the out-of-sample test set.4 When their imputation method is
+corrected, their Random Forests model performs no better than the Logistic Regression models that they compared against.
+We focus on reproducing the out-of-sample results reported by Muchlinski et al. (2016). Table A1 provides the comparisons
+between the results reported in Muchlinski et al. (2016), our reproductions of their reported (incorrect) results, as well as
+the corrected version of their results. Muchlinski et al. (2016) received two critiques of the methods used in their paper
+(Wang, 2019; Neunhoeffer & Sternberg, 2019). 5 . In response, they published a reply with clarifications and revised code
+addressing both critiques (Muchlinski et al., 2019). We use the revised version of their code. We find that the error in their
+imputation methods exists in the revised code as well as the original code, and was not identified by the previous critiques.
+Muchlinski et al. (2016) re-use the dataset from Hegre & Sambanis (2006) when training their models, and provide a separate
+out-of-sample test set for evaluation. To address missing values, they use a Random Forests based imputation method in
+R called rfImpute. However, the training and test sets are imputed together, which leads to a data leakage. This results in
+overoptimistic performance claims. Below, we detail the steps we take to correct their results, provide a visualization of the
+data leakage, and provide a simulation showcasing how the data leakage can result in overoptimistic claims of performance.
+
+
+Correcting the data imputation. To correct this error, we use the mice package in R which uses multiple imputation for
+imputing missing data. This is because the mice package allows us to specify which rows in the dataset are a part of the
+test set and it does not use those rows for creating the imputation model, whereas rfImpute — the original method used to
+impute the missing data in the original results by Muchlinski et al. (2016) — does not have this feature. The authors imputed
+the training set together with the out-of-sample test set using rfImpute, which led to data leakage. Table A1 provides the
+comparisons between the results reported in Muchlinski et al. (2016), our reproductions of their reported (incorrect) results,
+as well as the corrected version of their results.
+Using multiple imputation fills in missing values without regarding the underlying variable’s original distribution. For
+example, using multiple imputation fills in different missing values for the variable representing the percentage of rough
+terrain in a country in different years (Beger, 2021), whereas this particular variable (percentage of rough terrain) is constant
+over time. However, when multiple imputation is used with a train-test split, there is still no leakage between the training
+and test sets, since the imputation model only uses data from the training set to fill in missing values in the test set.
+
+
+Why can’t we use rfImpute in the corrected results? Instead of using the mice package, another way to impute the data
+correctly, i.e., without data leakage, would be to run the imputation using rfImpute on the training and test data separately
+— creating two separate imputation models — one for the training data and one for the test data. We could not use this
+imputation method because 70 of the 90 variables used in Muchlinski et al. (2016)’s model as features do not have any
+values in the out-of-sample test data provided — i.e. they are missing for all observations in the out-of-sample dataset —
+and rfImpute requires at least some values for each variable to not be missing. In other words, the mice package allows us to
+train an imputation model on the training set and use it to fill in missing values in the test set.
+   4
+    While leakage is particularly serious in predictive modeling, a dataset with 95% of values missing is problematic even for explanatory
+modeling.
+  5
+    Hofman et al. (2021a) also outline the shortcomings in the initial code released by Muchlinski et al. (2016).
+Leakage and the Reproducibility Crisis in ML-based Science                                                Kapoor and Narayanan
+
+Subtle differences between explanatory and predictive modeling. In the explanatory modeling paradigm, the aim is to
+draw inferences from data, as opposed to optimizing and evaluating out-of-sample predictive performance. In this case,
+data imputation would be considered a part of the data pre-processing step, even though it is still important to keep in
+mind the various assumptions being made in this process Schafer (1999). Contrarily, in the predictive modeling paradigm,
+the imputation is a part of the modeling step (Kuhn & Johnson, 2013) because the aim of the modeling exercise is to
+validate performance on an out-of-sample test set, which the model does not have access to during the training. In this case,
+imputing the training and test datasets together leads to leaking information from the test set to the training set and thus the
+performance evaluation on the purportedly “out-of-sample” test set would be an over-estimate.
+
+What is the precise mechanism by which the leakage occurs in Muchlinski et al. (2016)? When Muchlinski et al.
+(2016) impute the missing values in the out-of-sample test set, the imputation model has access to the entire training data
+as well as the labels of the target variables in the test data — they also include the target variable in the list of variables
+which the imputation model treats as independent variables when carrying out the imputation. The model therefore uses
+correlations between the target variable and independent variables in the training dataset and uses them to fill in the missing
+values in the test dataset — i.e. the model uses the labels of the target variables in the test data and correlations from
+the training data to fill in missing values. This leads to the test dataset having similar correlations between the target and
+independent variables as the ones present in the training data. Further, the missing data is filled in in such a way that it favors
+ML models such as Random Forests over Logistic Regression models, as we show in the visualization below.
+
+Visualizing the leakage. We can visually observe an instance of data leakage in Figure A1. We focus on the distribution
+of the feature agexp, which represents the proportion of agricultural exports in the GDP of a country. We choose this feature
+because in the Muchlinski et al. paper, this feature had the highest gini index for the random forests model — which means
+that it was an important feature for the model. While we only visualize one feature here, similar results hold across multiple
+features used in the model. Below, we reconstruct the process by which the data leakage was generated — following the
+exact steps Muchlinski et al. (2016) used to create and evaluate the dataset:
+
+   • Figure A1a represents the distribution of the agexp variable for war and peace data points in the original dataset by
+     Hegre & Sambanis (2006), ignoring missing values.
+
+   • Figure A1b shows the same distribution after including the imputed values of agexp. In particular, we see two peaks in
+     the dataset for war and peace data points alike, one due to war instances and one due to peace instances.
+
+   • If we look only at the data points that were imputed using the rfImpute method (Figure A1c), we see that the distribution
+     of the imputed data points for war and peace are completely separated, in contrast to the original distribution where
+     there was a significant overlap between the distributions.
+
+   • Finally, Figure A1d shows the effect of imputing this already-imputed dataset with the out-of-sample test set — we
+     see that the out-of-sample dataset only has the peak for peace datapoints, whereas the distribution for war is almost
+     uniform.
+
+Further, the random forests model can learn the peak for the agexp variable in the peace instances from the training dataset
+after imputation, since the peak for the training and test sets is similar. It can distinguish between war and peace datapoints
+much more easily compared to a logistic regression model that only uses one parameter per feature — logistic regression
+models are monotonic functions of the independent variables and therefore cannot learn that a variable only lies within a
+small range for a given label. This highlights the reason behind Random Forests outperforming Logistic Regression in this
+setting — imputing the training and test datasets together leads to variable values being artifically concentrated within a very
+small range for both the training and test datasets — and further, being neatly separated across war and peace instances. The
+impact of the imputation becomes even clearer when we consider that the out-of-sample test dataset provided by Muchlinski
+et al. (2016) has over 95% of the data missing, and 70 out of 90 variables are missing for all instances in the out-of-sample
+dataset.
+
+A simulation showcasing the impact of missingness on performance estimates in the presence of leakage. We can
+observe a visual example of how data leakage affects performance evaluation in Figure A2. We describe the simulation
+below:
+Leakage and the Reproducibility Crisis in ML-based Science                                                                        Kapoor and Narayanan
+
+
+
+
+          0.100
+
+
+
+
+                                                                                               0.20
+
+
+
+
+          0.075
+
+
+
+
+                                                                                               0.15
+
+
+
+
+                                                          warstds                                                                                    warstds
+
+density                                                                              density
+          0.050
+                                                              peace                                                                                      peace
+                                                              war                                                                                        war
+                                                                                               0.10
+
+
+
+
+          0.025
+                                                                                               0.05
+
+
+
+
+          0.000                                                                                0.00
+
+
+                  0    25                  50        75                                               0       25             50            75
+                             agexp                                                                                  agexp
+
+
+
+(a) Distribution of the agexp variable for peace and war                            (b) Distribution of the agexp variable for peace and war
+data points for the original Hegre et al. dataset, ignoring                         data points for the imputed Hegre et al. dataset used by
+missing values                                                                      Muchlinski et al. for training
+
+          12
+
+
+
+
+                                                                                               6
+
+
+
+           8
+
+
+
+
+                                                          warstds.y
+
+density
+                                                              peace
+                                                              war
+                                                                                               4
+                                                                                                                                                     warstds.y
+
+                                                                                     density
+                                                                                                                                                         peace
+                                                                                                                                                         war
+           4
+
+
+
+
+                                                                                               2
+
+
+
+
+           0
+
+
+                  8   10              12        14
+                            agexp.y
+                                                                                               0
+
+
+(c) Distribution of the agexp variable for peace and                                                      9         11
+                                                                                                                   agexp.y
+                                                                                                                                      13        15
+
+
+war data points only for the data points that were added
+during imputation (i.e. the data points that were missing                           (d) Distribution of the agexp variable for peace and war
+in the original dataset)                                                            data points for the out-of-sample test set
+
+Figure A1. Distribution of the agexp variable for peace and war data points for different imputation steps in Muchlinski et al. (2016). Note
+that the distribution of peace instances in the test set (D) has a peak that is close to the distribution in the imputed training set (B, C) —
+which allows the random forests model to learn the small range of values where peace data points are concentrated. While we report
+results for the agexp variable, similar trends appear across independent variables in the dataset.
+Leakage and the Reproducibility Crisis in ML-based Science                                                  Kapoor and Narayanan
+
+   • there are two variables — the target variable onset and the independent variable gdp.
+
+   • onset is a binary variable. gdp is drawn from a normal distribution and depends on onset as follows:
+
+                                                        gdp = N (0, 1) + onset.
+
+   • We generate 1000 samples with onset=0 and 1000 samples with onset=1 to create the dataset.
+
+   • We randomly split the data into training (50%) and test (50%) sets, and create a random forests model that is trained on
+     the training set and evaluated on the test set.
+
+   • To observe the impact of imputing the training and test sets together, we randomly delete a certain percentage of values
+     of gdp, and impute it using the imputation method used in Muchlinski et al. (2016).
+
+   • We vary the proportion of missing values from 0% to 95% in increments of 5% and plot the accuracy of the random
+     forests classifier on the test set.
+
+   • We run the entire process 100 times and report the mean and 95% CI of the accuracy in Figure A2; the 95% CI is too
+     small to be seen in the Figure.
+
+We find that imputing the training and test sets together leads to an increasing improvement in the purportedly “out-of-sample”
+accuracy of the model. Estimates of model performance in this case are artificially high. This example also highlights the
+impact of the high percentage of missing values — since the out-of-sample test set used by Muchlinski et al. (2016) contains
+over 95% missing values, the impact of imputing the training and test sets together is very high.
+
+
+
+
+Figure A2. Results of a simulation that showcase how imputing the training and test sets together leads to overoptimistic estimates of
+model performance. The 95% Confidence Intervals are too small to be seen.
+
+
+B.3. Colaresi & Mahmood (2017)
+Colaresi & Mahmood (2017) report that ML models vastly outperform Logistic Regression for predicting civil war onset.
+However, they re-use the imputed version of the dataset in Hegre & Sambanis (2006) which is provided by Muchlinski et al.
+(2016). They use the imputed dataset both for training and testing via a train-test split; they do not use the out-of-sample test
+set provided by Muchlinski et al. This means that the results in Colaresi & Mahmood (2017) are subject to exactly the same
+Leakage and the Reproducibility Crisis in ML-based Science                                                       Kapoor and Narayanan
+
+                         Algorithm              Reported      Reported results (reproduced)        Corrected results
+                     Fearon and Laitin            0.69                    0.78                           0.54
+                    Collier and Hoeffler          0.90                    0.83                           0.57
+                    Hegre and Sambanis            0.83                    0.82                           0.68
+                     Muchlinski et al.            0.94                    0.95                           0.64
+
+Table A1. Original and corrected results in Muchlinski et al. (2016). While there are differences between the reported results and our
+reproduction of the reported results, especially for the Fearon and Laitin as well as the Collier and Hoeffler models, the relative order of
+the model performance for both results is the same.
+
+                         Algorithm               Reported      Reported results (reproduced)         Corrected results
+                     Fearon and Laitin             0.77                    0.77                            0.79
+                      Muchlinski et al.            0.89                    0.89                            0.73
+                   Colaresi and Mahmood            0.91                    0.91                            0.75
+
+                        Table A2. Original results from Colaresi & Mahmood (2017) and our corrected results.
+
+
+pitfall as in Muchlinski et al. (2016), albeit with a slightly different dataset. Correcting the imputation method dramatically
+reduces the performance of the ML models proposed.
+We focus on reproducing the final round of results reported in the paper Colaresi & Mahmood (2017), which consists of a
+comparison of 3 models of civil war onset — the Random Forests model proposed in Muchlinski et al. (2016), the Random
+Forests model proposed in Colaresi & Mahmood (2017) as well as the Logistic Regression model proposed in Fearon &
+Laitin (2003). Their dataset has 17.4% values missing, and the test set has 19% values missing. The proportion of missing
+values in individual variables can be even higher — for example, the agexp, which represents the proportion of agricultural
+exports in the GDP of a country, is missing for 54.3% of the rows in the test set. In our corrected results, we use the original
+dataset from Hegre & Sambanis (2006) and impute the training and test data separately using the rfImpute function. The test
+set consists of data from the years after 1988. One of the independent variables, milper, is missing for all instances in the
+test set of Colaresi & Mahmood (2017) so we exclude this variable from our models. Table A2 provides the comparisons
+between the results reported in Colaresi & Mahmood (2017), our reproductions of their reported (incorrect) results, as well
+as the corrected version of their results.
+Colaresi & Mahmood (2017) and Wang (2019) reuse the dataset released by Muchlinski et al. (2016). This is the imputed
+version of the dataset released by Hegre & Sambanis (2006). However, for 777 rows in the imputed dataset released by
+Muchlinski et al. (2016), the original dataset by Hegre & Sambanis (2006) has a missing target variable (i.e. the variable
+representing civil war onset is missing) whereas the imputed version of the dataset (i.e. the dataset released by Muchlinski
+et al. (2016)) has a value of peace for the target variable representing civil war onset. Since Muchlinski et al. (2016) do
+not share the code that they use for imputing the Hegre & Sambanis (2006) dataset, it is unclear how the missing values in
+the target variable were imputed in the dataset, especially since the imputation method they use — rfImpute — requires
+non-missing values in the target variable. Still, the number of instances of civil war onset (i.e. instances where the variable
+representing civil war onset has the value war) in the Hegre & Sambanis (2006) dataset as well as the Muchlinski et al.
+(2016) dataset are the same.
+
+B.4. Wang (2019)
+Similar to Colaresi & Mahmood (2017), Wang (2019) report that ML models vastly outperform Logistic Regression for
+predicting civil war onset. However, they too re-use the imputed version of the dataset in Hegre & Sambanis (2006)
+provided by Muchlinski et al. (Muchlinski et al., 2016). They use the imputed dataset both for training and testing via k-fold
+cross-validation; they do not use the out-of-sample test set provided by Muchlinski et al. Correcting the imputation method
+dramatically reduces the performance of the ML models proposed.
+We focus on reproducing the results of the nested cross-validation implementation reported by Wang (2019). Wang (2019)
+reuses the imputed dataset provided by Muchlinski et al. (2016), instead of using the original dataset provided by Hegre &
+Sambanis (2006) and imputing the training and test sets separately. The dataset has 17.4% values missing. The proportion
+of missing values in individual variables can be even higher — for example, the agexp, which represents the proportion of
+agricultural exports in the GDP of a country, is missing for 49.8% of the rows in the data set. In our corrected results, we
+Leakage and the Reproducibility Crisis in ML-based Science                                                       Kapoor and Narayanan
+
+       Algorithm              Reported       Reported (reproduced)          k-fold CV (corrected)         Out-of-sample (corrected)
+   Fearon and Laitin            0.76                 0.76                           0.77                            0.78
+  Collier and Hoeffler          0.78                 0.78                           0.72                            0.77
+  Hegre and Sambanis            0.80                 0.80                           0.81                            0.80
+   Muchlinski et al.            0.92                 0.92                           0.78                            0.73
+       AdaBoost                0.94*                 0.94                           0.82                            0.77
+          GBT                  0.94*                 0.94                           0.81                            0.75
+Table A3. Original and corrected results in the Wang (2019). We find that using an out-of-sample test set further favors Logistic Regression
+models over ML models. The metric for all results is AUC. *These results were not reported using nested cross-validation in Wang
+(2019). In our reproduction of these reported results, we use nested cross-validation, which ensures that we do not get over-estimates of
+performance.
+
+
+
+use the original dataset from Hegre & Sambanis (2006) and impute the training and test data separately using the rfImpute
+function within each cross validation fold. This ensures that there is no data leakage between the training and test sets in
+each fold. Table A3 provides the comparisons between the results reported in Wang (2019), our reproductions of their
+reported (incorrect) results, as well as the corrected version of their results.
+We also conduct an additional robustness analysis in which we use a separate out-of-sample test set instead of k−fold cross
+validation, since using k−fold cross validation with temporal data can also lead to leakage across the train-test split. To
+maintain comparability between the original and corrected results by testing on the same instances of civil war, we continue
+to use k−fold cross validation in the corrected results in Figure 1. We report the results after making this change in Table A3.
+We use the same train-test split as Colaresi & Mahmood (2017) — year < 1988 as training data and the rest as test data
+— for the out-of-sample test set. The test set consists of data from the years after 1988. One of the independent variables,
+milper, is missing for all instances in the test set of Colaresi & Mahmood (2017) so we exclude this variable from our
+models.
+Note that the imputation method that should be used depends on the exact model deployment scenario, and should mimic it
+as closely as possible for accurate performance estimates. For example, in some model deployment settings samples for
+prediction come in one at a time and in some cases they come in batches. In the former setting, imputing the entire test set
+together may result in overoptimistic performance evaluations as well, since the deployed model doesn’t have access to a
+batch of samples. Our results may thus offer an upper bound on the performance of civil war prediction models in the case
+of Colaresi & Mahmood (2017) and Wang (2019).
+
+B.5. Kaufman et al. (2019)
+We focus on reproducing the results on civil war prediction in Kaufman et al. (2019). There are several issues in the paper’s
+results. We outline each issue below and provide a comparison of various scenarios in Table A4 that highlight the precise
+cause of the performance difference between the original and corrected results, and visualize the robustness of our corrected
+results. We find that even though there are several issues in Kaufman et al. (2019), the main difference in performance
+between the original results they report and our corrected results is due to data leakage.
+
+Data leakage due to proxy variables. The dataset used by Kaufman et al. (2019) has several variables that, if used as
+independent variables in models of civil war prediction, could cause data leakage, since they are proxies of the outcome
+variable. Table A5 lists the variables in the Fearon & Laitin (2003) dataset that cause leakage. The first 4 rows outline
+variables that could be affected by civil wars, as outlined in Fearon & Laitin (2003). Therefore, following Fearon & Laitin
+(2003), we use lagged versions of these variables in our correction. The other variables in Table A5 are either direct proxies
+of outcomes of interest or are missing for all instances for civil war.
+
+Parameter selection for the Lasso model. Kaufman et al. (2019) use an incorrect parameter selection technique when
+creating their Lasso model that leads to the model always predicting peace (i.e. all coefficients of the variables in the
+model are always zero). We correct this using a standard technique for parameter selection. Instead of choosing model
+parameters such that the model always predicts peace, we use the cv.glmnet function in R to choose a suitable value for
+model parameters based on the training data.
+Leakage and the Reproducibility Crisis in ML-based Science                                                        Kapoor and Narayanan
+
+Using k−fold cross validation with temporal data. k−fold cross validation shuffles the dataset before it is divided into
+training and test datasets. When the dataset contains temporal data, the training dataset could contain data from a later date
+than the test dataset because of being shuffled. To maintain comparability between the original and corrected results by
+testing on the same instances of civil war, we continue to use k−fold cross validation in the corrected results in Figure 1. To
+evaluate out-of-sample performance without using cross-validation, we use a separate train-test split instead of k−fold cross
+validation and report the difference in results for this scenario in the row Corrected (out-of-sample) in Table A4. We find
+that there is no substantial difference between the results when using the out-of-sample test set and k−fold cross validation
+— in each case, none of the models outperforms a baseline that predicts the outcome of the previous year. We use the same
+train-test split as Colaresi & Mahmood (2017) — year < 1988 as training data and the rest as test data.
+
+
+Replacing missing values with zeros. Kaufman et al. (2019) replace missing values in their dataset with zeros, instead
+of imputing the missing data or removing the rows with missing values. This is a methodologically unsound way of dealing
+with missing data: for example, the models would not be able to discern whether a variable has a value of zero because
+of missing data or because it was the true value of the variable for that instance. This risks getting underestimates of
+performance, as opposed to overoptimistic performance claims. As a robustness check, we impute the training and test data
+separately in each cross-validation fold using the rfImpute function in R and report the results in the Corrected (imputation)
+row of Table A4. We find that the choice of imputation method does not cause a difference in performance, perhaps because
+only 0.6% of the values of variables are missing in the dataset.
+
+
+Choice of cut-offs for calculating accuracy. Instead of calculating model cutoffs based on the best cutoff in the training
+set, Kaufman et al. use the distribution of model scores to decide the cutoffs for calculating accuracy. We include robustness
+results when we change the cutoff selection procedure to choosing the best cutoffs for the training set in the Corrected
+(cutoff choice) row of Table A5. We find that the choice of cutoff does not impact the main claim — the performance of the
+best model is still worse than a baseline that predicts the outcome of the previous year.
+
+
+Weak Baseline. Kaufman et al. (2019) compare their results against a baseline model that always predicts peace. We find
+that a baseline that predicts war if the outcome of the target variable was civil war in the previous year and predicts peace
+otherwise is a stronger baseline (Accuracy: 97.5% vs. 86.1%; χ2 =633.7, p = 7.836e-140 using McNemar’s test as detailed
+in Dietterich (1998)), and report results against this stronger baseline in Table A4.
+
+
+Confusion about the target variable. Kaufman et al. (2019) use ongoing civil war instead of civil war onset as the target
+variable in their models. While their abstract mentions that the prediction task they attempt is civil war onset prediction, they
+switch to using the term civil war incidence in later sections, without formally defining this term. To attempt to determine
+what they mean by this term, we looked at the papers they cite; one of them has the term civil war incidence in the title
+Collier & Hoeffler (2002), and defines civil war incidence as ‘observations [that] experienced a start of a civil war’. At the
+same time, in the introduction, they state that they are ‘predicting whether civil war occurs in a country in a given year’ —
+which refers to ongoing civil war instead of civil war onset. This might confuse a reader about the specific prediction task
+they undertake.
+
+          Scenario                    ADT        RF        SVM        ERF        Lasso      LR        Baseline       Stronger Baseline
+          Reported                    0.990     0.989      0.983      0.990      0.862     0.987       0.861               0.000
+   Reported (reproduction)            0.990     0.990      0.983      0.989      0.861     0.987       0.861               0.000
+          Corrected                   0.974     0.959      0.974      0.957      0.975     0.972       0.861               0.975
+  Corrected (out-of-sample)           0.966     0.936      0.962      0.927      0.966     0.963       0.796               0.966
+   Corrected (imputation)             0.974     0.959      0.974      0.957      0.975     0.975       0.861               0.975
+  Corrected (cutoff choice)           0.974     0.972      0.966      0.967      0.975     0.971       0.861               0.975
+Table A4. Results for the various scenarios in Kaufman et al. (2019). We report results up to 3 significant figures in this table because the
+small difference in performance between AdaBoost and Logistic Regression that is ascribed signifance in Kaufman et al. (2019) can only
+be observed in the third decimal point. The first 2 values of ‘Stronger Baseline’ are reported as 0 because this baseline was not included in
+the results of Kaufman et al. (2019).
+Leakage and the Reproducibility Crisis in ML-based Science                                                          Kapoor and Narayanan
+
+ Variable name            Reason for leakage                            Variable definition in data documentation
+       pop            affected by target variable                                  population; in 1000s
+      lpop            affected by target variable                                    log of population
+     polity2          affected by target variable                                   revised polity score
+     gdpen            affected by target variable                 gdp/pop based on pwt5.6; wdi2001;cow energy data
+      onset              codes civil war onset                                     1 for civil war onset
+    ethonset             codes civil war onset                               1 if onset = 1 and ethwar ∼= 0
+     durest                NA if onset = 0                                        estimated war duration
+       aim                 NA if onset = 0             1 = rebels aim at center; 3 = aim at exit or autonomy; 2 = mixed or ambig.
+     ended                 NA if onset = 0                                      war ends = 1; 0 = ongoing
+     ethwar                NA if onset = 0                            0 = not ethnic; 1 = ambig/mixed; 2 = ethnic
+   emponset              codes civil war onset                              onset coded for data with empires
+     sdwars            codes ongoing civil war                      Number of Sambanis/Doyle civ wars in progress
+    sdonset              codes civil war onset                                onset of Sambanis/Doyle war
+    colwars            codes ongoing civil war                        Number of Collier/Hoeffler wars in progress
+    colonset             codes civil war onset                                onset of Collier/Hoeffler war
+   cowwars             codes ongoing civil war                            Number of COW civ wars in progress
+   cowonset              codes civil war onset                                    onset of COW civ war
+
+Table A5. This table highlights the variables included as independent variables in Kaufman et al. (2019) which cause a data leakage. In
+the original use of the dataset, Fearon & Laitin (2003) include lagged versions of the first 4 variables in the list as independent variables in
+their model to avoid leakage. Following their use of lagged versions of these variables, we do the same in our correction to avoid leakage.
+The other variables are proxies for the outcomes of interest and hence we remove them from the models to avoid data leakage.
+
+
+B.6. Blair & Sambanis (2020)
+Blair & Sambanis (2020) state that their escalation model outperforms other models across a variety of settings. However,
+they do not test the performance evaluations to see if the difference is statistically significant. We find that there is no
+significant difference between the smoothed AUC values of the escalation model’s performance and other models they
+compare it to when we use a test for significance. Further, we provide a visualization of the 95% confidence intervals of
+specificities and sensitivities in the smoothed ROC curve they report for their model (escalation) as well as for a baseline
+model (cameo) — and find that the 95% confidence intervals are large (see Figure A3).
+
+Uncertainty quantification, p-values and Z-values for tests of statistical significance.
+
+   • We report p-values and Z values for a one-tailed significance test comparing the smoothed AUC performance of the
+     escalation model with other baseline models reported in their paper — quad, goldstein, cameo and average respectively.
+     Note that we do not correct for multiple comparisons; such a correction would further reduce the significance of the
+     results. We implement the comparison test for smoothed ROC curves detailed in Robin et al. (2011).
+        – 1 month forecasts: Z = 0.64, 1.09, 0.42, 0.67; p = 0.26, 0.14, 0.34, 0.25
+        – 6 months forecasts: Z = 0.41, 0.08, 0.70, 0.69; p = 0.34, 0.47, 0.24, 0.25
+   • The 95% confidence intervals for the 1 month models are:
+        – escalation: 0.66-0.95
+        – quad: 0.63-0.95
+        – goldstein: 0.62-0.93
+        – cameo: 0.65-0.95
+        – average: 0.65-0.95
+   • The 95% confidence intervals for the 6 month models are:
+        – escalation: 0.64-0.93
+        – quad: 0.60-0.90
+        – goldstein: 0.68-0.93
+Leakage and the Reproducibility Crisis in ML-based Science                                            Kapoor and Narayanan
+
+       – cameo: 0.58-0.92
+       – average: 0.60-0.92
+
+While a small p-value is used to reject the null hypothesis (in this case — that the out-of-sample performance does not
+differ between the models being compared), a singular focus on a test for statistical significance at a pre-defined threshold
+can be harmful (see, for example Imbens (2021)). Blair and Sambanis do report performance evaluations for a variety of
+different model specifications. However, the purpose of such robustness checks is to determine whether model performance
+sensitive to the parameter choices; it is unclear whether it helps deal with issues arising from sampling variance. At any
+rate, Blair and Sambanis’s results turn out to be highly sensitive to another modeling choice: the fact that they compute the
+AUC metric on the smoothed ROC curve instead of the empirical curve that their model produces. Smoothing refers to a
+transformation of the ROC curve to make the predicted probabilities for the war and peace instances normally distributed
+instead of using the empirical ROC curve (see Robin et al. (2011)). This issue was pointed out by Beger et al. (2021) and
+completely changes their original results; Blair & Sambanis (2021) discuss it in their rebuttal.
+
+B.7. Overview of papers in Table A6
+Table A6 provides the list of 12 papers included in our review, showing information about whether they report confidence
+intervals, conduct tests of statistical significance when comparing classifier performance, which metrics they report, the
+number of rows and the number of positive instances (i.e. instances of war/conflict) in the test set, and whether their main
+claim relies on out-of-sample evaluation of classifier performance. We detail information about the numbers we report in
+Table A6 below.
+
+   • Hegre et al. (2016): We report the number of rows and number of positive instances of civil war incidence for the dates
+     between 2001 and 2013 in the UCDP dataset, i.e. all years for which out-of-sample estimates are provided. We report
+     the out-of-sample AUC performance difference for the Major conflict setting. Out-of-sample evaluation results are
+     not included in the main text of the paper, hence we report that the paper’s main claim does not rely on out-of-sample
+     evaluations.
+   • Muchlinski et al. (2016): We report the number of rows and number of positive instances of civil war onset for
+     the dates after 2000 in the out-of-sample dataset provided by Muchlinski et al. We report the out-of-sample AUC
+     performance difference between the Random Forests and the best Logistic Regression setting. Out-of-sample evaluation
+     results are used to justify the performance improvement of using Random Forests models, hence we report that the
+     paper’s main claim relies on out-of-sample evaluations.
+   • Chiba & Gleditsch (2017): We report the total number of instances and the number of positive instances of govern-
+     mental onsets in the years 2013-14 (the test set dates). We report the difference between the territorial onset AUC’s
+     reported in the paper. Note that while Chiba & Gleditsch (2017) do report small number of data points that are
+     used in one of their settings, they do not address how to estimate variance or perform tests of statistical significance.
+     Out-of-sample evaluation results are not used as the main evidence of better performance in the main text of the paper,
+     hence we report that the paper’s main claim does not rely on out-of-sample evaluations.
+   • Colaresi & Mahmood (2017): We report the number of rows and onsets of civil war after the year 1988 (the test set
+     dates). We report the out-of-sample AUC difference between the two random forests models compared in the paper.
+     Out-of-sample evaluation results are used to justify the performance improvement of using an iterative method for
+     model improvement, hence we report that the paper’s main claim relies on out-of-sample evaluations.
+   • Hirose et al. (2017): We report the number of locations included in the out-of-sample results. Since the paper does
+     not attempt binary classification, we do not report the number of positive instances in this case. We report the out-of-
+     sample performance gain of adding relative ISAF support to the baseline model in the IED attack setting of the paper.
+     Out-of-sample evaluation results are used as important evidence of better model performance in the main text of the
+     paper, hence we report that the paper’s main claim relies on out-of-sample evaluations.
+   • Schutte (2017): We report the number of rows in the entire dataset, since the paper uses k-fold cross validation and
+     therefore all instances are used for testing. Since the paper does not attempt binary classification, we do not report
+     the number of positive instances in this case. We report the out-of-sample normalized MAE difference between the
+     population model and the best performing model compared in the paper. Out-of-sample evaluation results are used as
+Leakage and the Reproducibility Crisis in ML-based Science                                                   Kapoor and Narayanan
+
+
+
+
+(a) Visualizing the 95% confidence intervals of the specificities       (b) Visualizing the 95% confidence intervals of the sensitivities
+for the 1 month forecast in the smoothed ROC curve reported             for the 1 month forecast in the smoothed ROC curve reported
+in Blair & Sambanis (2020).                                             in Blair & Sambanis (2020).
+
+
+
+
+(c) Visualizing the 95% confidence intervals of the specificities       (d) Visualizing the 95% confidence intervals of the sensitivities
+for the 6 month forecast in the smoothed ROC curve reported             for the 6 month forecast in the smoothed ROC curve reported
+in Blair & Sambanis (2020).                                             in Blair & Sambanis (2020).
+
+Figure A3. The wide confidence intervals for sensitivities and specificities reported in Blair and Sambanis. Here, we visualize the
+escalation and cameo models for the 1 month and 6 month forecast in the base specification (reported in Figure 1 of their paper).
+
+
+      important evidence of better model performance in the main text of the paper, hence we report that the paper’s main
+      claim relies on out-of-sample evaluations.
+   • Hegre et al. (2019b): We report the number of rows and number of positive instances of civil war incidence for the
+     dates between 2001 and 2013 in the UCDP dataset, i.e. all years for which out-of-sample estimates are provided. We
+     report the out-of-sample AUC performance difference for the Major conflict setting. Out-of-sample evaluation results
+     are not used as the primary evidence of better model performance in the main text of the paper, hence we report that the
+Leakage and the Reproducibility Crisis in ML-based Science                                                                  Kapoor and Narayanan
+
+                                   Stat. sig                                       Num. rows     Num. positive        Main Claim   OOS performance
+ Paper                       CI?               Metric(s)
+                                   test?                                           in test set   test set instances   OOS?         delta
+ Hegre et al. (2016)         No    No          AUC, Brier score                    2197          321                  No           0.006
+ Muchlinski et al. (2016)    No    No          AUC, F1 score                       896           19                   Yes          0.04
+ Chiba & Gleditsch (2017)    No    No          AUC, Brier score                    4176          15                   No           0.03
+ Colaresi & Mahmood (2017)   No    No          AUC, Precision, Recall              1778          29                   Yes          0.02
+ Hirose et al. (2017)        No    *           MAE, RMSE                           14,606        —                    Yes          0.16
+ Schutte (2017)              No    No          MAE                                 3744          —                    Yes          0.09
+ Hegre et al. (2019b)        No    No          AUC                                 2197          321                  No           0.02
+                                               AUC, Brier score, AUPR, Accuracy,
+ Hegre et al. (2019a)        No    No                                              384,372       1848                 Yes          0.01
+                                               F1 score, cost-based threshold
+ Kaufman et al. (2019)       No    No          Accuracy                            6610          918                  Yes          0.03
+ Wang (2019)                 Yes   No          AUC, Precision, Recall              6363          116                  Yes          0.12
+ Blair & Sambanis (2020)     No    No          AUC, Precision, Recall              15,744        11                   Yes          0.03
+ Hegre et al. (2021)         Yes   No          AUC, AUPR, TPR/FPR                  3042          79                   Yes          —
+
+Table A6. A list of papers for which code and dataset were available, showing information about whether they report confidence intervals,
+conduct tests of statistical significance when comparing classifier performance, which metrics they report, the number of rows and the
+number of positive instances (i.e. instances of war or conflict or onset thereof) in the test set, and whether their main claim relies on
+out-of-sample evaluation of classifier performance. AUC = Area Under ROC, MAE = Mean Absolute Error, RMSE = Root Mean Squared
+Error, AUPR = Area Under Precision-Recall Curve, TPR = True Positive Rate, FPR = False Positive Rate, OOS performance delta = the
+performance difference for the most salient performance comparison reported in the paper (details in Section B.7). *Hirose et al. state
+that the out-of-sample performance is significantly better in the Supplement of their paper, but we could not find the figure they cite as
+evidence of this claim in their Supplement.
+
+
+      paper’s main claim does not rely on out-of-sample evaluations.
+
+   • Hegre et al. (2019a): We report the number instances with state based conflict in the ViEWS Monthly Outcomes at
+     PRIO-Grid Level data between 2015 and 2017 — the years for which the out-of-sample results are reported in the
+     paper. We report the out-of-sample AUC performance difference for the state-based conflict setting. Out-of-sample
+     evaluation results are used as the primary evidence of better model performance in the main text of the paper, hence we
+     report that the paper’s main claim relies on out-of-sample evaluations.
+
+   • Kaufman et al. (2019): We report the total number of rows and all instances of civil war incidence in the dataset used
+     by Kaufman et al., since they use k-fold cross validation and therefore all instances are used for testing. We report the
+     out-of-sample accuracy difference between the Adaboost and Logistic Regression settings. Out-of-sample evaluation
+     results are used as the primary evidence of better model performance in the main text of the paper, hence we report that
+     the paper’s main claim relies on out-of-sample evaluations.
+
+   • Wang (2019): We report the total number of rows and onsets of civil war used in the dataset used by Wang since
+     they use k-fold cross validation and therefore all instances are used for testing. We report the out-of-sample AUC
+     performance difference between the Adaboost and Logistic Regression models. Out-of-sample evaluation results are
+     used as the primary evidence of better model performance in the main text of the paper, hence we report that the paper’s
+     main claim relies on out-of-sample evaluations.
+
+   • Blair & Sambanis (2020): We report the number of rows and onsets of civil war after the year 2007 (the test set dates).
+     We report the out-of-sample AUC performance difference between the escalation and cameo models for the one-month
+     base setting. Out-of-sample evaluation results are used as the primary evidence of better model performance in the
+     main text of the paper, hence we report that the paper’s main claim relies on out-of-sample evaluations.
+
+   • Hegre et al. (2021): We report the number of rows and number of positive instances for civil war onset the dates
+     between 2001 and 2018, i.e. all years for which out-of-sample estimates are provided. We don’t report the out-of-sample
+     performance difference because the paper does not perform comparisons between models. Out-of-sample evaluation
+     results are used as the primary evidence of model performance in the main text of the paper, hence we report that the
+     paper’s main claim relies on out-of-sample evaluations.
+Leakage and the Reproducibility Crisis in ML-based Science                                           Kapoor and Narayanan
+
+C. Model info sheets for detecting and preventing leakage in ML-based science
+We include the model info sheet template as a Microsoft Word document on our website (https://reproducible.
+cs.princeton.edu). Here, we detail how model info sheets would address each type of leakage that we found in our
+survey, as well as the types of leakage we found in our case study of civil war prediction.
+
+  • L1.1 No test set. Model info sheets require an explanation of how the train and test set is split during all steps in the
+    modeling process (Q9-17 of model info sheets).
+  • L1.2 Pre-processing on training and test set. Details of how the train and test set are separated during the preprocess-
+    ing selection step need to be included in the model info sheet (Q12-13). This would address leakage due to incorrect
+    imputation Muchlinski et al. (2016); Wang (2019); Colaresi & Mahmood (2017).
+  • L1.3 Feature selection on training and test set. Details of how the train and test set are separated during the feature
+    selection step need to be included in the model info sheet (Q14-15).
+  • L1.4 Duplicates in datasets. Model info sheets require details of whether there are duplicates in the dataset, and if so,
+    how they are handled (Q10).
+  • L2 Model uses features that are not legitimate. For each feature used in the model, researchers need to argue why
+    the feature is legitimate to be used for the modeling task at hand (Q21). This addresses the leakage due to the use of
+    proxy variables in Kaufman et al. (2019).
+  • L3.1 Temporal leakage. In case the claim is about predicting future outcomes of interest based on ML methods,
+    researchers need to provide an explanation for why the time windows used in the training and test set are separate, and
+    why data in the test set is always a later timestamp compared to the data in the training set (Q20). This addresses the
+    temporal leakage in Kaufman et al. (2019); Wang (2019).
+  • L3.2 Dependencies in training and test data. Researchers need to reason about the dependencies that may exist in
+    their dataset and outline how dependencies across training and test sets are addressed (Q11).
+
+  • L3.3 Sampling bias in test distribution. Researchers need to reason about the presence of selection bias in their
+    dataset and outline how the rows included for data analysis were selected, and how the test set matches the distribution
+    about which the scientific claims are made (Q18-19).
+

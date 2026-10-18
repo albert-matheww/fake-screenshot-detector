@@ -1,0 +1,27 @@
+== A. top word probability on the eight hand-collected images
+shipped model (95 features): suspicious >= 0.847, evidence >= 0.966
+   3.jpg    edited top p=0.113 -> none
+   4.jpg    edited top p=0.979 -> EVIDENCE
+   5.jpg    edited top p=0.273 -> none
+   6.jpg    edited top p=0.340 -> none
+   7.webp   real   top p=0.306 -> none
+   8.webp   real   top p=0.243 -> none
+   9.webp   real   top p=0.116 -> none
+   10.webp  real   top p=0.064 -> none
+column-peer model (117 features): suspicious >= 0.765, evidence >= 0.980
+   3.jpg    edited top p=0.141 -> none
+   4.jpg    edited top p=0.993 -> EVIDENCE
+   5.jpg    edited top p=0.190 -> none
+   6.jpg    edited top p=0.196 -> none
+   7.webp   real   top p=0.357 -> none
+   8.webp   real   top p=0.473 -> none
+   9.webp   real   top p=0.031 -> none
+   10.webp  real   top p=0.044 -> none
+== B. column z-scores on the corpus (forge_v7 features): saturation and a numeric-column rule
+max |z_col_stroke_w2| per image: genuine median 8.0, p90 12.0; simulated-edited median 8.0, p90 12.0  (z clipped at 12; 1457 genuine, 2996 edited images with a usable column)
+max |z_col_sharp_hi| per image: genuine median 7.5, p90 12.0; simulated-edited median 7.8, p90 12.0  (z clipped at 12; 1457 genuine, 2996 edited images with a usable column)
+numeric-column rule evaluated on 584 genuine and 1137 edited images that have a numeric column
+  rule stroke z>=3 and sharp z>=6: real genuine 10.2% (n=49) / edited 13.7% (n=146); chrome genuine 19.7% (n=493) / edited 19.4% (n=930); pillow genuine 2.4% (n=42) / edited 3.3% (n=61);
+  rule stroke z>=3 and sharp z>=8: real genuine 10.2% (n=49) / edited 12.3% (n=146); chrome genuine 11.2% (n=493) / edited 11.2% (n=930); pillow genuine 2.4% (n=42) / edited 1.6% (n=61);
+  rule stroke z>=4 and sharp z>=8: real genuine 10.2% (n=49) / edited 12.3% (n=146); chrome genuine 8.7% (n=493) / edited 8.8% (n=930); pillow genuine 2.4% (n=42) / edited 1.6% (n=61);
+  rule stroke z>=3 and sharp z>=12: real genuine 8.2% (n=49) / edited 5.5% (n=146); chrome genuine 3.2% (n=493) / edited 3.9% (n=930); pillow genuine 0.0% (n=42) / edited 1.6% (n=61);

@@ -1,0 +1,6 @@
+native render 'real': fake_score=0.4948 is_fake=True override=arithmetic_score content_type=financial_document
+   arithmetic findings: ['Multiple different Total/Balance amounts printed in the same document: [70.77, 1284.19]']
+native render 'fake': fake_score=0.4163 is_fake=True override=arithmetic_score content_type=financial_document
+   arithmetic findings: ['Multiple different Total/Balance amounts printed in the same document: [70.77, 98284.19]']
+JPEG with Software tag 'Adobe Photoshop 25.0': fake_score=0.8041 override=metadata_score
+same pixels, tag absent: fake_score=0.4122 is_fake=True override=arithmetic_score

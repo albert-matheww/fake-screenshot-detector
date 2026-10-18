@@ -1,0 +1,15 @@
+== (1) false alarms on GENUINE images
+  chrome  112/ 3200  (3.50%)
+  pillow    1/ 1657  (0.06%)
+  real     22/ 1799  (1.22%)
+  ALL     135/6656  (2.03%)
+== (2) fires on our edited images (placement error <= ~2 px by construction)
+  chrome  211/ 6138  (3.44%)
+  pillow    6/ 2906  (0.21%)
+  real     63/ 5114  (1.23%)
+== (3) recall on simulated hand-placement errors; 1242 genuine images have a numeric column
+  shift 0.1 x height: detected 4/1107 (0%), culprit named correctly 0/4
+  shift 0.2 x height: detected 28/1107 (3%), culprit named correctly 26/28
+  shift 0.3 x height: detected 88/1107 (8%), culprit named correctly 84/88
+  shift 0.5 x height: detected 181/1107 (16%), culprit named correctly 180/181
+  shift 0.8 x height: detected 190/1107 (17%), culprit named correctly 187/190

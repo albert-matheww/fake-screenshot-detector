@@ -1,0 +1,1256 @@
+                                         Efficient Document Tampering Localization with
+                                          Multi-Level Discrepancy Features and Unified
+                                                   DCT–Quantization Embedding
+
+                                             Mohamed Dhouib1 , Ye Zhu1 , Sonia Vanier1 , and Aymen Shabou2
+                                                               1
+                                                                LIX, École Polytechnique, IP Paris, France
+                                                           2
+                                                               DataLab Groupe, Crédit Agricole S.A., France
+
+
+
+
+arXiv:2606.22285v1 [cs.CV] 21 Jun 2026
+                                                                  mohamed.dhouib@polytechnique.edu
+
+
+
+                                               Abstract. Localizing document tampering is extremely challenging, as
+                                               manipulations are crafted to appear visually consistent and often leave
+                                               only subtle traces that are nearly invisible to the human eye. In prior
+                                               work, evaluation has been largely dominated by synthetic benchmarks
+                                               that closely match the training distribution, and methods have shown
+                                               steady progress under this setting. However, these gains often translate
+                                               poorly to human-made forgeries and to cross-domain evaluation, where
+                                               both the source documents and the tampering pipeline can change, lead-
+                                               ing to a distribution shift. In addition, since the introduction of the Fre-
+                                               quency Perception Head for the discrete cosine transform (DCT) modal-
+                                               ity, it has become a standard choice, and subsequent work has largely
+                                               focused on downstream modules and fusion strategies rather than revis-
+                                               iting the backbone itself. To help close this gap in cross-domain perfor-
+                                               mance and improve the DCT backbone design, we propose DiffNet, a
+                                               relatively simple yet effective RGB–DCT early-fusion architecture driven
+                                               by two key design choices. First, to ensure that the decoder aggregates
+                                               multi-scale inconsistency evidence rather than operating on raw, content-
+                                               heavy activations, we apply a lightweight multi-level discrepancy trans-
+                                               formation at the output of each backbone stage, replacing features with
+                                               magnitude-only responses to learned zero-sum filters. Second, we design
+                                               an efficient DCT-domain backbone that relies on a lightweight frequency-
+                                               index-aware DCT–quantization joint embedding. Our approach achieves
+                                               state-of-the-art performance on cross-domain and human-made docu-
+                                               ment tampering localization, outperforming prior methods by around
+                                               30%, with up to 7× higher throughput than the previous best model.
+
+                                               Keywords: Document Tampering · Document forensics · Forgery de-
+                                               tection · Image manipulation localization · DCT and quantization tables
+
+
+                                         1   Introduction
+
+                                         Document images are central to financial, administrative, and identity-related
+                                         workflows, making them attractive targets for tampering. Such manipulations,
+                                         if undetected, can enable fraud and identity theft, undermine legal evidence,
+2       M. Dhouib et al.
+
+and trigger costly downstream errors in automated decision-making systems.
+Yet state-of-the-art models [6, 18, 33] still generalize poorly to cross-domain and
+human-made forgeries, and evaluation has mainly been conducted on synthetic
+tampering benchmarks [6, 9, 24, 33] that often remain close to the training dis-
+tribution.
+    Because annotated human-made tampering data are scarce and costly to col-
+lect, prior work typically resorts to large-scale synthetic pretraining as a practical
+necessity. However, this setting encourages shortcut learning. Synthetic gener-
+ation pipelines can introduce systematic signatures. Inserted text is generally
+rendered from a limited font set or a fixed generator family, while coverage often
+reuses a small set of algorithms that leave characteristic boundary or texture
+artifacts. Similar repetitive signatures arise in copy-move, splicing, and blend-
+ing operations, enabling models to rely on pipeline-specific fingerprints instead
+of the underlying inconsistencies that manipulations create and that are more
+likely to transfer across domains and forgery tools.
+    Moreover, synthetic datasets frequently come from a narrow set of source do-
+mains and acquisition pipelines, and for underrepresented document types such
+as payslips, bank statements, and tax forms, they often generate many manipu-
+lated variants from the same source image. For instance, [7] draws a substantial
+portion of its source documents from IIT-CDIP [15], a collection originating from
+tobacco litigation materials which represents a highly specific provenance. As a
+result, models can reduce training loss in hard cases by exploiting domain-specific
+cues rather than focusing on the inconsistencies the tampering introduces. These
+issues can persist even in human-made document tampering datasets, which are
+often small [1, 30] and produced by few experts.
+    This motivates us to tackle the task from a different direction: rather than
+further increasing architectural complexity, we constrain the feature pyramid so
+the decoder becomes mainly driven by inconsistency cues. Specifically, we intro-
+duce a lightweight multi-level discrepancy transformation applied at the output
+of every backbone stage before multi-level fusion and prediction. It converts
+stage features into magnitude-only responses of learned zero-sum filters, yield-
+ing a sign-invariant discrepancy representation across the entire feature pyramid.
+As a result, multi-level fusion aggregates inconsistency cues across stages rather
+than operating on raw content-heavy activations.
+    Beyond RGB cues, recent work has emphasized frequency evidence, in par-
+ticular DCT coefficients, and has developed several RGB–DCT fusion architec-
+tures [6, 13, 18, 24, 33]. The Frequency Perception Head [24] (FPH) has emerged
+as a standard choice in several recent state-of-the-art document tampering ar-
+chitectures [6, 25, 33], which have mainly emphasized stronger fusion strategies
+and auxiliary enhancement modules, while leaving the encoder backbone mostly
+unchanged. In contrast, we propose a more efficient alternative to the Frequency
+Perception Head. Since both quantized DCT coefficients and quantization-table
+entries are discrete integers, we leverage the expressiveness of embedding layers
+to map each coefficient–quantization pair to a compact joint embedding, explic-
+                                Efficient Document Tampering Localization        3
+
+itly injecting the frequency index while avoiding early high-dimensional feature
+expansions and auxiliary blocks.
+    Together, these two design choices yield DiffNet, a simple and efficient ar-
+chitecture that improves both cross-domain accuracy and throughput. On cross-
+domain evaluation, our architecture improves upon the previous best by around
+30% while increasing throughput by up to 7×. Our contributions are as follows:
+
+ – We introduce a multi-level discrepancy transformation applied at every back-
+   bone stage output, converting features into magnitude-only responses of
+   learned zero-sum filters and yielding a sign-invariant discrepancy represen-
+   tation across the feature pyramid.
+ – We design an efficient DCT-domain backbone based on a frequency-index-
+   aware joint embedding of quantized DCT coefficients and quantization ta-
+   bles, providing a strong and lightweight frequency branch for early fusion.
+ – We run extensive ablations on both components and their main design
+   choices, confirming the contribution of each part and supporting the design
+   decisions within each component.
+ – Combining these components in a simple RGB–DCT early-fusion architec-
+   ture yields a new state-of-the-art on human-made document tampering de-
+   tection and localization, improving over the previous best by around 30%
+   while substantially increasing throughput. The code and pretrained weights
+   are available at https://github.com/Mohamed-Dhouib/DiffNet.
+
+
+2     Related Work
+2.1   Document tampering detection and localization datasets
+Progress in document tampering localization has long been constrained by the
+limited availability of public, annotated data. Early works [4, 14, 27] were there-
+fore developed and evaluated on private collections. [32] introduced T-SROIE,
+a small benchmark centered on character-level replacements produced by SR-
+Net [35]. While useful for evaluation, such synthetic edits can exhibit systematic
+visual artifacts and may overestimate real-world performance. Later human-
+made datasets such as FindIt [1], FindItAgain [30], and RTM [18] were intro-
+duced, providing human-made manipulations that better reflect real-world sce-
+narios, but remain comparatively limited in scale relative to synthetic corpora,
+making them more suitable for evaluation and fine-tuning than for pretraining.
+To enable large-scale training, DocTamper [24] constructed a substantially larger
+dataset via a rule-based generation pipeline. The authors also introduce two test
+splits intended for cross-domain evaluation. However, the source documents vi-
+sual characteristics remain similar to those used to generate the training set,
+and the tampering is still produced by the same synthesis pipeline. Recently, [7]
+proposed a learning-guided generation pipeline that trains auxiliary networks
+to produce higher-quality and more diverse tampered documents. Although the
+quality has improved compared to previous synthetic datasets, the pipeline used
+still introduces pipeline-specific traces that models can use as tampering cues,
+4      M. Dhouib et al.
+
+rather than relying on the inconsistencies they introduce. Nonetheless, large-
+scale pretraining on synthetic data is necessary given the scarcity of human-
+made forgeries. We therefore propose to constrain the feature pyramid, reducing
+its reliance on pipeline-specific artifacts.
+
+
+2.2   Document tampering detection and localization architectures
+
+DCT-domain frequency evidence has proven particularly effective for exposing
+manipulation traces in document images. DTD [24] introduced a dual RGB
+and DCT architecture whose Frequency Perception Head (FPH) first processes
+the quantized DCT coefficients before injecting quantization-table information.
+Concretely, each discrete coefficient is passed through a dilated convolution that
+expands the signal to a high-dimensional feature map of 64 channels at the
+initial image resolution. The result is then projected and modulated by an em-
+bedded quantization table. Next, the modulated and unmodulated features are
+concatenated, augmented with explicit coordinate channels, and fed to a strided
+convolution that expands the representation to 256 channels, followed by several
+MBConv blocks [29]. This sequence materializes large intermediate activations
+early, contributing significant overhead in the DCT branch. FPH was reused
+by state-of-the-art models such as FFDN [6] and ADCD-Net [33]. FFDN [6]
+further strengthens spatial–frequency modeling and trace sensitivity with ad-
+ditional enhancement and fusion components. Other approaches further add
+specialized components [8, 16, 20], often at the cost of increased architectural
+complexity. More recently, ADCD-Net [33] improves robustness under practical
+post-processing that can disrupt JPEG block alignment. Overall, while these
+methods steadily improve performance, their initial evaluations and ablations
+of proposed components are often conducted on synthetic documents generated
+with the same pipeline as the training set, and their benefits have yet to be
+demonstrated for realistic human-made tampering and cross-domain settings,
+where both the source images and the manipulation pipeline can differ drasti-
+cally. We therefore start from a standard early-fusion architecture and introduce
+a small set of well-motivated architectural changes aimed at improving general-
+ization and providing a more efficient DCT backbone.
+
+
+2.3   Residual features
+
+In addition to leveraging frequency features, another common strategy in im-
+age forensics is to introduce residual-like operators as an additional modality
+alongside RGB. Hand-crafted residual features such as SRM [10] and Bayar con-
+volution layers [2,3] are used to produce high-pass representations that are fused
+with semantic features early on or processed in a parallel branch to improve sen-
+sitivity to subtle manipulation cues. While such auxiliary modalities can improve
+within-domain performance, recent unified evaluations suggest that they do not
+improve generalization [9]. In our work, we take a different direction and instead
+constrain the feature pyramid, rather than adding another modality.
+                                                                         Efficient Document Tampering Localization                                                         5
+
+
+       DCT-QT                  Freq
+      Embedding               Stage 1
+
+
+      RGB                     RGB
+                                                   +              Stage 2                            Stage 3                          Stage 4
+      Input                  Stage 1
+
+
+
+                        Zero-Sum                             Zero-Sum                           Zero-Sum                         Zero-Sum
+                          Block                                Block                              Block                            Block
+
+
+                    Free            Center               Free              Center           Free            Center           Free              Center
+                  Zero-Sum         Anchored            Zero-Sum           Anchored        Zero-Sum         Anchored        Zero-Sum           Anchored
+
+                  +1   -2    +1    +1   +1    +1       +1   0     -1     +2    +1    +2   0    +1    0     +1   +2    +1   -1   +2    -1     +0    +1    +0
+
+                  -2   +4    -2    +1   -8    +1       +2   0     -2     +1    -12   +1   -2   +2    -2    +0   -8    +0   0    0      0     +1    -4    +1
+
+                  +1   -2    +1    +1   +1    +1       +1   0     -1     +2    +1    +2   0    +1    0     +1   +2    +1   +1   -2    +1     +0    +1    +0
+
+
+
+
+                       |x|              |x|                 |x|                |x|             |x|              |x|             |x|                |x|
+
+
+
+                         Linear Layer                           Linear Layer                     Linear Layer                       Linear Layer
+
+
+
+
+                                                                                                                                                               Pyramid
+                                                                                                                                                              Prediction
+                                                                                                                                                                Head
+                                                                                                                                 Fusion &
+                                                                                                                                Refinement
+
+
+
+
+                       Fig. 1: Overview of the proposed DiffNet architecture.
+
+
+
+3     Method
+
+3.1   Overview
+
+Our model follows a two-branch early-fusion design. The RGB branch processes
+the input image with a four-stage ConvNeXt-V2 [34] backbone, producing a
+multi-scale feature pyramid. In parallel, the DCT branch encodes the quantized
+DCT coefficients together with the quantization table to produce a frequency
+feature map. We fuse the DCT features into the RGB stream after stage 1.
+At the output of each backbone stage, we apply our multi-level discrepancy
+transformation, yielding a discrepancy feature pyramid, which is then aggregated
+by a multi-scale fusion module to predict the tampering mask. An overview of
+the architecture is shown in Fig. 1.
+
+
+3.2   Backbone Design
+
+RGB branch. Given an image I ∈ RH×W ×3 , the RGB branch uses a ConvNeXt-
+V2 backbone to compute four stages of features {F1 , F2 , F3 , F4 }, with Fs ∈
+       H      W
+RCs × 2s+1 × 2s+1 for s ∈ {1, 2, 3, 4}.
+
+DCT branch. DCT coefficients together with quantization tables, which capture
+block-level frequency content and the per-frequency quantization strength, have
+proven to be an effective modality for document tampering detection [6, 33].
+Quantization and rounding introduce characteristic artifacts, often termed codec
+traces, that have been shown to be important cues for tampering detection and
+are most naturally described by the pair of quantized DCT coefficients and the
+associated quantization table [12,13,22,23]. We therefore operate in the quantized
+DCT domain. DCT maps each non-overlapping 8 × 8 image block from the pixel
+6              M. Dhouib et al.
+
+domain to 64 frequency coefficients in a cosine basis. Concretely, for a block
+B ∈ R8×8 with samples Bx,y , the unquantized 2D DCT coefficient at frequency
+index (u, v) ∈ {0, . . . , 7}2 is:
+
+
+               C_{u,v}=\alpha (u)\alpha (v)\sum _{x=0}^{7}\sum _{y=0}^{7} B_{x,y}\cos \!\left (\frac {(2x+1)u\pi }{16}\right )\cos \!\left (\frac {(2y+1)v\pi }{16}\right ),    (1)
+
+                              q
+where α(0) = √18 and α(t) = 28 for t ≥ 1. For each 8 × 8 block and frequency
+index (u, v), the raw quantized DCT coefficient is computed as:
+
+                                                                    \tilde {C}_{u,v} = \mathrm {round}\left (\frac {C_{u,v}}{Q_{u,v}}\right ),                                  (2)
+
+where Cu,v is the unquantized coefficient and Qu,v is the corresponding quan-
+                                                 H  W
+tization table entry. Let Ĉ ∈ {0, . . . , 20} 8 × 8 ×64 denote the stacked clipped
+absolute quantized DCT coefficients over all 8 × 8 blocks, obtained by taking
+the absolute value of each raw quantized DCT coefficient C̃p,k and clipping it to
+[0, 20], and let Q ∈ {1, . . . , 255}64 denote the quantization table. We index blocks
+by p and frequencies by k ∈ {1, . . . , 64}, and denote the quantization entry at
+frequency k as Qk . Since both Ĉ and Q take discrete integer values, we use a
+learnable frequency-index-aware joint embedding that maps each pair (Ĉp,k , Qk )
+to a vector in Rddct , with a small embedding size ddct . Concretely, we embed
+the local quantized coefficient value into vp,k ∈ Rddct and we embed the corre-
+sponding quantization entry Qk and transform it into per-frequency modulation
+parameters γk , βk ∈ Rddct , which modulate vp,k in a FiLM-like manner [21]. We
+additionally inject two complementary signals: (i) a learned frequency-index em-
+bedding fk ∈ Rddct that identifies which DCT position k the token comes from,
+and (ii) a global table bias t ∈ Rddct computed from the full quantization table
+Q, using an MLP, to capture quantization patterns beyond the single entry Qk .
+The resulting per-frequency joint embedding is:
+
+                                                   e_{p,k} = (1+\gamma _k)\odot v_{p,k} + \beta _k + f_k + t,                                                                   (3)
+
+where ⊙ denotes element-wise multiplication. Stacking these embeddings for all
+frequencies yields a per-block tensor of shape 64 × ddct . We then obtain a single
+block-level representation by a simple reshape that concatenates the 64 frequency
+embeddings along the channel dimension, producing a vector in R64 ddct per
+block. This produces an embedded tensor  E \in \mathbb {R}^{\frac {H}{8}\times \frac {W}{8}\times C_{\text {dct}}} where  C_{\text {dct}} = 64\,d_{\text {dct}}. 
+We then process E with a stack of standard ConvNeXt-V2 blocks [34], producing
+a compact frequency feature map  F_{\text {dct}} \in \mathbb {R}^{C_{\text {dct}} \times \frac {H}{8} \times \frac {W}{8}}  .
+
+Early fusion. We inject the DCT features into the RGB stream after the first
+stage by concatenation followed by a lightweight projection back to the RGB
+channel dimension. The remaining stages operate on the fused representation.
+                                                                                                                                                                           Efficient Document Tampering Localization                                                                                                                                                7
+
+3.3   Multi-level discrepancy transformation
+
+As discussed in the introduction, synthetic document tampering datasets used
+for pretraining can encourage models to treat domain-specific cues and pipeline-
+specific artifacts as evidence of tampering, rather than focusing on the incon-
+sistencies introduced by the manipulation. To reduce reliance on such cues and
+instead emphasize inconsistency evidence, we introduce a lightweight multi-level
+discrepancy transformation applied at the output of every backbone stage before
+multi-level fusion and prediction. It converts stage features into magnitude-only
+responses of learned zero-sum filters, yielding a sign-invariant discrepancy rep-
+resentation across the feature pyramid.
+
+Channel-wise zero-sum discrepancy filters. Let F ∈ RC×Hi ×Wi be a feature map
+at stage i. For each channel c independently, we produce M responses using
+K × K depthwise filters:
+
+        u_{c,m}(p) = \sum _{\Delta \in \{-\frac {K-1}{2},\ldots ,\frac {K-1}{2}\}^2} k_{c,m}(\Delta )\, F_c(p+\Delta ), \qquad m=1,\ldots ,M.                                                                                                                                                                                                                      (4)
+
+                                P
+We use zero-sum filters, i.e., ∆ kc,m (∆) = 0, which suppresses channel-wise
+bias components and emphasizes discrepancy responses rather than absolute
+feature intensity. We then take the absolute response, vc,m (p) = |uc,m (p)|, so
+the representation captures the strength of the mismatch independently of its
+sign. We can split the kernel into positive and negative parts k = k + − k − with
+k + (∆) = max(k(∆), 0) and k − (∆) = max(−k(∆), 0). Let I := {− K−1          K−1 2
+                                                                    2 ,..., 2 }
+denote the set of spatial offsets. Then we have:
+
+              \begin {aligned} v_{c,m}(p) &=\Bigl |\sum _{\Delta \in \mathcal {I}} k^+_{c,m}(\Delta )\,F_c(p+\Delta ) -\sum _{\Delta \in \mathcal {I}} k^-_{c,m}(\Delta )\,F_c(p+\Delta )\Bigr |,\\[-0.4em] &\hspace {1.8em}\text {with }\sum _{\Delta \in \mathcal {I}} k^+_{c,m}(\Delta ) =\sum _{\Delta \in \mathcal {I}} k^-_{c,m}(\Delta ). \end {aligned} 
+                                                                                                                                                                                                                                                                                                                                                                   (5)
+
+
+
+Since both terms have the same total weight, they form two competing weighted
+sums, and vc,m (p) captures their difference in magnitude, producing a discrepancy-
+strength signal.
+
+Free and center-anchored zero-sum filters. We let the model learn two comple-
+mentary types of zero-sum filters:
+                                                           P
+ – Free zero-sum filters keep flexibility while enforcing ∆ kc,m (∆) = 0.
+ – Center-anchored zero-sum filters further constrain the filter to behave
+    as a neighborhood-based center predictor: neighbor weights are non-negative
+    and the center weight is the negative sum of neighbors, so the output mea-
+    sures a center-to-context discrepancy.
+
+These two families are complementary: the center-anchored family injects a
+structured inductive bias, while the free family preserves expressivity.
+8       M. Dhouib et al.
+
+Unified parameterization. We propose a single formulation that covers both fam-
+ilies by tying the neighbor weights to the center weight, which will allow us to de-
+                                                                           K−1 2
+fine an efficient implementation at training time. Let N = − K−1
+                                                             
+                                                                  2 ,..., 2        \
+{(0, 0)} denote the set of K × K offsets excluding the center. For each (c, m) we
+learn unconstrained parameters θc,m,∆ and define:
+
+
+            a_{c,m,\Delta } = \begin {cases} \theta _{c,m,\Delta } & \text {(free family)},\\ \lvert \theta _{c,m,\Delta }\rvert & \text {(center-anchored family)}, \end {cases} \qquad \Delta \in \mathcal {N}.    (6)
+
+The convolution kernel can be formulated as follows:
+
+                                          k_{c,m}(\Delta ) = \begin {cases} a_{c,m,\Delta } & \Delta \in \mathcal {N},\\ -\sum _{\delta \in \mathcal {N}} a_{c,m,\delta } & \Delta =(0,0). \end {cases}              (7)
+
+which automatically enforces the zero-sum constraint and correctly defines both
+filter families. A direct implementation would explicitly synthesize the full K ×K
+depthwise kernels inside the forward pass, introducing additional tensor con-
+struction overhead before the convolution. Our proposed parametrization allows
+us to define an efficient custom CUDA kernel, which we explain in Appendix A.
+At inference time, once parameters are fixed, we materialize the resulting depth-
+wise kernels once and use a standard depthwise convolution.
+
+Projection. The M magnitude responses per channel are then mapped back
+to the backbone channel dimension with a lightweight channel-wise projection,
+yielding the transformed feature map F̃ = ϕ(F ).
+
+Multi-stage application. We apply the same transformation at the output of
+every backbone stage before multi-level fusion and prediction. For each stage s,
+we first project Fs to a relatively small intermediate width and then apply ϕ in
+this space, producing the transformed feature map:
+                                                        \tilde {F}_s = \phi \!\left (r(F_s)\right ), \qquad s \in \{1,2,3,4\},                                                                                       (8)
+
+where r(·) is a lightweight projection to a reduced channel dimension. The de-
+coder and fusion modules then operate on {F̃1 , F̃2 , F̃3 , F̃4 }.
+
+Feature activations before and after zero-sum filtering. To confirm the effect of
+our discrepancy transformation, we visualize feature activations immediately be-
+fore and after the proposed zero-sum filter bank. Concretely, at a fixed backbone
+stage we take the feature tensor F4 and its counterpart just after the zero-sum
+filters, compute an activation intensity map, and upsample it to the input size.
+Fig. 2 shows that pre zero-sum activations tend to follow more the document
+content, whereas after applying the zero-sum filters, the activation concentrates
+around local inconsistencies, producing sharper evidence near the edited region
+while suppressing content-driven responses. This qualitative behavior matches
+the role of the transformation: expose tampering boundaries as discrepancy cues
+that are later integrated by the multi-level fusion decoder.
+                                  Efficient Document Tampering Localization             9
+
+  Input      GT      Pre-filters Post-filters   Input    GT      Pre-filters Post-filters
+
+
+
+
+  Fig. 2: Activation intensity maps before and after the proposed zero-sum filters.
+
+
+
+Relation to constrained convolution residual modalities. Several works in im-
+age forensics use high-pass convolutions to extract a residual signal as an addi-
+tional input modality. Common examples include fixed residual features such as
+SRM [10] and constrained convolution layers that enforce a residual form, as in
+Bayar convolutions [2, 3]. These residuals are typically computed from the input
+image and then fused with RGB features or processed in a separate branch. Our
+approach is fundamentally different. First, our multi-level discrepancy transfor-
+mation is not an extra modality. It is applied to the backbone feature maps at
+multiple pyramid stages, before multi-level fusion and prediction, so it directly
+shapes the representation used for localization rather than adding a parallel in-
+put stream. Second, we take the absolute response and treat it as a discrepancy-
+strength signal, while residual branches typically keep signed residuals. Third,
+we do not fix the center weight as in Bayar convolutions, where the center is set
+to −1 and neighbor weights are normalized to sum to 1 [3]. We only enforce the
+zero-sum property and use two filter families, center-anchored mixtures and free
+zero-sum mixtures. In Sec. 4.4 we test these alternatives and show that remov-
+ing our pathway and adding a residual modality, or replacing our pathway with
+SRM kernels or Bayar-style constrained variants, reduces performance.
+
+
+
+3.4   Deep multi-scale fusion and mask prediction
+
+
+We fuse the transformed pyramid features in an FPN-style top-down pathway,
+progressively propagating information from fine to coarse stages. We then refine
+the fused representation with six ConvNeXt-V2 blocks. Finally, a lightweight
+segmentation head outputs the tampering mask at the input resolution. Since
+the transformed features operate at a relatively small width after r(·), these
+fusion and prediction modules add only minor overhead.
+10           M. Dhouib et al.
+
+Table 1: Results for models trained and evaluated following the Doc Protocol. Avg.
+C denotes the average F1 score across all cross-domain test sets.
+
+ Method                           Venue                          T-SROIE OSTF TPIC-13 RTM Avg. C
+ TruFor                           CVPR’23                              0.213                   0.046                   0.104                   0.034              0.099
+ MVSS-Net                         ICCV’21                              0.187                   0.037                   0.113                   0.027              0.091
+ Mesorch                          AAAI’25                              0.294                   0.139                   0.241                   0.041              0.179
+ IML-ViT                          arXiv                                0.427                    0.21                   0.256                   0.076              0.242
+ PSCC-Net                         TCSVT’22                             0.517                   0.441                    0.55                   0.126              0.408
+ CAT-Net                          IJCV’22                              0.609                   0.178                   0.343                   0.063              0.298
+ TIFDM                            TCE’24                               0.058                   0.006                   0.013                   0.018              0.024
+ CAFTB-Net                        TOMM’25                              0.262                   0.119                   0.301                   0.033              0.179
+ DTD                              CVPR’23                              0.525                   0.124                   0.284                   0.058              0.247
+ FFDN                             ECCV’24                              0.533                   0.241                   0.357                   0.071              0.301
+ ADCD-Net                         ICCV’25                              0.623                   0.441                   0.579                   0.159              0.450
+ DiffNet (Ours)                   —                                    0.745                   0.495                   0.647                   0.173              0.515
+
+
+
+4       Experiments
+4.1       Implementation details
+We set the DCT embedding dimension to ddct = 4, the DCT backbone depth to
+6, the discrepancy kernel size to K = 7, and the number of discrepancy responses
+per channel to M = 2, split equally across the two filter families, i.e., one free
+zero-sum filter and one center-anchored zero-sum filter per channel. We set the
+projection dimension before ϕ to 256 channels at all stages, and the decoder
+refinement depth to 6.
+
+4.2       Evaluation Protocols
+To thoroughly evaluate our architecture and demonstrate its superiority, we
+follow two training and evaluation protocols and compare against prior models
+under the same protocol.
+
+
+Table 2: Results for models trained and evaluated under the Syn2Real-TDoc-2.8M
+protocol. P, R, and F1 denote precision, recall, and F1 score, respectively. Avg. F1
+reports the average F1 across RTM, FindItAgain, and FindIt, separately for image-
+level (Im) and pixel-level (Pix) predictions.
+
+                                            RTM                                        FindItAgain                                       FindIt                         Avg. F1
+Model         Venue
+                                  Im                     Pix                    Im                     Pix                     Im                      Pix             Im      Pix
+                          P       R       F1      P       R       F1      P     R       F1      P       R       F1      P       R       F1      P       R       F1
+PSCC-Net      TCSVT’22   0.393   0.402   0.397   0.105   0.108   0.106   0.567 0.600   0.583   0.106   0.128   0.116   0.629   0.550   0.587   0.120   0.121   0.120   0.522   0.114
+CAT-Net       IJCV’22    0.400   0.350   0.374   0.092   0.110   0.100   0.480 0.342   0.400   0.110   0.056   0.074   0.515   0.425   0.466   0.130   0.105   0.117   0.413   0.097
+DTD           CVPR’23    0.366   0.733   0.489   0.149   0.114   0.129   0.500 0.400   0.444   0.125   0.124   0.125   0.623   0.662   0.642   0.140   0.144   0.142   0.525   0.132
+ASC-Former    PR’25      0.443   0.323   0.374   0.234   0.161   0.191   0.386 0.629   0.478   0.153   0.123   0.136   0.696   0.688   0.692   0.301   0.139   0.190   0.515   0.172
+FFDN          ECCV’24    0.464   0.510   0.486   0.282   0.206   0.238   0.689 0.571   0.625   0.316   0.214   0.255   0.823   0.700   0.757   0.363   0.283   0.318   0.623   0.270
+ADCD-Net      ICCV’25    0.470   0.517   0.492   0.249   0.157   0.193   0.523 0.657   0.582   0.136   0.149   0.142   0.828   0.662   0.736   0.191   0.179   0.185   0.604   0.174
+DiffNet (Ours) —         0.506 0.552 0.528 0.321 0.212 0.255 0.625 0.628 0.626 0.409 0.246 0.307 0.833 0.707 0.765 0.448 0.287 0.350 0.640 0.304
+                                      Efficient Document Tampering Localization       11
+
+Table 3: Efficiency and localization performance for state-of-the-art models. Inference
+and training throughput are reported in it/s, at a resolution of 768 × 768. Inference
+throughput is reported with batch size 1. Doc Avg F1 is the average localization F1
+on the cross-domain Doc Protocol test sets. TDoc Avg F1 is the average localization
+F1 on Syn2Real-TDoc, and Avg all is their mean. Note that ADCD-Net has 23.7M
+trainable parameters and 22M frozen parameters.
+
+Params (M) Model                 Inf. (it/s) Train (it/s) Doc Avg F1 TDoc Avg F1 Avg all
+          3.7   PSCC-Net              15.4        10.0    0.408        0.114      0.261
+        114.0   CAT-Net               29.9        13.8    0.298        0.097      0.198
+         67.3   DTD                   29.4        25.3    0.247        0.132      0.190
+         79.6   ASC-Former            29.6        27.9      —          0.172        —
+         45.7   ADCD-Net               5.7         4.4    0.450        0.174      0.312
+        140.0   FFDN                  33.1        20.8    0.301        0.270      0.286
+        113.0   DiffNet (Ours)        40.1        41.9    0.515        0.304      0.410
+
+
+
+
+Doc Protocol. We follow Doc Protocol’s cross-domain evaluation introduced in
+ForensicHub [9]. Under this protocol, models are trained on DocTamper [24] and
+evaluated on T-SROIE [32], OSTF [26], Tampered-IC13 [31], and RTM [18].
+
+Syn2Real-TDoc. We follow the Syn2Real-TDoc protocol proposed in [7]. Under
+this protocol, models are trained on TDoc-2.8M and evaluated on RTM [18],
+FindIt [1], and FindItAgain [30].
+
+  Both pretraining datasets are synthetic, while all test datasets in the Syn2Real-
+TDoc protocol are human-made. In particular, RTM and FindItAgain are both
+high-quality and extremely challenging. On the other hand, the Doc protocol
+focuses on cross-domain generalization, with only RTM being human-made. We
+provide more details about the pretraining and testing datasets in Appendix B.
+For both protocols, we follow their respective training and evaluation procedures.
+We note that the reported metrics are not computed in the same way: Syn2Real
+first aggregates precision and recall globally and then derives F1, whereas Doc
+Protocol averages F1 across images and excludes samples with no positive pixels.
+Additional details are provided in Appendix C.
+
+4.3   Main Results
+Results on the Doc Protocol. Table 1 reports cross-domain performance under
+the ForensicHub Doc Protocol, comparing DiffNet against TruFor [11], MVSS-
+Net [5], Mesorch [36], IML-ViT [19], PSCC-Net [17], CAT-Net [13], TIFDM [8],
+CAFTB-Net [28], DTD [24], FFDN [6], and ADCD-Net [33]. Our method achieves
+the best results on all test sets and improves the cross-domain average F1 from
+0.45 to 0.515.
+
+Results on Syn2Real-TDoc. Table 2 reports performance under the Syn2Real-
+TDoc protocol. Our method achieves the best overall performance, reaching
+12         M. Dhouib et al.
+
+0.640 average image-level F1 and 0.304 average pixel-level F1. Compared with
+the strongest prior baseline, this corresponds to gains of +0.017 and +0.034 re-
+spectively. The improvements are consistent across datasets and are particularly
+pronounced for pixel-level localization. On RTM we improve pixel-level F1 from
+0.238 to 0.255, on FindItAgain from 0.255 to 0.307. Both of these datasets are
+human-made and extremely challenging. They contain carefully crafted manip-
+ulations, often with advanced concealment techniques designed to hide forensic
+traces. They also include a much higher proportion of pristine images than ma-
+nipulated ones, which makes achieving high metrics difficult. Nevertheless, our
+method consistently improves over the previous best on both datasets.
+
+Efficiency and robustness Table 3 summarizes throughput and the average lo-
+calization accuracy across both protocols. Our model largely surpasses previous
+work on both protocols, while being substantially faster than previous work. It
+achieves 40.1 it/s at inference and 41.9 it/s during training, outperforming the
+fastest prior high-performing baseline FFDN and providing up to a 7× inference
+speedup over ADCD-Net.
+
+
+4.4     Ablation Studies
+
+We perform ablation studies to quantify the contribution of each component in
+our design. All reported results are averaged over three runs.
+Table 4 shows ablation results of our core design choices under both protocols.
+Removing the zero-sum constraint (A0) lowers performance, which validates the
+effectiveness of the discrepancy transformation. Swapping our DCT backbone
+for the Frequency Perception Head at matched compute (A1) leads to a similar
+drop, showing that our compact DCT–quantization joint embedding provides
+a better representation. Finally, removing the fused-representation refinement
+(A2) causes a smaller but consistent decrease.
+Table 5 covers several design choices of our approach. For the DCT embedding,
+removing the global table bias t (A3) or the frequency-index embedding f (A4)
+reduces performance, while removing the FiLM modulation terms γ (A5) or β
+(A6) causes a larger performance drop. This confirms the importance of each
+term of our joint embedding formula. Replacing the embedding with a linear
+
+
+Table 4: Core ablations. Doc Pix F1 and TDoc Pix F1 denote the average pixel-level F1
+under the cross-domain evaluation of Doc Protocol and Syn2Real-TDoc, respectively.
+Avg. Pix F1 is the equal-weight mean of the two protocol averages. All values reported
+are averaged across three different runs.
+
+ID Ablation                                                                      Doc Pix F1 TDoc Pix F1 Avg. Pix F1
+B baseline (ours)                                                              0.515 (±0.005) 0.303 (±0.003)     0.409
+A0 w/o zero-sum constraint                                                       0.496 (±0.007) 0.291 (±0.004)   0.393
+A1 replace our DCT backbone with FPH (comparable params/FLOPs)                   0.493 (±0.019) 0.290 (±0.006)   0.391
+A2 w/o fused representation refinement (compute added to the last stage instead) 0.508 (±0.007) 0.294 (±0.006)   0.401
+                                  Efficient Document Tampering Localization            13
+
+Table 5: Additional ablation results. All values reported are averaged across three
+different runs.
+
+  ID        Ablation                                                   Doc Pix F1
+  B         baseline (ours)                                           0.515 (±0.005)
+  DCT embedding design
+  A3     w/o table bias t                                             0.513 (±0.003)
+  A4     w/o frequency-index embedding f                              0.512 (±0.013)
+  A5     w/o γ                                                        0.509 (±0.014)
+  A6     w/o β                                                        0.504 (±0.017)
+  A7     linear instead of embedding                                  0.494 (±0.007)
+  DCT embedding dimension
+  A8     ddct = 1                                                     0.507 (±0.008)
+  A9     ddct = 2                                                     0.511 (±0.007)
+  A10    ddct = 8                                                     0.515 (±0.011)
+  Discrepancy filters
+  A11      zero-sum kernel size K : 7 → 9                             0.514 (±0.009)
+  A12      zero-sum kernel size K : 7 → 5                             0.512 (±0.006)
+  A13      zero-sum kernel size K : 7 → 3                             0.512 (±0.006)
+  A14      fixed SRM filters instead of learned discrepancy filters   0.511 (±0.005)
+  A15      no absolute value after zero-sum filters                   0.510 (±0.008)
+  A16      tanh instead of absolute value after zero-sum filters      0.512 (±0.003)
+  A17      one filter family only (best single-family choice)         0.513 (±0.004)
+  A18      use bayar-conv                                             0.506 (±0.011)
+  A19      discrepancy filters as a modality                          0.499 (±0.011)
+  A20      w/o zero-sum constraint + more regularization              0.497 (±0.006)
+
+
+
+
+mapping (A7) produces a large decrease, which confirms that learning an em-
+bedding is more efficient. Varying the embedding dimension (A8-9-10) shows
+that the used value of four provides the best efficiency.
+
+The discrepancy-filter ablation results in Table 5 confirm the contribution of dif-
+ferent used values and design choices. Varying the kernel size (A11-12-13) shows
+that the used kernel size of seven provides the best performance and efficiency.
+Using fixed SRM kernels (A14) or Bayar convolution layers (A18) reduces per-
+formance compared to our proposed learned discrepancy filters. Removing the
+absolute-value operator (A15) or replacing it with tanh (A16) does also degrade
+performance, showing that taking the absolute values of the response of these
+zero-sum filters is beneficial. Using only one filter family (A17) also reduces accu-
+racy, confirming that the free and center-anchored filters complement each other.
+Finally, treating discrepancy filters as an additional modality (A19) rather than
+transforming the feature pyramid or removing the zero-sum filters and replacing
+them with more regularization (A20) reduces performance.
+14           M. Dhouib et al.
+
+     Input        GT        Ours    FFDN       Input      GT         Ours     FFDN
+
+
+
+
+Fig. 3: Comparison on two examples of our model and the previous state-of-the-art
+method, FFDN, with both models pretrained on TDoc-2.8M.
+
+
+
+4.5     Qualitative analysis
+
+Qualitative comparison Fig. 3 shows two representative examples comparing
+our model against FFDN. In these examples, our predictions tend to better
+concentrate on the edited area and recover a more coherent manipulated region,
+while suppressing scattered responses on unrelated content, which is consistent
+with the role of our multi-level discrepancy transformation.
+
+Hard cases. Fig. 4 illustrates hard samples where our model only partially lo-
+calizes the forgery, yielding very low recall. These cases are challenging because
+the edits occur in areas with blank background, and are locally post-processed
+to conceal traces of tampering, leaving very few cues about the forgery location.
+
+Discussion. Our method achieves a consistent boost in performance compared
+to prior work. However, the localization performance on human-made tampering
+remains low. This is due to several factors. First, these datasets contain many
+challenging cases where very few tampering cues remain: edits are often per-
+formed in homogeneous background regions and combined with advanced con-
+cealment techniques, making high recall difficult. In contrast, synthetic datasets
+typically lack concealment strategies that adapt their type and strength to each
+individual case. While some works attempt to conceal tampering with fixed
+
+
+      Input            GT          Ours          Input          GT           Ours
+
+
+
+
+Fig. 4: Illustration of hard cases where our model struggles to recover the full manip-
+ulated region.
+                                 Efficient Document Tampering Localization          15
+
+rules [8], this can introduce shortcuts [7] during training. Improving the realism
+and diversity of concealment in synthetic data is therefore a promising direction
+for future work. Second, these benchmarks include a large proportion of regions
+with no positive pixels, reflecting real-world deployment conditions and making
+it difficult to achieve high precision. Pixel F1 is also sensitive to label ambigu-
+ity and annotation shift: label mismatches between benchmarks and synthetic
+pretraining can penalize otherwise plausible predictions.
+
+
+5   Conclusion
+We present an efficient RGB–DCT early-fusion architecture for human-made
+document tampering detection and localization. Our approach is built around
+two complementary ideas: (i) a multi-level discrepancy transformation applied
+at every backbone stage to convert features into a sign-invariant discrepancy
+representation, and (ii) a lightweight frequency-index-aware joint embedding for
+quantized DCT coefficients and quantization tables, enabling an efficient DCT
+branch for early fusion. Across both the Doc Protocol and the Syn2Real-TDoc
+protocol, the proposed design consistently improves performance, while also im-
+proving training and inference throughput.
+
+
+References
+ 1. Artaud, C., Doucet, A., Ogier, J.M., d’Andecy, V.P.: Receipt dataset for fraud
+    detection. In: First International Workshop on Computational Document Forensics
+    (2017)
+ 2. Bayar, B., Stamm, M.C.: A deep learning approach to universal image manipula-
+    tion detection using a new convolutional layer. In: Proceedings of the 4th ACM
+    workshop on information hiding and multimedia security. pp. 5–10 (2016)
+ 3. Bayar, B., Stamm, M.C.: Constrained convolutional neural networks: A new ap-
+    proach towards general purpose image manipulation detection. IEEE Transactions
+    on Information Forensics and Security 13(11), 2691–2706 (2018)
+ 4. Bibi, M., Hamid, A., Moetesum, M., Siddiqi, I.: Document forgery detection using
+    printer source identification—a text-independent approach. In: 2019 International
+    Conference on Document Analysis and Recognition Workshops (ICDARW). vol. 8,
+    pp. 7–12. IEEE (2019)
+ 5. Chen, X., Dong, C., Ji, J., Cao, J., Li, X.: Image manipulation detection by multi-
+    view multi-scale supervision. In: Proceedings of the IEEE/CVF international con-
+    ference on computer vision. pp. 14185–14193 (2021)
+ 6. Chen, Z., Chen, S., Yao, T., Sun, K., Ding, S., Lin, X., Cao, L., Ji, R.: Enhancing
+    tampered text detection through frequency feature fusion and decomposition. In:
+    European Conference on Computer Vision. pp. 200–217. Springer (2024)
+ 7. Dhouib, M., Buscaldi, D., Vanier, S., Shabou, A.: Leveraging contrastive learning
+    for a similarity-guided tampered document data generation pipeline (2026), https:
+    //arxiv.org/abs/2602.17322
+ 8. Dong, L., Liang, W., Wang, R.: Robust text image tampering localization via
+    forgery traces enhancement and multiscale attention. IEEE Transactions on Con-
+    sumer Electronics (2024)
+16      M. Dhouib et al.
+
+ 9. Du, B., Zhu, X., Ma, X., Qu, C., Feng, K., Yang, Z., Pun, C.M., liu, J., Zhou, J.Z.:
+    Forensichub: A unified benchmark & codebase for all-domain fake image detection
+    and localization. In: The Thirty-ninth Annual Conference on Neural Information
+    Processing Systems Datasets and Benchmarks Track (2025), https://openreview.
+    net/forum?id=IKK0mEUTfE
+10. Fridrich, J., Kodovsky, J.: Rich models for steganalysis of digital images. IEEE
+    Transactions on information Forensics and Security 7(3), 868–882 (2012)
+11. Guillaro, F., Cozzolino, D., Sud, A., Dufour, N., Verdoliva, L.: Trufor: Leveraging
+    all-round clues for trustworthy image forgery detection and localization. In: Pro-
+    ceedings of the IEEE/CVF conference on computer vision and pattern recognition.
+    pp. 20606–20615 (2023)
+12. Huang, F., Huang, J., Shi, Y.Q.: Detecting double jpeg compression with the same
+    quantization matrix. IEEE Transactions on Information Forensics and Security
+    5(4), 848–856 (2010)
+13. Kwon, M.J., Nam, S.H., Yu, I.J., Lee, H.K., Kim, C.: Learning jpeg compression
+    artifacts for image manipulation detection and localization. International Journal
+    of Computer Vision 130(8), 1875–1895 (May 2022). https://doi.org/10.1007/
+    s11263-022-01617-5, http://dx.doi.org/10.1007/s11263-022-01617-5
+14. Lampert, C.H., Mei, L., Breuel, T.M.: Printing technique classification for docu-
+    ment counterfeit detection. In: 2006 International Conference on Computational
+    Intelligence and Security. vol. 1, pp. 639–644. IEEE (2006)
+15. Lewis, D., Agam, G., Argamon, S., Frieder, O., Grossman, D., Heard, J.: Building a
+    test collection for complex document information processing. In: Proceedings of the
+    29th annual international ACM SIGIR conference on Research and development
+    in information retrieval. pp. 665–666 (2006)
+16. Li, L., Zhang, K., Lu, J., Zhang, S., Chu, N.: Multiclassification tampering detec-
+    tion algorithm based on spatial-frequency fusion and swin-t. IET Image Processing
+    19(1), e70007 (2025)
+17. Liu, X., Liu, Y., Chen, J., Liu, X.: Pscc-net: Progressive spatio-channel correlation
+    network for image manipulation detection and localization. IEEE Transactions on
+    Circuits and Systems for Video Technology 32(11), 7505–7517 (2022)
+18. Luo, D., Liu, Y., Yang, R., Liu, X., Zeng, J., Zhou, Y., Bai, X.: Toward real text
+    manipulation detection: New dataset and new solution. Pattern Recognition 157,
+    110828 (2025)
+19. Ma, X., Du, B., Jiang, Z., Hammadi, A.Y.A., Zhou, J.: Iml-vit: Bench-
+    marking image manipulation localization by vision transformer. arXiv preprint
+    arXiv:2307.14863 (2023)
+20. Nguyen, A.D., Kim, H.Y., Nguyen, H.N.: Taliu: A novel decoder and augmentation
+    strategy for boosting tampered document image detection. IEEE Access (2025)
+21. Perez, E., Strub, F., De Vries, H., Dumoulin, V., Courville, A.: Film: Visual rea-
+    soning with a general conditioning layer. In: Proceedings of the AAAI conference
+    on artificial intelligence. vol. 32 (2018)
+22. Pevny, T., Fridrich, J.: Detection of double-compression in jpeg images for appli-
+    cations in steganography. IEEE Transactions on information forensics and security
+    3(2), 247–258 (2008)
+23. Popescu, A.C., Farid, H.: Statistical tools for digital forensics. In: International
+    workshop on information hiding. pp. 128–147. Springer (2004)
+24. Qu, C., Liu, C., Liu, Y., Chen, X., Peng, D., Guo, F., Jin, L.: Towards robust
+    tampered text detection in document image: New dataset and new solution. In:
+    Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recog-
+    nition. pp. 5937–5946 (2023)
+                                 Efficient Document Tampering Localization           17
+
+25. Qu, C., Zhong, Y., Guo, F., Jin, L.: Omni-iml: towards unified image manipulation
+    localization. arXiv preprint arXiv:2411.14823 (2024)
+26. Qu, C., Zhong, Y., Guo, F., Jin, L.: Revisiting tampered scene text detection in
+    the era of generative ai. In: Proceedings of the AAAI Conference on Artificial
+    Intelligence. vol. 39, pp. 694–702 (2025)
+27. Shang, S., Kong, X., You, X.: Document forgery detection using distortion muta-
+    tion of geometric parameters in characters. Journal of Electronic Imaging 24(2),
+    023008–023008 (2015)
+28. Song, Y., Jiang, W., Chai, X., Gan, Z., Zhou, M., Chen, L.: Cross-attention based
+    two-branch networks for document image forgery localization in the metaverse.
+    ACM Transactions on Multimedia Computing, Communications and Applications
+    21(2), 1–24 (2025)
+29. Tan, M., Le, Q.: Efficientnet: Rethinking model scaling for convolutional neural
+    networks. In: International conference on machine learning. pp. 6105–6114. PMLR
+    (2019)
+30. Tornés, B.M., Taburet, T., Boros, E., Rouis, K., Doucet, A., Gomez-Krämer, P.,
+    Sidere, N., d’Andecy, V.P.: Receipt dataset for document forgery detection. In:
+    International Conference on Document Analysis and Recognition. pp. 454–469.
+    Springer (2023)
+31. Wang, Y., Xie, H., Xing, M., Wang, J., Zhu, S., Zhang, Y.: Detecting tampered
+    scene text in the wild. In: European Conference on Computer Vision. pp. 215–232.
+    Springer (2022)
+32. Wang, Y., Zhang, B., Xie, H., Zhang, Y.: Tampered text detection via rgb and
+    frequency relationship modeling. Chinese Journal of Network and Information
+    Security 8(3), 29–39 (2022). https://doi.org/10.11959/j.issn.2096- 109x.
+    2022035, http://www.infocomm- journal.com/cjnis/CN/abstract/article_
+    172502.shtml
+33. Wong, K., Zhou, J., Wu, H., Si, Y.W., Zhou, J.: Adcd-net: Robust document image
+    forgery localization via adaptive dct feature and hierarchical content disentangle-
+    ment. In: Proceedings of the IEEE/CVF International Conference on Computer
+    Vision. pp. 19280–19289 (2025)
+34. Woo, S., Debnath, S., Hu, R., Chen, X., Liu, Z., Kweon, I.S., Xie, S.: Convnext v2:
+    Co-designing and scaling convnets with masked autoencoders. In: Proceedings of
+    the IEEE/CVF conference on computer vision and pattern recognition. pp. 16133–
+    16142 (2023)
+35. Wu, L., Zhang, C., Liu, J., Han, J., Liu, J., Ding, E., Bai, X.: Editing text in the
+    wild (2019), https://arxiv.org/abs/1908.03047
+36. Zhu, X., Ma, X., Su, L., Jiang, Z., Du, B., Wang, X., Lei, Z., Feng, W., Pun, C.M.,
+    Zhou, J.Z.: Mesoscopic insights: orchestrating multi-scale & hybrid architecture
+    for image manipulation localization. In: Proceedings of the AAAI conference on
+    artificial intelligence. vol. 39, pp. 11022–11030 (2025)
+18         M. Dhouib et al.
+
+A       Custom CUDA kernel for zero-sum discrepancy filters
+As explained in Sec. 3.3, for each input channel c we apply M depthwise zero-sum
+discrepancy filters over a K\times K neighborhood. During training, we implement
+this transformation with a fused custom CUDA operator that works directly
+on a compact center-tied representation, rather than first materializing dense
+constrained kernels and then applying a standard depthwise convolution. The
+operator has a forward path and a backward path, both implemented directly
+from the same compact representation.
+
+Operator convention and padding. We use the cross-correlation convention. Let
+p=(p_y,p_x)\in \{0,\ldots ,H-1\}\times \{0,\ldots ,W-1\} denote an output position, and
+let \Delta =(\Delta _y,\Delta _x)\in \mathcal N denote a non-central offset in the K\times K neighborhood.
+Boundary accesses are resolved with reflection padding. Writing \rho _H and \rho _W for
+the reflection maps along the two spatial axes, we define the reflected extension
+                                           \widetilde {F}_{b,c}(q_y,q_x) = F_{b,c}\!\bigl (\rho _H(q_y),\rho _W(q_x)\bigr ). 
+
+Hence, every access F_{b,c}(p+\Delta ) in the implementation is understood as
+   \@mathmeasure \z@ \textstyle {F}\ifdim \wd \z@ >\tw@ em\mathaccent "055D{F}\else \mathaccent "0365{F}\fi _{b,c}(p+\Delta )
+   . In the backward-input computation,                                  contributions from reflected halo ac-
+cesses are folded back onto their corresponding interior pixels.
+
+Compact center-tied representation. Let \protect \mathcal  N denote the set of non-central offsets
+in the K\times K neighborhood. For each input channel c and discrepancy filter m,
+we learn only the neighbor coefficients
+                                                                     \{a_{c,m,\Delta }\}_{\Delta \in \mathcal N}, 
+and tie the center coefficient as
+                                                       k_{c,m}(\mathbf 0)=-\sum _{\Delta \in \mathcal N} a_{c,m,\Delta }. 
+
+Defining
+                                                             s_{c,m}:=\sum _{\Delta \in \mathcal N} a_{c,m,\Delta }, 
+
+the response at spatial location p can be written as
+
+                         u_{b,c,m}(p) = \sum _{\Delta \in \mathcal N} a_{c,m,\Delta }\,\widetilde {F}_{b,c}(p+\Delta ) - s_{c,m}\,F_{b,c}(p). 
+
+
+CUDA organization. Each thread block is mapped to one (b,c) pair and one
+spatial tile. The grid dimensions are
+                            \bigl (B\!\times \! C,\;\lceil H/T_H\rceil ,\;\lceil W/T_W\rceil \bigr ), 
+
+where T_H\times T_W is the tile size. Within the block, thread (t_y,t_x) is responsible
+for output location
+                                        p=(p_y,p_x)=(\mathrm {tile}_y+t_y,\;\mathrm {tile}_x+t_x). 
+                                                                    Efficient Document Tampering Localization                     19
+
+The tile dimensions are selected at launch time from a small set of specialized
+kernels according to the spatial resolution and kernel size. Concretely, we use
+16\times 16 tiles when \qopname \relax m{min}(H,W)\ge 64 and K\le 5, 16\times 8 tiles when \qopname \relax m{min}(H,W)\ge 64
+and K=7, and 8\times 8 tiles otherwise. This keeps the shared-memory footprint
+
+                      (T_H+2r)(T_W+2r)\cdot \mathrm {sizeof(float)} + M(K^2-1)\cdot \mathrm {sizeof(float)} 
+
+within budget while maintaining sufficient block count and occupancy on late
+stages.
+    The kernel size K and the number of filters M are compile-time template
+parameters. The loops over \Delta \in \mathcal N and m\in \{1,\ldots ,M\} are fully unrolled with
+#pragma unroll, keeping the M accumulators register-resident. The offsets are
+not stored in memory: for each supported K, the compiler emits the correspond-
+ing static spatial displacements directly in the unrolled code.
+    Before the spatial computation begins, the feature tile together with the
+reflected border of radius r=(K-1)/2 is loaded into shared memory. The
+coefficients \ifmmode \lbrace \else \textbraceleft \fi a_{c,m,\Delta }\} for the active channel c are also cooperatively loaded into
+shared memory and then reused by all threads in the block. Since the coefficients
+depend only on c and not on the batch index b, blocks with different batch indices
+but the same channel also benefit from L2 cache reuse.
+
+Forward path. At the beginning of each forward call, a lightweight preprocessing
+kernel computes the scalar sums
+
+                                                                      s_{c,m}=\sum _{\Delta \in \mathcal N} a_{c,m,\Delta } 
+
+
+
+for all (c,m) and stores them in a contiguous buffer reused by the forward and
+backward kernels. The forward CUDA path then evaluates the operator directly
+from the compact coefficients. For each output location p, the repeated inner loop
+runs only over the offsets \Delta \in \mathcal N and accumulates the neighbor contribution
+                                     \sum _{\Delta \in \mathcal N} a_{c,m,\Delta }\,\widetilde {F}_{b,c}(p+\Delta ). 
+
+
+The center contribution is fused into the same computation through the single
+correction
+                                   -\,s_{c,m}F_{b,c}(p), 
+applied once per output.
+   This organization is preferable to evaluating
+                         \sum _{\Delta \in \mathcal N} a_{c,m,\Delta }\bigl (\widetilde {F}_{b,c}(p+\Delta )-F_{b,c}(p)\bigr ) 
+
+
+
+literally, since that would introduce one subtraction involving F_{b,c}(p) for every
+offset \Delta . In the implemented form, the repeated inner loop remains a pure neigh-
+bor multiply-accumulate, while the shared center contribution is handled once
+per output.
+20       M. Dhouib et al.
+
+Backward path. In backpropagation, gradients are computed directly from the
+same compact representation, without reconstructing the dense constrained ker-
+nels. Let
+                             g_{b,c,m}(p)=\frac {\partial \mathcal L}{\partial u_{b,c,m}(p)} 
+
+be the upstream gradient. The gradient with respect to each learned neighbor
+coefficient is
+                  \frac {\partial \mathcal L}{\partial a_{c,m,\Delta }} = \sum _{b}\sum _{p} g_{b,c,m}(p)\bigl (\widetilde {F}_{b,c}(p+\Delta )-F_{b,c}(p)\bigr ), \qquad \Delta \in \mathcal N, 
+
+
+which we rewrite as
+                \frac {\partial \mathcal L}{\partial a_{c,m,\Delta }} = \underbrace {\sum _{b}\sum _{p} g_{b,c,m}(p)\widetilde {F}_{b,c}(p+\Delta )}_{C_{c,m,\Delta }} - \underbrace {\sum _{b}\sum _{p} g_{b,c,m}(p)F_{b,c}(p)}_{B_{c,m}}. 
+
+
+
+
+Since B_{c,m} does not depend on \Delta , it is computed once for each (c,m) and reused
+for all offsets.
+    The spatial sums B_{c,m} and C_{c,m,\Delta } are computed with a two-phase reduction.
+In the first phase, each thread block processes one spatial tile and accumulates
+tile-local partial sums using warp-level and block-level reductions; these tile-
+partial sums are written to a compact scratch buffer. In the second phase, a
+lightweight reduction kernel sums the tile-partials into the final gradients. This
+avoids atomic additions on the critical path and yields deterministic results for
+a fixed launch configuration and reduction order, up to the usual floating-point
+associativity effects.
+    The gradient with respect to the input feature map is the exact adjoint of
+the reflected forward access. Since reflection padding maps several halo positions
+onto the same interior pixel, all contributions that reflect onto a pixel q must be
+folded back onto it:
+
+             \frac {\partial \mathcal L}{\partial F_{b,c}(q)} = \sum _{m} \left ( \sum _{\Delta \in \mathcal N} a_{c,m,\Delta } \!\!\sum _{\substack {p\,:\,\rho (p+\Delta )=q}}\!\! g_{b,c,m}(p) \;-\; s_{c,m}\,g_{b,c,m}(q) \right ), 
+
+
+where the inner sum ranges over all output positions p whose reflected access
+\rho (p+\Delta ) lands on q. In the interior, where \rho (p+\Delta )=p+\Delta , this is a standard
+transposed correlation; the fold only modifies the outermost radius-r ring. We
+realize it without atomics by first accumulating the transposed correlation into
+a gradient buffer extended by the radius-r halo and then folding each halo entry
+onto its reflected interior source.
+
+Why the center-tied form is efficient. The main benefit of the center-tied form is
+not merely that the center coefficient is not learned independently. Rather, tying
+converts the zero-sum constraint into a small set of shared scalar quantities that
+can be reused throughout forward and backward. In the forward computation,
+                                                   Efficient Document Tampering Localization                                        21
+
+the center contribution is represented by the single term -s_{c,m}F_{b,c}(p). In the
+backward-input computation, it becomes -s_{c,m}g_{b,c,m}(q). In the backward-weight
+computation, it becomes the shared term B_{c,m} , reused across all offsets. Hence,
+tying turns zero-sum enforcement into a cheap scalar correction rather than a
+dense kernel transformation.
+
+Why this is better than materializing dense kernels. A naive training-time imple-
+mentation would first construct a dense K\times K kernel for every (c,m), enforce
+the zero-sum constraint on that dense tensor, and only then apply depthwise
+correlation. This adds overhead that is not part of the actual spatial filtering:
+one must materialize the dense kernel tensor, reduce over its entries to enforce
+the constraint, modify those entries, and then read the constrained kernel again
+during convolution. The same issue appears in backpropagation if gradients are
+propagated through the dense constrained kernel. By contrast, our implementa-
+tion stores only the compact neighbor coefficients, computes the scalar s_{c,m} once,
+and evaluates the constrained operator directly. Gradients are likewise computed
+directly from the compact coefficients and shared center terms, without recon-
+structing or differentiating through a dense constrained kernel.
+
+Why this is preferable to mean subtraction. An alternative way to impose the
+zero-sum constraint is to start from an unconstrained dense kernel \protect \tilde  {k}_{c,m} and
+subtract its mean:
+
+                            k_{c,m}(\delta )=\tilde {k}_{c,m}(\delta )-\frac {1}{K^2}\sum _{\delta '}\tilde {k}_{c,m}(\delta '). 
+
+
+Although valid, this requires storing all K^2 coefficients, reducing over all of them,
+and modifying all of them before convolution. In other words, the constraint is
+enforced by rewriting the whole kernel. In the center-tied form, only the K^2-1
+neighbor coefficients are stored, and the full correction is represented by the
+scalar s_{c,m} . Thus, tying is more efficient precisely because it replaces a dense
+kernel transformation by one shared scalar correction.
+
+Fusing the full discrepancy block. In the actual CUDA implementation, we fuse
+the full discrepancy block into a single operator: zero-sum filtering, absolute-
+value nonlinearity, and the subsequent per-channel projection back to the work-
+ing width. For each input channel c, the kernel computes the M zero-sum re-
+sponses, keeps them in registers, applies the absolute value in place, and imme-
+diately combines them through the learned projection weights. Therefore, the
+expanded representation of size B\times C\times M\times H\times W is never materialized as
+an intermediate activation tensor. This is advantageous because, for small M ,
+the cost of the absolute value and the projection is negligible compared with the
+cost of storing and reloading the expanded responses from global memory. By
+fusing all three steps, the operator loads the feature tile once, performs all local
+computations while the M responses remain register-resident, and writes only
+the final projected output.
+22                M. Dhouib et al.
+
+Late stages and measured speedup. Avoiding dense-kernel materialization be-
+comes especially beneficial in deeper backbone stages, where feature maps are
+spatially small while the discrepancy filters remain relatively large. For a
+    512\times 512
+     input, stage 4 of a stride-32 backbone has spatial size 16\times 16, i.e., 256 spa-
+tial locations. With M=2 and K=7, the dense filter bank for a single input
+channel already contains
+                                                                                  2\times 7\times 7 = 98 
+
+coefficients. Hence, the amount of kernel data touched per channel is of the
+same order as the number of spatial locations in the feature map itself. In this
+regime, repeatedly constructing and transforming dense kernels is no longer neg-
+ligible relative to the feature-map computation. Compared with a PyTorch-level
+center-tied baseline compiled with torch.compile, our custom CUDA operator
+increases end-to-end training throughput by about 12\%. Restricting the operator
+to the last two backbone stages still yields an acceleration of about 11\%.
+
+Center-anchored variant. For the center-anchored variant, we use the same
+CUDA operator after replacing each neighbor coefficient by its absolute value,
+
+                                                                              \tilde a_{c,m,\Delta }=|a_{c,m,\Delta }|. 
+
+The tied center is then defined from
+
+                                                s_{c,m}:=\sum _{\Delta \in \mathcal N}\tilde a_{c,m,\Delta }, \qquad k_{c,m}(\mathbf 0)=-s_{c,m}, 
+
+
+so that the response becomes
+
+                                      u_{b,c,m}(p) = \sum _{\Delta \in \mathcal N}\tilde a_{c,m,\Delta }\,\widetilde {F}_{b,c}(p+\Delta ) - s_{c,m}\,F_{b,c}(p). 
+
+
+Hence, the implementation is unchanged apart from applying the absolute value
+to the neighbor coefficients before computing the accumulated neighbor term
+and the tied center correction. Gradients are propagated through the reparam-
+eterization
+                            \frac {\partial \mathcal {L}}{\partial a_{c,m,\Delta }} = \operatorname {sign}(a_{c,m,\Delta }) \cdot \frac {\partial \mathcal {L}}{\partial \tilde a_{c,m,\Delta }}, 
+
+
+with \protect \operatorname  {sign}(0)=0.
+
+
+B           Details about the training and testing datasets
+
+We evaluate our method under two protocols, namely the Doc Protocol intro-
+duced in ForensicHub [9] and the Syn2Real-TDoc protocol introduced in [7].
+                                                                      Efficient Document Tampering Localization                                                                  23
+
+Algorithm 1 Forward pass of the center-tied zero-sum discrepancy operator
+Require: Feature map F\in \mathbb {R}^{B\times C\times H\times W} , neighbor coefficients \ifmmode \lbrace \else \textbraceleft \fi a_{c,m,\Delta }\}_{\Delta \in \mathcal N} , number
+    of filters M
+Ensure: Responses U\in \mathbb {R}^{B\times C\times M\times H\times W}
+ 1: Precompute s_{c,m} \gets \sum _{\Delta \in \mathcal N} a_{c,m,\Delta } for all (c,m)
+ 2: for all blocks indexed by one (b,c) pair and one spatial tile, in parallel do
+ 3:     Load the tile of F_{b,c} together with its reflected border of radius r=(K-1)/2
+    into shared memory
+ 4:     Cooperatively load \ifmmode \lbrace \else \textbraceleft \fi a_{c,m,\Delta }\}_{m,\Delta } for the active channel c into shared memory
+ 5:     for all output locations p assigned to the threads of the block, in parallel do
+ 6:         for m=1,\dots ,M do
+ 7:               \protect \mathrm  {acc}_m \gets 0
+ 8:         end for
+ 9:         for all \Delta \in \mathcal N do
+10:                v_\Delta \gets \widetilde {F}_{b,c}(p+\Delta )
+11:                for m=1,\dots ,M do
+12:                           \protect \mathrm  {acc}_m \gets \mathrm {acc}_m + a_{c,m,\Delta }\,v_\Delta 
+13:                end for
+14:          end for
+15:          v_0 \gets F_{b,c}(p)
+16:          for m=1,\dots ,M do
+17:                U_{b,c,m}(p) \gets \mathrm {acc}_m - s_{c,m}\,v_0
+18:          end for
+19:      end for
+20: end for
+
+
+
+
+Datasets used in the Doc Protocol. For the Doc Protocol, training is performed
+on DocTamper [24]. DocTamper is a synthetic document tampering dataset built
+using a rule-based pipeline from document images. It contains 120{,}000 tampered
+training images.
+    Evaluation in the Doc Protocol is then carried out on four external document
+manipulation datasets, namely T-SROIE, OSTF, Tampered-IC13, and RTM [9].
+Following ForensicHub [9], these datasets are converted to the same sliced format
+as DocTamper. We use the files provided by the authors of the protocol paper
+to ensure that the same evaluation is conducted.
+    T-SROIE [32] is a synthetic receipt tampering dataset derived from SROIE,
+where the forged images are generated through text editing based on SRNet.
+Its sliced test split contains 1{,}579 fake patches [9]. OSTF [26] is a synthetic text
+tampering benchmark in which forged images are generated by eight genera-
+tive AI text editing models; its sliced test split contains 3{,}046 fake patches [9].
+Tampered-IC13 [31] is a synthetic scene-text tampering dataset obtained by digi-
+tally altering text regions in ICDAR2013 images; its sliced test split contains 589
+fake patches [9]. RTM is a real-world text manipulation benchmark in which the
+manipulated images are manually edited by professional editors [18]. For the Doc
+Protocol, RTM is evaluated in the sliced format defined by ForensicHub. After
+24                        M. Dhouib et al.
+
+
+
+
+Algorithm 2 Backward pass of the center-tied zero-sum discrepancy operator
+Require: Upstream gradients G=\partial \mathcal L/\partial U , feature map F , neighbor coefficients \ifmmode \lbrace \else \textbraceleft \fi a_{c,m,\Delta }\}, precom-
+   puted sums s_{c,m}
+Ensure: Gradients \partial \mathcal L/\partial a_{c,m,\Delta } and \partial \mathcal L/\partial F_{b,c}
+1: \Omega \gets \{0,\ldots ,H-1\}\times \{0,\ldots ,W-1\}                                               \triangleright  valid spatial domain
+2: Phase 1 (tile-local partial sums):
+3: for all blocks indexed by one (b,c) pair and one spatial tile, in parallel do
+4:      Load the corresponding tile of F_{b,c} and G_{b,c,m} with reflected border into shared memory
+5:      for all filters m=1,\dots ,M do
+6:           Accumulate tile-local
+
+                                                                                                     B^{\mathrm {tile}}_{b,c,m} \gets \sum _{p\in \mathrm {tile}} G_{b,c,m}(p)\,F_{b,c}(p) 
+
+
+ 7:                           for all \Delta \in \mathcal N do
+ 8:                              Accumulate tile-local
+
+                                                                                           C^{\mathrm {tile}}_{b,c,m,\Delta } \gets \sum _{p\in \mathrm {tile}} G_{b,c,m}(p)\,\widetilde {F}_{b,c}(p+\Delta ) 
+
+
+ 9:       end for
+10:    end for
+11:    Write all tile-local partial sums to a scratch buffer
+12: end for
+13: Phase 2 (global reduction):
+14: for all channel-filter pairs (c,m) in parallel do
+15:    Reduce scratch-buffer partial sums into
+
+                                                                                                     B_{c,m}=\sum _{b}\sum _{p} G_{b,c,m}(p)\,F_{b,c}(p) 
+
+
+          and
+                                                                                           C_{c,m,\Delta }=\sum _{b}\sum _{p} G_{b,c,m}(p)\,\widetilde {F}_{b,c}(p+\Delta ) 
+
+16:                   for all \Delta \in \mathcal N do
+17:                      Set
+                                                                                                                     \frac {\partial \mathcal L}{\partial a_{c,m,\Delta }} \gets C_{c,m,\Delta }-B_{c,m} 
+
+
+
+18:    end for
+19: end for
+20: Backward-input:
+21: for all blocks indexed by one (b,c) pair and one spatial tile, in parallel do
+22:    Load the corresponding tile of G_{b,c,m} into shared memory
+23:    for all input positions q\in \Omega  assigned to the threads of the block, in parallel do
+24:
+              \displaystyle \frac {\partial \mathcal L}{\partial F_{b,c}(q)} \gets \sum _{m}\Bigl ( \sum _{\Delta \in \mathcal N} a_{c,m,\Delta } \!\!\!\sum _{\substack {p\,:\,\rho (p+\Delta )=q}}\!\!\! G_{b,c,m}(p) \;-\; s_{c,m}\,G_{b,c,m}(q) \Bigr )
+
+
+25:    end for
+26: end for
+                                 Efficient Document Tampering Localization           25
+
+applying the DocTamper-style cropping procedure, the RTM test split contains
+3{,}444 fake patches [9].
+
+Datasets used in Syn2Real-TDoc. For Syn2Real-TDoc, we follow exactly the
+protocol introduced in [7]. The synthetic pretraining corpus is TDoc-2.8M, i.e.,
+a synthetic document tampering dataset of approximately 2.8 million generated
+tampered images [7].
+    Evaluation is then performed on RTM, FindIt, and FindItAgain. RTM [18]
+is the same real-world text manipulation benchmark described above. For the
+Syn2Real-TDoc protocol, its official test split of 3{,}197 images is used. FindIt is a
+human-made receipt forgery dataset built from scanned receipts and OCR out-
+puts, where the forged receipts were manually created during forgery workshops
+using standard editing software [1]. Its test split contains 549 images. FindItA-
+gain is also a human-made receipt forgery benchmark. It contains 988 scanned
+receipt images derived from SROIE, among which 163 were manually modified
+to simulate realistic fraud [30]. Its test split contains 218 images.
+    As stated above, for each protocol we use exactly the same training and
+testing datasets, processed in exactly the same manner.
+
+
+C    Details about the training and evaluation protocols
+
+Doc Protocol. Under the Doc Protocol, models are trained and evaluated on
+sliced 512\times 512 patches. Following the protocol setting in [9], we use a resolution
+of 512\times 512 for both training and evaluation. This is the resolution used to
+train document tampering localization models for this protocol. Under the Doc
+Protocol, we follow the common benchmark recipe of ForensicHub whenever it
+applies. ForensicHub further specifies that the number of training iterations and
+the batch size depend on the model [9]. For settings not covered by this common
+recipe, we use those of the Syn2Real-TDoc Protocol.
+    In the Doc Protocol, pixel-level Binary F1 is computed exactly as defined by
+the benchmark. Specifically, they first compute Binary F1 separately for each
+cropped image patch, and then average these per-patch scores over the subset
+of patches whose ground-truth mask contains at least one forged pixel. In our
+paper, we follow exactly the same evaluation rule.
+    We note that as training and inference use the same resolution, there is no
+need for an inference strategy here and the crop is simply fed to the model at
+its native resolution, following the official protocol.
+
+Syn2Real-TDoc. Under Syn2Real-TDoc, we follow exactly the protocol of [7]. A
+resolution of 1024\times 1024 is used, exactly as in the protocol. For this protocol,
+unified training settings are used, including the same number of epochs, batch
+size, data augmentation pipeline, seed, and optimization schedule. We use exactly
+the same settings as those used for the models evaluated under this protocol.
+Training is performed for 2 epochs with a batch size of 64. The Focal Loss
+with \gamma =2 is used for both the segmentation head and the document-level
+26      M. Dhouib et al.
+
+classification head. The maximum learning rate is set to 1\times 10^{-4} , and a cosine
+annealing schedule is used. We also use the same data augmentation pipeline as
+defined in Appendix H of [7]. In our paper, we follow exactly this protocol.
+    Following the Syn2Real-TDoc protocol, we use a sliding window inference
+strategy. For each image, inference is performed in a sliding-window manner,
+from which the global prediction map is computed. For the image-level predic-
+tion, the maximum over the logits of all crops is taken.
+    In Syn2Real-TDoc, global TP, TN, FP, and FN are computed first; precision,
+recall, and F1 are then derived from them. We follow the same metric for this
+protocol.
+

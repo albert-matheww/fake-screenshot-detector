@@ -1,0 +1,5 @@
+Digital Camera Identification From Sensor Pattern Noise
+Luka, J., Fridrich, J., Goljan, M. (2006). IEEE Transactions on Information Forensics and Security. doi:10.1109/tifs.2006.873602
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+In this paper, we propose a new method for the problem of digital camera identification from its images based on the sensor's pattern noise. For each camera under investigation, we first determine its reference pattern noise, which serves as a unique identification fingerprint. This is achieved by averaging the noise obtained from multiple images using a denoising filter. To identify the camera from a given image, we consider the reference pattern noise as a spread-spectrum watermark, whose presence in the image is established by using a correlation detector. Experiments on approximately 320 images taken with nine consumer digital cameras are used to estimate false alarm rates and false rejection rates. Additionally, we study how the error rates change with common image processing, such as JPEG compression or gamma correction.

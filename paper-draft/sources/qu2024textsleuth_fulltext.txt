@@ -1,0 +1,818 @@
+                                                               TextSleuth: Towards Explainable Tampered Text Detection
+                                                                 Chenfan Qu1,2 , Jian Liu2 , Haoxing Chen2 , Baihan Yu2 ,
+                                                                     Jingjing Liu2 , Weiqiang Wang2 , Lianwen Jin1
+                                                                   1
+                                                                     South China University of Technology 2 Ant Group
+                                                         202221012612@mail.scut.edu.cn, rex.lj@antgroup.com, eelwjin@scut.edu.cn
+
+
+
+
+arXiv:2412.14816v3 [cs.CV] 15 Jan 2025
+                                                                   Abstract                                    Existing works: Unexplainable                      Ours: Explainable
+                                                                                                            Tampered image       Forgery localization   Tampered image        Forgery localization
+                                              Recently, tampered text detection has attracted in-
+                                              creasing attention due to its essential role in infor-
+                                              mation security. Although existing methods can de-
+                                              tect the tampered text region, the interpretation of
+                                              such detection remains unclear, making the predic-          The tampered text reads "15".                  Explain the basis for judgment
+                                              tion unreliable. To address this problem, we pro-           Edge Artifacts: The number "15" in the tampered area displays noticeable edge
+                                              pose to explain the basis of tampered text detection        artifacts. The edges here are slightly more pronounced and less smooth compared to the
+                                              with natural language via large multimodal mod-             authentic text around it, suggesting an inconsistency with the background. The lines
+                                                                                                          surrounding the tampered text do not blend seamlessly with the nearby paper texture.
+                                              els. To fill the data gap for this task, we propose a       Unnatural Texture Appearance: The texture of the "15" appears somewhat blurred
+                                              large-scale, comprehensive dataset, ETTD, which             and lacks the crispness seen in other parts of the image. This hints at manipulation, as
+                                              contains both pixel-level annotations for tampered          the appearance of these numbers lacks the natural print clarity of the authentic text.
+                                                                                                          Inconsistent Font: There is a slight inconsistency in the thickness and color of the
+                                              text region and natural language annotations de-            number "15" compared to the surrounding numbers. The font style appears subtly
+                                              scribing the anomaly of the tampered text. Multi-           different, especially in brightness and thickness, making it stand out as altered.
+                                              ple methods are employed to improve the quality of          Lack of Integration: The "15" appears unnaturally pasted and does not integrate
+                                                                                                          smoothly with its surroundings. This lack of seamlessness makes it seem artificially
+                                              the proposed data. For example, elaborate queries           overlaid, drawing attention to itself.
+                                              are introduced to generate high-quality anomaly
+                                              descriptions with GPT4o. A fused mask prompt                Figure 1: We propose to both detect the tampered text region and
+                                              is proposed to reduce confusion when querying               explain the basis for the detection in natural language, making the
+                                              GPT4o to generate anomaly descriptions. To au-              prediction more reliable. We construct the first dataset and propose
+                                              tomatically filter out low-quality annotations, we          a novel model for the explainable tampered text detection task.
+                                              also propose to prompt GPT4o to recognize tam-
+                                              pered texts before describing the anomaly, and to           security [Dong et al., 2024]. Consequently, tampered text de-
+                                              filter out the responses with low OCR accuracy.             tection has become a major research topic in recent years [Qu
+                                              To further improve explainable tampered text de-            et al., 2024b]. It is crucial to develop effective and reliable
+                                              tection, we propose a simple yet effective model            methods for detecting tampered text images.
+                                              called TextSleuth, which achieves improved fine-
+                                              grained perception and cross-domain generaliza-                Existing works model tampered text detection as semantic
+                                              tion by focusing on the suspected region, with              segmentation [Shao et al., 2023] or object detection [Qu et
+                                              a two-stage analysis paradigm and an auxiliary              al., 2024a], with the aim of interpreting the basis for image
+                                              grounding prompt. Extensive experiments on both             forgery classification by predicting tampered regions. De-
+                                              the ETTD dataset and the public dataset have veri-          spite the progress made in recent years, such fine-grained pre-
+                                              fied the effectiveness of the proposed methods. In-         dictions are still black-box and cannot provide a convincing
+                                              depth analysis is also provided to inspire further re-      basis to support the judgement, leading to unreliable results.
+                                              search. Our dataset and code will be open-source.              To provide more reliable predictions for tampered text de-
+                                                                                                          tection, we propose to leverage multimodal large models to
+                                                                                                          both detect tampered text regions and explain the basis for
+                                         1   Introduction                                                 their detection in natural language. Given the absence of
+                                         Text image is one of the most important information carriers     dataset for interpretable tampered text detection, we construct
+                                         in today’s society, containing a large amount of sensitive and   the Explainable Tampered Text Detection (ETTD) dataset.
+                                         private information [Chen et al., 2024a]. With the rapid de-     To ensure the comprehensiveness of the data, we collect
+                                         velopment of image processing technologies, sensitive text       multilingual card images, document images and scene text
+                                         information can be more easily manipulated for malicious         images from the Internet and the existing text-rich datasets
+                                         purposes, such as fraud, posing serious risks to information     such as ICDAR2017 [Nayef et al., 2017] and LSVT [Sun
+et al., 2019]. And we perform text tampering on the col-              Both our proposed ETTD dataset and TextSleuth model
+lected data with various methods, including traditional meth-      are the first efforts in the field of interpretable tampered text
+ods copy-move, splicing, and the deep generative method            detection. Extensive experiments have confirmed that the
+DiffUTE [Chen et al., 2024b]. Poisson Blending [Pérez et al.,     proposed TextSleuth significantly improves upon the base-
+2023] is employed to reduce the visual inconsistency around        line model, outperforming existing methods by a large mar-
+tampered region. Finally, we 12,000 tampered text images           gin on both the proposed ETTD dataset and the public Tam-
+with accurate pixel-level annotations of the tampered region       pered IC-13 [Wang et al., 2022] dataset, demonstrating strong
+and 10,500 authentic text images. The large-scale of our data      in-domain and cross-domain generalization capabilities. In-
+notably alleviates the data hunger of deep models. The im-         depth analysis is also provided to inspire further work in the
+ages are split to three parts, ETTD-Train, ETTD-Test and           field of interpretable tampered text detection.
+ETTD-CD, the two test sets have the same and different dis-           In summary, the our main contribution is fourfold:
+tributions with the ETTD-Train respectively, allowing both             • We propose a novel task, explainable tampered text de-
+in-domain and cross-domain evaluation.                                   tection, which aims to provide reliable prediction by de-
+   With the obtained tampered text, we utilize GPT4o to gen-             scribing the anomalies of tampered text in natural lan-
+erate the description of both visual and linguistic anomalies            guage, serving as a pioneering effort in this field.
+caused by text tampering, and to generate the text recognition
+result for specifying the target tampered text. To achieve this,       • We obtain the data annotation for this task by prompt-
+we prompt the GPT4o with a novel elaborate query, the tam-               ing GPT4o with elaborate queries. We propose effective
+pered image and its corresponding mask annotation indicat-               methods to improve the quality of the annotations. For
+ing the tampered region. However, since text is mostly dense             example, a fused mask prompt to reduce model con-
+and has similar location and shape, directly inputting the bi-           fusion and a novel method to automatically filter out
+nary mask, as existing work [Xu et al., 2024] does will cause            bad responses. Based on these, we construct the ETTD
+severe confusion to the GPT4o, making it unclear which is                dataset, which is the first, large-scale and comprehen-
+the actual tampered text. To solve this problem, we propose              sive dataset for explainable tampered text detection.
+to fuse the binary mask into the original tampered image with          • We propose the first multimodal large model TextSleuth
+pixel-wise weighting. With the proposed fused mask prompt,               for interpretable tampered text detection, which achieves
+the GPT4o has a much better understanding of the location                state-of-the-art performance with a two-stage analysis
+of the target region, which in turn significantly reduces the            paradigm and a novel auxiliary prompt.
+errors and obviously improves the annotation quality. In ad-           • Extensive experiments are conducted. Valuable conclu-
+dition, the GPT4o’s output is not always correct and manual              sions and insights are provided through in-depth analy-
+verification is costly. Inspired by the fact that incorrect de-          sis, inspiring the further research in this field.
+tection of manipulated text leads to unclear perception and
+poor anomaly description, we further propose to address this       2     Related works
+issue by automatically filtering out the annotation based on
+the accuracy of the manipulated text OCR.                          2.1    Tampered Text Detection
+   The tiny area and visual consistency of tampered                Early work on tampered text detection is achieved by printer
+text [Wang et al., 2022] pose multiple challenges for explain-     classification [Lampert et al., 2006] or template match-
+able tampered text detection, making it difficult for existing     ing [Ahmed and Shafait, 2014], which is only applicable to
+methods to achieve good enough performance. For example,           scanned documents and does not work well for photographed
+misidentification of tampered text leads to incorrect anomaly      documents [Dong et al., 2024]. DocTamper [Qu et al., 2023]
+description, difficulty in finding tampered text weakens the       is the first large-scale comprehensive dataset for tampered
+analysis quality, and increases the risk of overfitting to un-     text detection in arbitrary style documents. It is created
+related background styles. To this end, we propose a novel         by a novel method Selective Tampering Generation [Qu et
+simple-yet-effective model termed as TextSleuth. Specifi-          al., 2023], which effectively reduces the cost of high-quality
+cally, an extra RCNN [Ren et al., 2015] based text detection       training data. DTD [Qu et al., 2023] is proposed to detect vi-
+module initially scans the image and predicts the location of      sually consistent tampering in documents through examining
+the tampered text with cascaded RoI heads. The initial predic-     the continuity of the block artifacts grids. The SACP [Al-
+tion of tampered region is converted into a grounding prompt       ibaba Security, 2020] and RTM [Luo et al., 2024] datasets
+and fed into the large language model along with the image         provide large-scale manually forged documents. Tampered
+tokens and the original question to obtain the final predic-       IC13 [Wang et al., 2022] dataset is the first work on tampered
+tion. The proposed two-stage analysis paradigm and auxil-          scene text detection, containing about 300 scene text images
+iary prompt in TextSleuth effectively minimizes errors, im-        tampered by SR-Net [Wu et al., 2019]. The OSFT dataset [Qu
+proves explanation quality and cross-domain generalization         et al., 2024a] significantly improves Tampered IC-13 with re-
+by drawing the model’s special attention to the anomaly re-        alistic forgeries created by nine latest deep generative models.
+gion and helping it to learn more general features. In addition,   CAFTB-Net [Song et al., 2024] benefits from noise-domain
+since the reference grounding comprehension task is mostly         modeling and cross-attention mechanism. DTL [Shao et al.,
+involved in the pre-training stage of large models [Chen et al.,   2025] improves model robustness with latent manifold ad-
+2024c], the proposed auxiliary grounding prompt can reduce         versarial training. Omni-IML [Qu et al., 2024b] unifies im-
+comprehension difficulty and alleviate forgetting.                 age forensics across different text image types. Despite the
+             Table 1: A brief summary of the ETTD dataset statistics. ”Forged Area” denotes the area ratio of tampered text.
+   Dataset Image types Image source Languages Tampering methods & Numbers Authentic num. Forged Area
+           Documents,     Internet,             Total (10400): DiffUTE (800),
+ETTD-Train                           EN, CH                                    9600        0.0268
+            ID cards, ICDAR2013,              CopyMove (4800), Splicing (4800)
+           scene texts, ICDAR2017,               Total (600): DiffUTE (200),
+ETTD-Test                            EN, CH                                    400         0.0202
+               etc.        LSVT                CopyMove (200), Splicing (200)
+                                               Total (1000): Copymove (500),
+ ETTD-CD    scene text ICDAR2013       EN                                      500         0.0608
+                                                        Splicing (500)
+
+  Tampered image Fused mask prompt                             GPT4o                                 Generated Anomaly Descriptions
+                                            Image Query                      Filtering
+                                                                                                Blurred and hazy texture   Lack integration
+                                                            Text Query                          Inconsistent alignment      Edge artifacts
+                                           You are an expert good at analyzing …
+                                           You will be provided with two images, …
+                                           Your task is to describe visible details caused by    Broken text coherence     Font difference
+                                           tampering..., consider following perspectives …
+                       Figure 2: The pipeline for obtaining the textual anomaly description for the tampered text.
+
+progress made in recent years, existing work on tampered text                3     ETTD Dataset
+detection can still only localize the tampered region in an un-
+                                                                             To fill in the data gap for explainable tampered text detec-
+reliable black-box manner, unable to explain the basis of its
+                                                                             tion dataset, we construct a large-scale comprehensive dataset
+judgement in natural language.
+                                                                             called Explainable Tampered Text Detection (ETTD).
+
+2.2   Explainable Image Forgery Detection                                    3.1     Text Tampering
+Recently, some works achieve explainable image forensics                     To ensure the comprehensiveness of the proposed data, we
+through multimodal large language models. FFAA [Huang                        collect multilingual document and card images from the In-
+et al., 2024a] utilizes GPT4o to generate detailed basis                     ternet and scene text images from the existing datasets (e.g.
+description for the identification judgment. MMTT [Lian                      ICDAR2013 [Karatzas et al., 2013] and LSVT [Sun et al.,
+et al., 2024] further proposes to perform in-depth face                      2019]. We then forge some of the collected images with
+forgery analysis by observing the facial organs one by one.                  the widely-used methods, copy-move and splicing. Poisson
+FakeShield [Xu et al., 2024] leverages GPT4o to create                       Blending [Pérez et al., 2023] is employed to reduce visual
+anomaly description for natural style image forgery and in-                  inconsistency. To further improve the data diversity, we man-
+troduces a new model based on LISA [Lai et al., 2024]. Ed-                   ually edit the text with DiffUTE [Chen et al., 2024b], a latest
+itScout [Nguyen et al., 2024] focuses on the detection of                    diffusion model for realistic tampered text generation.
+image forgeries that generated by diffusion models and also
+develops a new model based on LISA. ForgeryGPT [Li et
+                                                                             3.2     Anomaly Description Generation
+al., 2024a] improves interpretable natural image forensics                   As shown in Figure 2, we leverage the GPT4o to generate
+with binary mask prompt. FakeBench [Li et al., 2024b] fills                  the description of both visual and linguistic anomalies caused
+the blank in explainable image forensics for forgeries gen-                  by text tampering. Given the different features between tam-
+erated by deep generative models (e.g. Diffusion models).                    pered text and tampered natural objects [Wang et al., 2022],
+ForgerySleuth [Sun et al., 2024] obtains hierarchical forgery                the textual queries in existing works [Xu et al., 2024] can not
+description annotation with the proposed Chain-of-Clues for                  work well for tampered text (e.g. ”unnatural depth” is usu-
+the MIML [Qu et al., 2024c], a high quality image foren-                     ally observed in tampered natural objects but not in tampered
+sics dataset with more than 123k manually forged images                      text). To address this issue, we propose an elaborate query
+and their corresponding pixel-level annotations. It also im-                 that inspires the GPT4o to analyze anomalies for tampered
+proves LISA for natural image forensics with noise domain                    text on six major perspectives, covering texture, integration,
+modeling. SIDA [Huang et al., 2024b] achieves explainable                    alignment, edge artifacts, text coherence, font, as shown in
+forensics for natural image and AIGC image especially on                     Figure 2. The detailed query is presented in the Appendix.
+social media scenario, an effective new model is introduced                     We further input this elaborate query along with the tam-
+by improving LISA. Despite the progress made, none of the                    pered image and its corresponding mask annotation into the
+existing work achieves interpretable forensics on another im-                GPT4o. However, due to the similarity in location and shape
+portant task, tampered text detection. Due to the tiny size and              of the text instances in an image, directly inputting the bi-
+visual consistency of tampered text [Qu et al., 2023], natu-                 nary mask as in existing work [Xu et al., 2024] will cause
+ral image forgery detection methods mostly do not work very                  considerable confusion to the GPT4o. As shown in Fig. 3,
+well for tampered text detection [Luo et al., 2024], leaving                 the annotator model usually struggles to identify the target
+massive risks. It is crucial to develop explainable tampered                 text with the binary mask, often mistaking a nearby authen-
+text detection techniques for reliable text image forensics.                 tic text as a fake text. Analyzing anomaly on authentic text
+                                                                                  images from the ETTD dataset are split as the cross-domain
+                                                                                  test set (ETTD-CD). The ETTD-CD consists of Copy-move
+Tampere
+                                                                                  forgeries, Splicing forgeries and authentic images from IC-
+ Image                                                                            DAR2013, which are not included in ETTD-Train. Therefore,
+                                                                                  the ETTD-CD has a different data distribution from ETTD-
+                                                                                  Train and can evaluate model performance on unknown sce-
+                                                                   “99” or “96”   narios. Accurate pixel-level annotations for tampered regions
+Confusing
+                                                                     or “S”?
+             “NUT” or “WONT”?
+                                                                                  are provided to facilitate fine-grained analysis of the tampered
+                                                   “沐浴” or “青春”?                  text regions. The data hunger of large models can be effec-
+Prompt 
+                                “her” or “grey”?
+                                                                                  tively alleviated with our large-scale diverse data.
+
+
+                                                                      “96”!
+                                                                                  4   TextSleuth
+Ours clear      “WONT”!                                                           The tampered text is mostly tiny in size and the the visual
+                                                       “沐浴!
+                                                                                  anomaly is mostly unobvious [Luo et al., 2024]. Conse-
+Prompt ☺
+                                      “her”!
+                                                                                  quently, three major challenges are emerged for interpretable
+                                                                                  tampered text detection: 1. The multimodal large models suf-
+                                                                                  fer from more risks of misidentifying the tampered text, re-
+Figure 3: The binary mask prompt as in existing work is confusing                 sulting in incorrect anomaly description. 2. A large part of
+in text images. In contrast, our proposed fused mask prompt clearly               the model parameters are used to find the tampered region,
+indicates the content and the exact location of the tampered text.
+                                                                                  which weakens their ability to analyze and describe the tam-
+undoubtedly produces incorrect anomaly descriptions. To ad-                       pered region. 3. The models are more likely to be disturbed
+dress this issue, we propose the fused mask prompt, where the                     by the irrelevant background style, which weakens their gen-
+original image is fused with the binary mask by pixel-wise                        eralization on unseen tampering methods and scenarios. To
+weighting. Specifically, given the input image I ∈ RH,W,3                         this end, we propose a simple-yet-effective model termed as
+and the binary mask annotation M ∈ BH,W , B ∈ {0, 1}, the                         TextSleuth, which overcomes the above challenges through a
+fused mask prompt M f used ∈ RH,W,3 can be formulated as                          two-stage analysis paradigm and a novel reference grounding
+M f used = I ∗ λ1 + M ∗ λ2 . We set λ1 and λ2 to 0.5 in practi-                   auxiliary prompt.
+cal. With the proposed fused mask prompt, the annotator can                          As shown in Figure 4, given an input image, the sus-
+clearly recognize the tampered text on the target region and                      pected tampered text region is initially detected by a Swin-
+better understand where the target region is by referring to the                  Transformer based detection model with cascaded RoI
+surrounding content. The proposed method significantly re-                        heads [Cai and Vasconcelos, 2018]. The predicted coordi-
+duces hallucination and errors caused by frequent confusion.                      nates are then normalized to 0-1000 and are converted to the
+   Since the responses of GPT4o are not always correct, di-                       reference grounding auxiliary prompt ”The suspected tam-
+rectly using the GPT4o responses as annotations leads to                          pered text ⟨box⟩[[xmin , ymin , xmax , ymax ]]⟨/box⟩”. Given
+poor data quality, while manually verifying the annotation is                     that the reference grounding comprehension task is involved
+costly. Our aim is to automatically filter out unsatisfactory                     in the pre-training stage of most large models [Wang et al.,
+responses. We empirically find that, the anomaly description                      2024], the large language model can effortlessly comprehend
+from the GPT4o is also mostly accurate when the GPT4o can                         the target location in the proposed auxiliary prompt. In the
+correctly recognize the tampered text. This means that the                        auxiliary prompt, the large language model naturally pays
+GPT4o is clear about the location of the tampered text and                        special attention to the region represented by the coordinates,
+the visual details of it. Inspired by this, we propose to au-                     as it has learned in its pre-training stage. This differs from
+tomatically filter out the bad responses with tampered text                       existing work [Li et al., 2024a] that forces the model to look
+OCR accuracy [Zhang et al., 2019] lower than 0.8. The OCR                         at the suspected region with binary mask embeddings, which
+ground-truth is obtained from dataset annotation or OCR en-                       is confusing in indicating tampered text, violates the pre-
+gine, and is used to replace the GPT4o OCR in the remaining                       training paradigm and causes more forgetting. The auxiliary
+samples to ensure accuracy. The proposed method effectively                       prompt is fed into the large language model along with the
+improves the quality of anomaly description for tampered text                     image tokens and the original question, to obtain the recogni-
+in an automatic manner. For authentic text images, the textual                    tion and describe the anomaly for tampered text.
+description is set to ”There is no tampered text in this image.”.                    Despite its simplicity, the proposed method effectively ad-
+                                                                                  dresses the three major challenges in explainable tampered
+3.3          Dataset Summary                                                      text detection: 1. The initial prediction of the suspect re-
+As shown in Tab. 1, there are 5,500 text images tampered by                       gion significantly reduces the risk of misidentifying the tam-
+copy-move, 5,500 text images tampered by splicing and 1,000                       pered region and reduces hallucination. 2. The detection
+text images tampered by DiffUTE in our ETTD dataset. An-                          prior alleviates the difficulty in detecting tampered text, mod-
+other 10,500 images without text tampering serve as the au-                       els can save more parameters to obtain better anomaly anal-
+thentic part. 20,000 images from the ETTD dataset are split as                    ysis and description. 3. By focusing on the tampered region,
+the training set (ETTD-Train), 1,000 images from the ETTD                         the model gets rid of the interference from unrelated back-
+dataset are split as the test set (ETTD-Test) and another 1,500                   ground styles, learns more general features during training,
+Tampered region prediction:                                                       Answer: The tampered text reads “甲".
+                                           Large Language Model
+The suspected tampered region:                                                    Unnatural Texture Appearance: The texture of the
+<box> [[211, 109, 363, 237]] </box>.                                              tampered text "甲" appears slightly hazy and lacks
+    Bounding box norm_1000                       Vision Tower                     the crispness seen in the other text characters on
+                      xmin: 135,                                                  the image. This distortion effect introduced during
+                      ymin: 100,         Input image                              the tampering process makes it stand out from the
+                      xmin: 232,                                                  more naturally integrated text.
+                      ymin: 218,                            Question:             Inconsistent Font: There is a noticeable difference
+                   Final bbox pred                          What is the           in the brightness and slight color variation of the
+                                                            tampered              tampered text "甲" compared to the surrounding
+    RH1       RH2        RH3                                text in this          text. This difference in intensity and shade gives
+                                                           image, why?            the character an inconsistent appearance against
+    RPN      Swin Transformer                                                     the original text, hinting at potential tampering.
+
+                                       Figure 4: The overall pipeline of the proposed TextSleuth.
+
+and thereby obtains improved generalisation to unseen tam-            5.2    Implement Details
+pering methods and scenarios.                                         The vision tower and projector of the large multimodal model
+                                                                      are full-parameter fine-tuned and the large language model
+5     Experiments                                                     part is LoRA [Hu et al., 2021] fine-tuned with rank 8 and
+We conduct experiments on both the proposed ETTD dataset              alpha 16. We adopt AdamW [Loshchilov and Hutter, 2017]
+and the public Tampered IC-13 dataset [Wang et al., 2022]             optimizer with a learning rate decaying linearly from 1e-4 to
+with multiple advanced large multimodal models, includ-               0. The batch-size is set to 16 for all models and the exper-
+ing GPT4o [OpenAI, 2024], Yi-VL-6B [AI et al., 2024],                 iments are run on NVIDIA A100 80GB GPUs. We set the
+DeepSeekVL-7B [Lu et al., 2024], MiniCPMV2.5 [Hu et                   maximum input area to 1.2M pixels for the Qwen2VL mod-
+al., 2024], the 1B to 8B versions of Intern2VL [Chen et al.,          els. In the proposed TextSleuth model, the Swin-Transformer
+2024c] and the 2B, 7B versions of Qwen2VL [Wang et al.,               based detection model is trained for 30 epochs on the ETTD
+2024]. We fine-tune all models except GPT4o on the ETTD               training set, with a batch-size of 16 and a maximum input res-
+training set for 5 epochs with the same settings, which is suf-       olution of 1.2M pixels. The AdamW optimizer is employed
+ficient for all models to achieve their best performance.             with a learning rate that decays linearly from 6e-6 to 3e-6.
+                                                                         For all the fine-tuned models, the input text query is ”What
+5.1     Evaluation Metric                                             is the tampered text in this image, why?”, which matches the
+To evaluate the similarity between the predicted anomaly de-          training data. The image classification prediction is regarded
+scription and the textual annotation, we calculate the OCR            as ”tampered” if the edit distance between the model output
+accuracy [Zhang et al., 2019] for tampered text recognition           and the string ”There is no tampered text in this image.” is
+and the paragraph cosine similarity for non-OCR parts. The            greater than 3. For GPT4o and other pre-trained models, to
+weighted summary of OCR accuracy and paragraph simi-                  output the most similar format with the annotation, the query
+larity is used as the final similarity score. For misclassi-          is set to ”Does this image have tampered text on it? Please
+fied samples, the paragraph cosine similarity is set directly         start your answer with ”Yes” or ”No”. If ”Yes”, then rec-
+to 0 as the gist is opposite. Specifically, we extract the con-       ognize the tampered text and describe the anomaly of the
+tent within the quotation marks from the first predicted sen-         tampered region.”. The image classification prediction is re-
+tence and use it to calculate the OCR accuracy AccOCR .               garded as ”tampered” if the output starts with ”Yes”.
+We then remove stop-words and the content within the quo-
+tation marks from both prediction Ppred and ground-truth              5.3    Comparison Study
+paragraphs Pgt for more accurate paragraph similarity cal-            Anomaly Description. The comparison results of anomaly
+culation. The paragraph feature vectors Vpred , Vgt are ob-           description on the ETTD dataset are shown in Table 2. Four
+tained by averaging the word vectors in each paragraph,               conclusions can be drawn through analyzing the results:
+Vpred = average([W 2V (word) f or word in Ppred ]),                   (1) High input resolution is essential for models to
+Vgt = average([W 2V (word) f or word in Pgt ]), where                 correctly recognize the tampered text and explain its
+W 2V is the pretrained word-to-vector function [Mikolov et            anomaly, but it can also slightly weaken model general-
+al., 2018]. Finally, the cosine similarity between the two            ization to unfamiliar scenarios. On the ETTD-Test set, the
+paragraph feature vectors is used as the paragraph similar-           Yi-VL-6B with the lowest input resolution 448×448 achieves
+ity score, Simpara = Cos(Vpred , Vgt ). We have manually              the lowest final score of 68.5, which is notably lower than
+verified that better predictions almost always lead to higher         the fine-tuned models. Resizing the input image to such a
+cosine similarity scores. The final similarity score Sim is           small resolution makes the subtle visual anomaly hard to de-
+calculated by Sim = 0.3 ∗ AccOCR + 0.7 ∗ Simpara . The                tect, thus Yi-VL-6B performs the worst. However, the Yi-
+common accuracy metric [Guillaro et al., 2023] is adopted             VL-6B performs much better on ETTD-CD, where the tam-
+for image forgery classification task.                                pered text is mostly larger. Most of the other models suf-
+fer significant performance degradation due to the unfamil-       (1) The existing multimodal models do not have the abil-
+iar scenario. This indicates that high input resolution mostly    ity to recognize tampered text and the anomaly. All three
+weaken model generalization on unfamiliar scenarios.              base models perform poorly in setting (1), but much better in
+(2) The scaling law also applies to the explainable tam-          setting (2). This confirms that the official open-source mod-
+pered text detection task. Even within the same series (e.g.      els are mostly incapable of detecting tampered text. Training
+InternVL2 or Qwen2VL) where the vision tower is the same          them on the ETTD data is essential for them to gain the ability
+and the pre-training data is similar, models with larger LLMs     for explainbale tampered text detection.
+mostly perform better. For example, Qwen2VL-7B achieves           (2) The proposed auxiliary prompt can significantly im-
+an average final score of 90.7, which is better than Qwen2VL-     prove model performance across different base models.
+2B. This confirms that the scaling law behind our task.           For each of the three base models, the model performance
+(3) Model performance on the explainable tampered text            in setting (3) is significantly better than that in setting (2)
+detection task is highly related to its pre-trained model         (+10.8 points average final score for InternVL2-2B, +9.2
+performance on general task. For example, on the Open-            for Qwen2VL-2B and +6.5 for Qwen2VL-7B). These im-
+Compass, the pre-trained MiniCPMV2.5 model performs bet-          provements are achieved by the proposed two-stage analysis
+ter than DeepSeekVL-7B, which is consistent with the model        paradigm and the auxiliary prompt in our TextSleuth. The
+performance of their fine-tuned versions on the explainable       proposed methods alleviate the difficulty in detecting tam-
+forensic task. A better large multimodal model on general         pered region and make the models better focused on ana-
+task is likely to be more intelligent and can better learn to     lyzing the anomaly, resulting in an improved anomaly de-
+describe the anomaly of tampered text.                            scription quality. Additionally, by focusing on the tam-
+(4) The proposed TextSleuth performs the best on both             pered text with the proposed prompt, the models can learn
+ETTD-Test and ETTD-CD, significantly outperforming                more general features by reducing the interference from un-
+other models in both in-domain and cross-domain scenar-           related background styles. Consequently, the model’s cross-
+ios. This verifies that the proposed auxiliary prompt improves    domain generalization is considerably improved. The huge
+model’s fine-grained perception and helps the model to pro-       improvements on different basic large multimodal models
+duce high quality anomaly description by focusing its atten-      also demonstrate that our TextSleuth is widely applicable.
+tion on the suspected region at start.                            (3) The performance of our TextSleuth can be further im-
+Image Forgery Classification. The comparison results of the       proved with better tampered region detectors. For all of
+image forgery classification are shown in Tab. 4. The public      the three base models, model performance in setting (4) is
+tampered IC-13 dataset used in evaluation consists of texts       better than those in setting (3). The improvement is achieved
+tampered by SR-Net [Wu et al., 2019] and can also evaluate        by eliminating the errors of the initial tampered text box pre-
+model’s cross domain performance on unknown tampering             diction. Therefore, our TextSleuth can easily be improved in
+method. The proposed TextSleuth considerably outperforms          the future with an advanced tampered text region detector.
+existing methods on all the three benchmarks, and improves        Robustness Evaluation. We evaluate the robustness of the
+the Qwen2VL-7B baseline by +3.5 points, +7.9 points and +         TextSleuth under different JPEG compression quality factors
+12.7 points on the three benchmarks respectively, demonstrat-     and different resize factors on ETTD-Test and ETTD-CD. As
+ing the effectiveness of the proposed method. Similar conclu-     shown in Table 6, the stable performance under common dis-
+sions can be drawn as analyzed in the above paragraphs.           tortions has verified the robustness of our TextSleuth.
+Auto-annotation. To verify the effectiveness of the proposed
+fused mask prompt, we manually obtain the OCR results of             The prediction visualization is presented in the Appendix.
+100 random tampered texts from the collected data. We com-
+pare the tampered text OCR performance between the bi-            6   Conclusion
+nary mask prompt as in existing work and the proposed fused       This paper is the first work that achieves explainable tam-
+mask prompt, the results are shown in Table 5. The anno-          pered text detection, by describing the anomaly of the tam-
+tator GPT4o has significantly higher OCR accuracy with the        pered text image with natural language. Given the absence of
+proposed prompt. The higher OCR accuracy indicates that           dataset for this task, we construct a large-scale comprehensive
+the large model can better understand the actual location of      dataset termed as ETTD, which consists of multilingual docu-
+the tampered text. Therefore, the anomaly description from        ment and scene text images tampered by copy-move, splicing
+GPT4o is also more accurate with the method.                      and AIGC-based text editing. Given the obtained tampered
+                                                                  text, we obtain the anomaly description by prompting GPT4o
+5.4   Ablation Study                                              with elaborate queries, the tampered image and tampered re-
+The ablation study of the proposed TextSleuth is shown in         gion annotation. However, due to the similar shape and posi-
+Table 3. We conduct experiments on three base multimodal          tion of the text, prompting GPT4o with a binary mask as in
+models. For each base model (e.g. InternVL2-2B), there are        existing works mostly confuses the GPT4o and leads to incor-
+four ablation settings. Setting (1) is the official pre-trained   rect responses. To address this issue, we propose to prompt
+model performance. Setting (2) is the official model fine-        GPT4o with a fused mask, which is obtained by weighting
+tuned on the ETTD Train. Setting (3) is the TextSleuth fine-      the image with the binary mask. Experiments verify that the
+tuned with the proposed grounding auxiliary prompt. Setting       proposed fused mask prompt significantly improves the an-
+(4) is the TextSleuth with the perfect tampered text detector.    notation quality. Moreover, given that the incorrect recogni-
+Four conclusions can be drawn through analysis:                   tion of tampered text means unclear perception and leads to
+                                          Table 2: Comparsion study of the proposed method.
+                                     ETTD-Test (in-domain)                      ETTD-CD (cross-domain)                   Average
+          Methods
+                                  OCR        Cosine        Final              OCR       Cosine       Final                Final
+                                accuracy   similarity      score            accuracy   similarity    score                score
+          GPT4o                   48.3        66.1         60.7               74.6        78.0        77.0                68.9
+        Yi-VL-6B                  49.9        76.5         68.5               64.3        81.4        76.2                72.4
+     DeepSeekVL-7B                66.6        86.9         80.8               37.9        64.7        56.7                68.8
+      MiniCPMV2.5                 79.3        92.6         88.6               68.9        74.8        73.0                80.8
+      InternVL2-1B                77.8        89.1         85.7               79.2        84.0        82.5                84.1
+      InternVL2-2B                81.1        91.5         88.3               78.2        82.7        81.3                84.8
+      InternVL2-4B                75.8        82.4         80.4               91.4        94.0        93.1                86.8
+      InternVL2-8B                80.9        90.7         87.7               80.0        85.1        83.5                85.6
+      Qwen2VL-2B                  84.8        93.7         91.0               82.1        85.0        84.1                87.6
+      Qwen2VL-7B                  87.1        94.8         92.4               87.1        89.9        88.9                90.7
+   TextSleuth-7B (Ours)           92.6        98.3         96.5               97.7        98.1        97.9                97.2
+Table 3: Ablation study of the proposed method. ”SFT” denotes surprised fine-tuning. ”TextSleuth” denotes equipping the model with the
+proposed TextSleuth method. ”Perfect Detector” denotes using ground-truth tampered region boxes in the TextSleuth’s auxiliary prompt.
+        Base           Ablation settings       ETTD-Test (in-domain)    ETTD-CD (cross-domain) Average
+     Multi-modal              Text     Perfect OCR     Cosine Final      OCR     Cosine Final Final
+                  Num SFT
+       Model                 Sleuth Detector accuracy similarity score accuracy similarity score score
+                   (1)  ×      ×         ×     14.1     57.8     44.7    34.3     64.4     55.4  50.1
+                   (2)  ✓      ×         ×     81.1     91.5     88.3    78.2     82.7     81.3  84.8
+     InternVL2-2B
+                   (3)  ✓      ✓         ×     83.1     98.3     93.6    96.5     98.1     97.5  95.6
+                   (4)  ✓      ✓         ✓     83.7     99.4     94.6    97.7     99.4     98.8  96.7
+                   (1)  ×      ×         ×     18.5     57.0     45.5    29.8     63.8     53.6  49.6
+                   (2)  ✓      ×         ×     84.8     93.7     91.0    82.1     85.0     84.1  87.6
+     Qwen2VL-2B
+                   (3)  ✓      ✓         ×     90.4     98.2     95.8    97.2     98.0     97.7  96.8
+                   (4)  ✓      ✓         ✓     91.3     99.3     96.8    98.5     99.3     99.0  97.9
+                   (1)  ×      ×         ×     14.0     41.8     33.5    36.4     53.4     48.3  40.9
+                   (2)  ✓      ×         ×     87.1     94.8     92.4    87.1     89.9     88.9  90.7
+     Qwen2VL-7B
+                   (3)  ✓      ✓         ×     92.6     98.3     96.5    97.7     98.1     97.9  97.2
+                   (4)  ✓      ✓         ✓     93.6     99.4     97.6    99.0     99.4     99.2  98.4
+
+Table 4: Accuracy performance of different large multimodal mod-         Table 6: Robustness evaluation under common distortions.
+els on image forgery classification task.                              Average          JPEG      JPEG      Image     Image
+                  ETTD-       ETTD-     Tampered-                        final   Ori. compress compress resize         resize
+     Method        Test         CD         IC13                         score         quality75 quality50 factor0.75 factor0.5
+               (in-domain) (out-domain) (zero-shot)                   Qwen2VL 90.7 89.6            87.2      89.2       86.1
+     GPT4o         67.3        79.3        82.8                       TextSleuth 97.2 96.3         94.4      95.8       93.0
+   Yi-VL-6B        76.9        81.9        45.9
+DeepSeekVL-7B      87.4        66.7        76.4                      bad anomaly description, we also propose to filter out the re-
+ MiniCPMV2.5       93.2        75.5        56.7                      sponses with low tampered text OCR accuracy, which can ef-
+ InternVL2-1B      89.7        84.6        59.2                      fectively improve annotation quality in an automatic manner.
+ InternVL2-2B      92.1        83.3        58.8                      The proposed ETTD dataset has both in-domain and cross-
+ InternVL2-4B      82.8        94.5        36.1                      domain test subsets, which allows a thorough evaluation of
+ InternVL2-8B      91.2        85.7        60.5                      model generalization. In addition, a novel TextSleuth model
+ Qwen2VL-2B        94.3        85.7        73.8                      is proposed to further improve explainable tampered text de-
+ Qwen2VL-7B        95.4        90.5        75.1                      tection, which overcomes several major challenges in the field
+ TextSleuth-7B     98.9        98.6        88.4                      with a two-stage analysis paradigm and an auxiliary prompt.
+                                                                     Experiments have confirmed that the proposed method con-
+ Table 5: Comparison study for the proposed fused mask prompt.       siderably improves upon different baseline models, and that
+                                OCR     Perfect                      our TextSleuth notably outperforms existing methods in both
+                Method                                               in-domain and cross-domain evaluation on both the ETTD
+                               Accuracy Match
+         Binary mask prompt      47.3    30.4                        and public datasets. In-depth analysis is also provided to
+      Fused mask prompt (Ours)   84.2    73.0                        inspire further work. We believe that our valuable ETTD
+                                                                     dataset and our first-of-its-kind, simple-yet-effective meth-
+                                                                     ods can shed light on the further research on interpretable
+                                                                     tampered text detection.
+References                                                     [Hu et al., 2024] Shengding Hu, Yuge Tu, Xu Han, Chaoqun
+                                                                 He, Ganqu Cui, Xiang Long, Zhi Zheng, Yewei Fang, Yux-
+[Ahmed and Shafait, 2014] Amr Gamal Hamed Ahmed and
+                                                                 iang Huang, Weilin Zhao, Xinrong Zhang, Zheng Leng
+  Faisal Shafait. Forgery detection based on intrinsic docu-     Thai, Kaihuo Zhang, Chongyi Wang, Yuan Yao, Chenyang
+  ment contents. In 2014 11th IAPR International Workshop        Zhao, Jie Zhou, Jie Cai, Zhongwu Zhai, Ning Ding, Chao
+  on Document Analysis Systems, pages 252–256. IEEE,             Jia, Guoyang Zeng, Dahai Li, Zhiyuan Liu, and Maosong
+  2014.                                                          Sun. Minicpm: Unveiling the potential of small language
+[AI et al., 2024] 01. AI, :, Alex Young, Bei Chen, Chao Li,      models with scalable training strategies, 2024.
+  Chengen Huang, Ge Zhang, Guanwei Zhang, Heng Li,             [Huang et al., 2024a] Zhengchao Huang, Bin Xia, Zicheng
+  Jiangcheng Zhu, Jianqun Chen, Jing Chang, Kaidong Yu,          Lin, Zhun Mou, Wenming Yang, and Jiaya Jia. Ffaa:
+  Peng Liu, Qiang Liu, Shawn Yue, Senbin Yang, Shiming           Multimodal large language model based explainable open-
+  Yang, Tao Yu, Wen Xie, Wenhao Huang, Xiaohui Hu, Xi-           world face forgery analysis assistant, 2024.
+  aoyi Ren, Xinyao Niu, Pengcheng Nie, Yuchi Xu, Yudong
+  Liu, Yue Wang, Yuxuan Cai, Zhenyu Gu, Zhiyuan Liu,           [Huang et al., 2024b] Zhenglin Huang, Jinwei Hu, Xiangtai
+  and Zonghong Dai. Yi: Open foundation models by 01.ai,         Li, Yiwei He, Xingyu Zhao, Bei Peng, Baoyuan Wu, Xi-
+  2024.                                                          aowei Huang, and Guangliang Cheng. Sida: Social me-
+                                                                 dia image deepfake detection, localization and explanation
+[Alibaba Security, 2020] Alibaba Security. Security ai chal-
+                                                                 with large multimodal model, 2024.
+  lenger program. https://tianchi.aliyun.com/competition/
+  entrance/531812/introduction, 2020.                          [Karatzas et al., 2013] Dimosthenis Karatzas, Faisal Shafait,
+                                                                 Seiichi Uchida, Masakazu Iwamura, Lluis Gomez i Big-
+[Cai and Vasconcelos, 2018] Zhaowei Cai and Nuno Vas-
+                                                                 orda, Sergi Robles Mestre, Joan Mas, David Fer-
+  concelos. Cascade r-cnn: Delving into high quality ob-         nandez Mota, Jon Almazan Almazan, and Lluis Pere
+  ject detection. In Proceedings of the IEEE Conference on       De Las Heras. Icdar 2013 robust reading competition. In
+  Computer Vision and Pattern Recognition (CVPR), June           2013 12th international conference on document analysis
+  2018.                                                          and recognition, pages 1484–1493. IEEE, 2013.
+[Chen et al., 2024a] Changsheng Chen, Liangwei Lin,            [Lai et al., 2024] Xin Lai, Zhuotao Tian, Yukang Chen, Yan-
+  Yongqi Chen, Bin Li, Jishen Zeng, and Jiwu Huang.              wei Li, Yuhui Yuan, Shu Liu, and Jiaya Jia. Lisa: Reason-
+  Cma: A chromaticity map adapter for robust detection of        ing segmentation via large language model. In Proceed-
+  screen-recapture document images. In Proceedings of the        ings of the IEEE/CVF Conference on Computer Vision and
+  IEEE/CVF Conference on Computer Vision and Pattern             Pattern Recognition, pages 9579–9589, 2024.
+  Recognition, pages 15577–15586, 2024.
+                                                               [Lampert et al., 2006] Christoph H Lampert, Lin Mei, and
+[Chen et al., 2024b] Haoxing Chen, Zhuoer Xu, Zhangxuan
+                                                                 Thomas M Breuel. Printing technique classification for
+  Gu, Yaohui Li, Changhua Meng, Huijia Zhu, Weiqiang             document counterfeit detection. In 2006 International
+  Wang, et al. Diffute: Universal text editing diffusion         Conference on Computational Intelligence and Security,
+  model. Advances in Neural Information Processing Sys-          volume 1, pages 639–644. IEEE, 2006.
+  tems, 36, 2024.
+                                                               [Li et al., 2024a] Jiawei Li, Fanrui Zhang, Jiaying Zhu, Es-
+[Chen et al., 2024c] Zhe Chen, Weiyun Wang, Hao Tian,
+                                                                  ther Sun, Qiang Zhang, and Zheng-Jun Zha. Forgerygpt:
+  Shenglong Ye, Zhangwei Gao, Erfei Cui, Wenwen Tong,
+                                                                  Multimodal large language model for explainable image
+  Kongzhi Hu, Jiapeng Luo, Zheng Ma, et al. How far
+                                                                  forgery detection and localization, 2024.
+  are we to gpt-4v? closing the gap to commercial mul-
+  timodal models with open-source suites. arXiv preprint       [Li et al., 2024b] Yixuan Li, Xuelin Liu, Xiaoyang Wang,
+  arXiv:2404.16821, 2024.                                         Bu Sung Lee, Shiqi Wang, Anderson Rocha, and Weisi
+                                                                  Lin. Fakebench: Probing explainable fake image detec-
+[Dong et al., 2024] Li Dong, Weipeng Liang, and Rangding
+                                                                  tion via large multimodal models, 2024.
+  Wang. Robust text image tampering localization via
+  forgery traces enhancement and multiscale attention. IEEE    [Lian et al., 2024] Jingchun Lian, Lingyu Liu, Yaxiong
+  Transactions on Consumer Electronics, 2024.                     Wang, Yujiao Wu, and Zhedong Zheng. A large-scale in-
+[Guillaro et al., 2023] Fabrizio Guillaro, Davide Cozzolino,      terpretable multi-modality benchmark for image forgery
+                                                                  localization, 2024.
+  Avneesh Sud, Nicholas Dufour, and Luisa Verdoliva. Tru-
+  for: Leveraging all-round clues for trustworthy image        [Loshchilov and Hutter, 2017] Ilya Loshchilov and Frank
+  forgery detection and localization. In Proceedings of the      Hutter. Decoupled weight decay regularization. arXiv
+  IEEE/CVF Conference on Computer Vision and Pattern             preprint arXiv:1711.05101, 2017.
+  Recognition, pages 20606–20615, 2023.                        [Lu et al., 2024] Haoyu Lu, Wen Liu, Bo Zhang, Bingxuan
+[Hu et al., 2021] Edward J Hu, Yelong Shen, Phillip Wallis,      Wang, Kai Dong, Bo Liu, Jingxiang Sun, Tongzheng Ren,
+  Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang,             Zhuoshu Li, Hao Yang, Yaofeng Sun, Chengqi Deng, Han-
+  and Weizhu Chen. Lora: Low-rank adaptation of large            wei Xu, Zhenda Xie, and Chong Ruan. Deepseek-vl: To-
+  language models. arXiv preprint arXiv:2106.09685, 2021.        wards real-world vision-language understanding, 2024.
+[Luo et al., 2024] Dongliang Luo, Yuliang Liu, Rui Yang,        [Shao et al., 2025] Huiru Shao, Zhuang Qian, Kaizhu
+  Xianjin Liu, Jishen Zeng, Yu Zhou, and Xiang Bai. To-            Huang, Wei Wang, Xiaowei Huang, and Qiufeng Wang.
+  ward real text manipulation detection: New dataset and           Delving into adversarial robustness on document tamper-
+  new solution. Pattern Recognition, page 110828, 2024.            ing localization. In European Conference on Computer
+[Mikolov et al., 2018] Tomas Mikolov, Edouard Grave, Piotr         Vision, pages 290–306. Springer, 2025.
+  Bojanowski, Christian Puhrsch, and Armand Joulin. Ad-         [Song et al., 2024] Yalin Song, Wenbin Jiang, Xiuli Chai,
+  vances in pre-training distributed word representations. In      Zhihua Gan, Mengyuan Zhou, and Lei Chen. Cross-
+  Proceedings of the International Conference on Language          attention based two-branch networks for document image
+  Resources and Evaluation (LREC 2018), 2018.                      forgery localization in the metaverse. ACM Transactions
+                                                                   on Multimedia Computing, Communications and Applica-
+[Nayef et al., 2017] Nibal Nayef, Fei Yin, Imen Bizid,
+                                                                   tions, 2024.
+  Hyunsoo Choi, Yuan Feng, Dimosthenis Karatzas, Zhenbo
+  Luo, Umapada Pal, Christophe Rigaud, Joseph Chazalon,         [Sun et al., 2019] Yipeng Sun, Zihan Ni, Chee-Kheng Chng,
+  et al. Icdar2017 robust reading challenge on multi-lingual       Yuliang Liu, Canjie Luo, Chun Chet Ng, Junyu Han, Er-
+  scene text detection and script identification-rrc-mlt. In       rui Ding, Jingtuo Liu, Dimosthenis Karatzas, et al. Ic-
+  2017 14th IAPR international conference on document              dar 2019 competition on large-scale street view text with
+  analysis and recognition (ICDAR), volume 1, pages 1454–          partial labeling-rrc-lsvt. In 2019 International Conference
+  1459. IEEE, 2017.                                                on Document Analysis and Recognition (ICDAR), pages
+                                                                   1557–1562. IEEE, 2019.
+[Nguyen et al., 2024] Quang Nguyen, Truong Vu, Trong-
+  Tung Nguyen, Yuxin Wen, Preston K Robinette, Taylor T         [Sun et al., 2024] Zhihao Sun, Haoran Jiang, Haoran Chen,
+  Johnson, Tom Goldstein, Anh Tran, and Khoi Nguyen.               Yixin Cao, Xipeng Qiu, Zuxuan Wu, and Yu-Gang Jiang.
+  Editscout: Locating forged regions from diffusion-based          Forgerysleuth: Empowering multimodal large language
+  edited images with multimodal llm, 2024.                         models for image manipulation detection, 2024.
+[OpenAI, 2024] OpenAI. Gpt-4 technical report, 2024.            [Wang et al., 2022] Yuxin Wang, Hongtao Xie, Mengting
+                                                                   Xing, Jing Wang, Shenggao Zhu, and Yongdong Zhang.
+[Pérez et al., 2023] Patrick Pérez, Michel Gangnet, and An-      Detecting tampered scene text in the wild. In European
+   drew Blake. Poisson image editing. In Seminal Graphics          Conference on Computer Vision, pages 215–232. Springer,
+   Papers: Pushing the Boundaries, Volume 2, pages 577–            2022.
+   582. 2023.                                                   [Wang et al., 2024] Peng Wang, Shuai Bai, Sinan Tan, Shijie
+[Qu et al., 2023] Chenfan Qu, Chongyu Liu, Yuliang Liu,            Wang, Zhihao Fan, Jinze Bai, Keqin Chen, Xuejing Liu,
+  Xinhong Chen, Dezhi Peng, Fengjun Guo, and Lianwen               Jialin Wang, Wenbin Ge, Yang Fan, Kai Dang, Mengfei
+  Jin. Towards robust tampered text detection in document          Du, Xuancheng Ren, Rui Men, Dayiheng Liu, Chang
+  image: new dataset and new solution. In Proceedings of           Zhou, Jingren Zhou, and Junyang Lin. Qwen2-vl: En-
+  the IEEE/CVF Conference on Computer Vision and Pat-              hancing vision-language model’s perception of the world
+  tern Recognition, pages 5937–5946, 2023.                         at any resolution, 2024.
+[Qu et al., 2024a] Chenfan Qu, Yiwu Zhong, Fengjun Guo,         [Wu et al., 2019] Liang Wu, Chengquan Zhang, Jiaming
+  and Lianwen Jin. Generalized tampered scene text detec-          Liu, Junyu Han, Jingtuo Liu, Errui Ding, and Xiang Bai.
+  tion in the era of generative ai, 2024.                          Editing text in the wild. In Proceedings of the 27th ACM
+                                                                   International Conference on Multimedia, MM ’19, page
+[Qu et al., 2024b] Chenfan Qu, Yiwu Zhong, Fengjun Guo,
+                                                                   1500–1508, New York, NY, USA, 2019. Association for
+  and Lianwen Jin. Omni-iml: Towards unified image ma-             Computing Machinery.
+  nipulation localization, 2024.
+                                                                [Xu et al., 2024] Zhipei Xu, Xuanyu Zhang, Runyi Li,
+[Qu et al., 2024c] Chenfan Qu, Yiwu Zhong, Chongyu Liu,            Zecheng Tang, Qing Huang, and Jian Zhang. Fakeshield:
+  Guitao Xu, Dezhi Peng, Fengjun Guo, and Lianwen                  Explainable image forgery detection and localization via
+  Jin. Towards modern image manipulation localization: A           multi-modal large language models, 2024.
+  large-scale dataset and novel methods. In Proceedings of
+  the IEEE/CVF Conference on Computer Vision and Pat-           [Zhang et al., 2019] Rui Zhang, Yongsheng Zhou, Qianyi
+  tern Recognition (CVPR), pages 10781–10790, June 2024.           Jiang, Qi Song, Nan Li, Kai Zhou, Lei Wang, Dong Wang,
+                                                                   Minghui Liao, Mingkun Yang, et al. Icdar 2019 robust
+[Ren et al., 2015] Shaoqing Ren, Kaiming He, Ross Gir-             reading challenge on reading chinese text on signboard. In
+  shick, and Jian Sun. Faster r-cnn: Towards real-time ob-         2019 international conference on document analysis and
+  ject detection with region proposal networks. Advances in        recognition (ICDAR), pages 1577–1581. IEEE, 2019.
+  neural information processing systems, 28, 2015.
+[Shao et al., 2023] Huiru Shao, Kaizhu Huang, Wei Wang,
+   Xiaowei Huang, and Qiufeng Wang. Progressive super-
+   vision for tampering localization in document images. In
+   International Conference on Neural Information Process-
+   ing, pages 140–151. Springer, 2023.
+7   The Proposed Textual Prompt                                      9   Visualization
+Due to the different characteristics of tampered text, exist-        The prediction visualization of GPT4o, Qwen2VL-7B and
+ing textual prompts designed for natural objects or deepfakes        our TextSleuth is shown in Figures 6 and 7. Evidently, the
+cannot be directly used to generate high-quality anomaly de-         proposed method can produce more accurate results. More
+scriptions for tampered text. To this end, we redesign the tex-      samples of the ETTD dataset are shown in Figures 8 and 9.
+tual prompt by summarizing the possible anomalies caused
+by text tampering into six major perspectives and providing a
+detailed explanation for each of them.
+The full version of our textual prompt is:
+You are an expert good at analyzing tampered text images.
+You will be provided with two images, the first is the tam-
+pered text image A and the second is the reference image
+B, with the tampered areas highlighted and the authentic
+areas darkened.
+Your task is to: First, recognize the tampered text and out-
+put its OCR result. Second, Describe visible details in the
+image that have been tampered with. Please consider the
+visible details caused by tampering from these perspectives.
+1. Edge artifacts. The background of the tampered text
+may be inconsistent with the authentic regions. Therefore,
+the edges around the tampered text region may be discontin-
+uous and inconsistent with the background.
+2. Unnatural texture appearance. The texture appearance
+of the tampered text may be slightly blurred, hazy, jagged,
+have a distortion effect, or have an unnatural clarity.
+3. Inconsistent font. The font of the tampered text may be
+slightly different in color, size, thickness, brightness, or style
+from the surrounding authentic text.
+4. Inconsistent alignment. The tampered text may have in-
+consistent spacing with the surrounding text or a small offset
+to the text line.
+5. Text incoherence. Tampered text may break the coherence
+of the sentence.
+6. Lack of integration. The tampered text may appear un-
+naturally placed and not integrated with its surroundings, or
+it may not blend seamlessly with its surroundings, appearing
+artificially overlaid or unnaturally pasted. Don’t mention the
+image B in your answer, always assume that you are only ob-
+serving the input image A.
+   As shown in Figure 1, our proposed prompt can help
+GPT4o output a satisfactory anomaly description.
+
+8   Detection Performance
+We present the detection performance of the detector in the
+proposed TextSleuth in Table 7. The precision, recall and F1-
+score under the ICDAR2017 DetEval protocol [Nayef et al.,
+2017] and an IoU threshold of 0.5 are used.
+
+Table 7: The detection performance of the detector in the proposed
+TextSleuth. The IoU threshold is set to 0.5.
+
+     Dataset          Precision       Recall        F1-score
+    ETTD-Test           0.994         0.986          0.990
+    ETTD-CD             0.983         0.995          0.989
+            You are an expert good at analyzing tampered text images. You will be provided with two images, the first is the tampered text image
+            A and the second is the reference image B, with the tampered areas highlighted and the authentic areas darkened.
+            Your task is to: First, recognize the tampered text and output its OCR result. Second, Describe visible details in the image that have
+    User    been tampered with. Please consider the visible details caused by tampering from these perspectives:
+
+            1. Edge artifacts. The background of the tampered text may be inconsistent with the authentic regions. Therefore, the edges around
+            the tampered text region may be discontinuous and inconsistent with the background.
+            2. Unnatural texture appearance. The texture appearance of the tampered text may be slightly blurred, hazy, jagged, have a distortion
+            effect, or have an unnatural clarity.
+            3. Inconsistent font. The font of the tampered text may be slightly different in color, size, thickness, brightness, or style from the
+            surrounding authentic text.
+            4. Inconsistent alignment. The tampered text may have inconsistent spacing with the surrounding text or a small offset to the text line.
+            5. Text incoherence. Tampered text may break the coherence of the sentence.
+            6. Lack of integration. The tampered text may appear unnaturally placed and not integrated with its surroundings, or it may not blend
+            seamlessly with its surroundings, appearing artificially overlaid or unnaturally pasted.
+
+            Don't mention the image B in your answer, always assume that you are only observing the input image A.
+
+
+
+
+   User
+
+
+
+
+             The tampered text reads "GRASS".
+             Edge Artifacts: The edges around the tampered text "GRASS" appear to be discontinuous with the surrounding background.
+  GPT4o      There is a noticeable boundary around the letters that does not seamlessly blend with the text's immediate environment,
+             suggesting a cut-and-paste effect commonly found in image tampering.
+             Unnatural Texture Appearance: The texture of the tampered text "GRASS" appears slightly blurred compared to the sharper
+             appearance of the other texts. This distortion effect, where the edges of the letters do not have the same crispness or definition
+             as the authentic text, makes it stand out unnaturally.
+             Inconsistent Alignment: The spacing between the tampered text "GRASS" and the preceding text "BREAK" appears irregular or
+             has a slight offset when compared to the consistency seen in the other lines of text. This misalignment disrupts the uniformity
+             typically expected in such signage.
+             Text Incoherence: The text "BREAK GRASS" does not create a coherent or meaningful message within the context of safety
+             instructions, which typically involve actions like "BREAK GLASS." This incoherence adds to the suspicion of tampering, as the
+             revised phrasing results in linguistic nonsense.
+             Lack of Integration: The tampered text "GRASS" appears as though it has been overlaid or pasted onto the image rather than
+             being a naturally integrated part of the scene. This artificial placement makes the text appear as a foreign element within the
+             image, lacking the integration seen in genuine, unaltered text regions.
+
+
+
+
+Figure 5: Our proposed textual prompt are specially designed for tampered text can can guide GPT4o to generate high-quality anomaly
+descriptions for tampered text.
+                                   What is the tampered text in this image? Why?                               The tampered text localization
+                                                                                                               prediction of our TextSleuth
+                                                                                                               model. (Correct)
+  User
+
+
+
+
+               Yes, the image has tampered text. The anomaly is in the area where the text "劳务人发包" seems to be manipulated. The space
+               between the two Chinese characters "劳务" and "人发包" is unusually large and inconsistent with the rest of the document's
+               textual formatting, indicating potential tampering. (Partly correct answer)
+ GPT4o
+               The tampered text reads "人".
+               Edge artifacts: The edges around the tampered text "人" appear slightly discontinuous and inconsistent with the surrounding
+               background. This suggests that the text may have been artificially inserted, as the transition between the text and the
+               background is not as smooth as in the authentic regions.
+Qwen2VL        Unnatural texture appearance: The texture of the tampered text "人" appears slightly different from the surrounding text. It
+               may have an unnatural clarity or sharpness that does not match the rest of the document, indicating tampering.
+               Lack of integration: The tampered text "人" appears unnaturally placed and does not blend seamlessly with its surroundings. It
+               looks as if it has been overlaid or pasted onto the document, rather than being an original part of the text.“. (Partly correct)
+
+               The tampered text reads "人".
+               Unnatural texture appearance: The texture of the tampered text "人" appears slightly blurred and hazy compared to the
+               surrounding authentic text. This lack of clarity and the presence of jagged edges contribute to the unnatural appearance of the
+               tampered text.
+               Inconsistent font: The tampered text "人" exhibits inconsistencies in font thickness and brightness compared to the surrounding
+TextSleuth     text. The character appears slightly bolder and brighter, indicating a difference in the font style used for the tampered text.
+  (Ours)       Inconsistent alignment: The tampered text "人" has inconsistent spacing with the surrounding text, the spacing around the text
+               "人" is unnaturally large.
+               Lack of integration: The tampered text "人" does not blend seamlessly with its surroundings. It appears artificially overlaid, as if
+               it was pasted onto the image rather than being part of the original text. This lack of integration is evident in the way the
+               character stands out from the rest of the text.“. (Correct answer)
+
+
+
+  Figure 6: Our proposed TextSleuth can accurately detect the tampered text and better explain the anomalies of the tampered text.
+              What is the tampered text in this image? Why?                                Our model’s localization prediction of tampered text.
+
+
+ User
+
+
+
+
+              Yes, the text appears to have been tampered with. The manipulated area is the percentage figure next to "FINE GAEL" under the
+              "65+ %" category in the Age section. The abnormality is in the appearance of the number "62" which seems larger, bolder, and
+              slightly misaligned compared to the other numbers in the grid, indicating it might have been digitally altered or superimposed.
+ GPT4o        Additionally, visually it looks out of place and indicates it has been tampered with. (Incorrect answer)
+
+
+              The tampered text reads "22".
+              Edge artifacts: The edges around the tampered text "22" appear slightly discontinuous and inconsistent with the surrounding
+              background. This suggests that the text may have been inserted or altered, as the transition between the text and the
+              background is not seamless.
+Qwen2VL       Unnatural texture appearance: The texture of the tampered text "22" seems slightly different from the authentic text. It appears
+              slightly blurred or hazy compared to the sharper, more defined text around it, indicating potential tampering.
+              Lack of integration: The tampered text "22" appears unnaturally placed and does not blend seamlessly with its surroundings. It
+              looks artificially overlaid, as if it was pasted onto the image rather than being part of the original design. (Incorrect answer)
+
+
+              The tampered text reads "33".
+              Edge artifacts: The edges around the tampered text "33" appear slightly inconsistent with the background. There are noticeable
+              discontinuities or a change in texture in the immediate vicinity of the text, suggesting the insertion of new text.
+              Unnatural texture appearance: The texture of the number "33" seems to have a slightly different appearance compared to
+              neighboring text. It indicates alterations.
+TextSleuth    Inconsistent font: The font style, thickness, or color of "33" differs subtly from the surrounding numbers. This inconsistency can
+  (Ours)      serve as an indicator of tampering, suggesting that the font does not match the original style used in the rest of the document.
+              Lack of integration: The "33" does not blend seamlessly with its surrounding text and grid lines, making it appear artificially
+              overlaid or pasted. It lacks the natural integration seen in untouched sections of the document, enhancing the perception of
+              tampering. (Correct answer)
+
+
+
+ Figure 7: Our proposed TextSleuth can accurately detect the tampered text and better explain the anomalies of the tampered text.
+    The tampered text reads "PR".
+    Edge Artifacts: The tampered text "PR" shows visible discontinuities at the edges compared to the surrounding areas. The edges around the "PR"
+    text show a break or discontinuity against the background, indicating it was not part of the original image.
+    Unnatural Texture Appearance: The texture of the tampered "PR" text appears somewhat hazy and less sharp than the surrounding authentic
+    texts. This indicates manipulation, as the integrated texture should normally appear consistent.
+    Inconsistent Font: There is a noticeable inconsistency in size and color with the text just before it and the authentic "STOP" text below. The
+    tampered text "PR" appears slightly more faded and not as bold as the surrounding text.
+    Inconsistent Alignment: The "PR" does not line up properly with the preceding text "DON," appearing offset both horizontally and vertically. This
+    inconsistent alignment makes the text look less natural and more likely tampered with.
+    Text Incoherence: The inclusion of the letters "PR" within the context of the image does not form a coherent or expected phrase within the
+    setting of a traffic sign, suggesting tampering in terms of intended message.
+    Lack of Integration: The tampered "PR" text does not smoothly integrate with the color and shading nuances of the stop sign's red background or
+    the adjacent legitimate text, making it appear as an artificially placed element.
+
+
+
+
+    The tampered text reads "JAMES".
+    Edge artifacts: The edges around the tampered text "JAMES" appear to be inconsistent with the background, indicating discontinuity. This is
+    evident where the boundary between the tampered region and the surrounding area is not as smooth or consistent as the original regions.
+    Unnatural texture appearance: The tampered text "JAMES" exhibits a slightly unnatural texture, where the clarity of the letters seems detached
+    from the rest of the image. This could manifest as either an overly sharp appearance compared to the slightly blurred background or an
+    inconsistent texture.
+    Inconsistent font: There is a noticeable difference in the font style or thickness of the tampered text "JAMES" compared to the surrounding
+    authentic text. This can include variations in color, size, or brightness, which makes the tampered text stand out unnaturally from the rest.
+    Lack of integration: The tampered text "JAMES" appears unnaturally placed, as if overlaid on the image without seamlessly blending with its
+    surroundings. This lack of integration points to an artificial addition which has a contrasting appearance compared to the authentic text.
+
+
+
+
+    The tampered text reads "7890".
+    Edge Artifacts: The edges around the tampered text "7890" appear to be slightly discontinuous and inconsistent with the background texture,
+    which results in an unnatural demarcation between the tampered text and the surrounding authentic text. This discontinuity suggests tampering.
+    Unnatural Texture Appearance: The tampered text "7890" has a slightly different texture compared to the surrounding numbers. It appears
+    somewhat blurred or artificially smoothened, which results in an unnatural clarity that is distinct from the rest of the text, indicating a potential
+    tampering effect.
+    Lack of Integration: The tampered text "7890" does not blend seamlessly with the surrounding characters and the background. It appears
+    somewhat as if it is placed on top of the card's design rather than integrated into it, giving an impression of being unnaturally overlaid or pasted
+    into the image.
+
+
+
+Figure 8: More data samples in the proposed ETTD dataset. The left image in each row is the original image and the tampered text region is
+highlighted in the right image.
+    The tampered text reads "B".
+    Unnatural Texture Appearance: The letter "B" displays an unnatural texture. This is evident through slight blurriness, jagged edges, or a distortion
+    effect making it stand out against the surrounding authentic text.
+    Inconsistent Font: The character "B" differs in font size, thickness, brightness, and color compared to the surrounding text. This variance makes it
+    appear distinct and separate from the rest of the text elements in the label.
+
+
+
+
+    The tampered text reads "67".
+    Edge Artifacts: The number "67" has visible edge artifacts, indicating tampering. The boundaries around these characters appear more prominent
+    or sharper than the surrounding text, suggesting they were added separately.
+    Inconsistent Font: The font used for "67" shows slight variances in thickness or brightness compared to the authentic text, indicating that it was
+    not originally part of the document.
+    Unnatural Texture Appearance: The "67" appears slightly blurred or hazy compared to nearby numbers. This effect might result from editing that
+    failed to seamlessly integrate the new text with the texture of the paper.
+
+
+
+
+    The tampered text reads "8X".
+    Edge Artifacts: The edges around the "8X" tampered text appear slightly inconsistent with the smooth and continuous background typically seen
+    in authentic regions. This manifests in subtle edge discontinuities or abrupt transitions that do not blend seamlessly with the surrounding area.
+    Unnatural Texture Appearance: The "8X" text shows signs of unnatural texture compared to its original appearance. This includes potential
+    blurriness, haziness, or jagged contours which are not naturally found on the finely rendered elements typical of this user interface.
+
+
+
+Figure 9: More data samples in the proposed ETTD dataset. The left image in each row is the original image and the tampered text region is
+highlighted in the right image.
+

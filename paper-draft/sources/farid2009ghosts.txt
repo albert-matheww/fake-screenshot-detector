@@ -1,0 +1,5 @@
+Exposing Digital Forgeries From JPEG Ghosts
+Farid, H. (2009). IEEE Transactions on Information Forensics and Security. doi:10.1109/tifs.2008.2012215
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+When creating a digital forgery, it is often necessary to combine several images, for example, when compositing one person's head onto another person's body. If these images were originally of different JPEG compression quality, then the digital composite may contain a trace of the original compression qualities. To this end, we describe a technique to detect whether the part of an image was initially compressed at a lower quality than the rest of the image. This approach is applicable to images of high and low quality as well as resolution.

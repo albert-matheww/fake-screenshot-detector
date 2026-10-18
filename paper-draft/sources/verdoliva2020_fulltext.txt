@@ -1,0 +1,1622 @@
+                                                                                                                                                                                                1
+
+
+
+
+                                                                     Media Forensics and DeepFakes:
+                                                                              an overview
+                                                                                                           Luisa Verdoliva
+
+
+
+                                            Abstract—With the rapid progress of recent years, techniques
+                                         that generate and manipulate multimedia content can now guar-
+                                         antee a very advanced level of realism. The boundary between
+                                         real and synthetic media has become very thin. On the one
+                                         hand, this opens the door to a series of exciting applications in
+
+
+
+
+arXiv:2001.06564v1 [cs.CV] 18 Jan 2020
+                                         different fields such as creative arts, advertising, film production,
+                                         video games. On the other hand, it poses enormous security
+                                         threats. Software packages freely available on the web allow any
+                                         individual, without special skills, to create very realistic fake
+                                         images and videos. So-called deepfakes can be used to manipulate
+                                         public opinion during elections, commit fraud, discredit or                   Fig. 1. Examples of deepfake manipulations from YouTube. Top: manipulated
+                                         blackmail people. Potential abuses are limited only by human                  videos; bottom: original videos. It is worth noting that in the real videos
+                                         imagination. Therefore, there is an urgent need for automated                 Obama and Trump are impersonated by comic actors.
+                                         tools capable of detecting false multimedia content and avoiding
+                                         the spread of dangerous false information. This review paper
+                                         aims to present an analysis of the methods for visual media                   new video on his own, with a collaborative actor whose face is
+                                         integrity verification, that is, the detection of manipulated images
+                                         and videos. Special emphasis will be placed on the emerging                   eventually replaced by the target face. Governmental bodies,
+                                         phenomenon of deepfakes and, from the point of view of the                    enforcement agencies, the news industry, and also the man in
+                                         forensic analyst, on modern data-driven forensic methods. The                 the street are becoming acutely aware of the potential menace
+                                         analysis will help to highlight the limits of current forensic tools,         carried by such a technology. The scientific community is
+                                         the most relevant issues, the upcoming challenges, and suggest                asked to develop reliable tools for automatically detecting fake
+                                         future directions for research.
+                                                                                                                       multimedia.
+                                            Index Terms—Digital image forensics, video forensics, deep                    Actually, this is not a new problem. Image manipulation has
+                                         learning, deepfakes.
+                                                                                                                       been carried out since photography was born1 , and powerful
+                                                                                                                       image/video editing tools, such as Photoshop R , After Effects
+                                                                  I. I NTRODUCTION                                     Pro R , or the open source software GIMP, have been around
+                                                                                                                       for a long time. Using such conventional signal processing
+                                            Fake multimedia has become a central problem in the last
+                                                                                                                       methods, images can be easily modified, obtaining realistic
+                                         few years, especially after the advent of the so called Deep-
+                                                                                                                       results that can fool even a careful observer. Figure 2 shows
+                                         fakes, i.e., images and videos manipulated using advanced
+                                                                                                                       some examples of skillfully manipulated images that have
+                                         deep learning tools, like autoencoders (AE) or generative
+                                                                                                                       been disseminated on the Internet in recent years to spread
+                                         adversarial networks (GAN). With this technology, creating
+                                                                                                                       false news, both on images2 and videos3 . In fact, research
+                                         realistic manipulated media assets may be very easy, provided
+                                                                                                                       in multimedia forensics has been going on for at least 15
+                                         one can access large amounts of data. Applications include
+                                                                                                                       years [1], [2], and is receiving ever growing attention, not
+                                         movie productions, photography, video-games and virtual re-
+                                                                                                                       only from the academy, but also from major information
+                                         ality. The very same technology, however, can also be used for
+                                                                                                                       technology (IT) companies and funding agencies. In 2016,
+                                         malicious purposes, like creating fake porn videos to blackmail
+                                                                                                                       the Defense Advanced Research Projects Agency (DARPA)
+                                         people, or building fake-news campaigns to manipulate the
+                                                                                                                       of the U.S. Department of Defense launched the large-scale
+                                         public opinion. In the long run, it may also reduce trust in
+                                                                                                                       Media Forensic initiative (MediFor) to foster research on
+                                         journalism, including serious and reliable sources. Figure 1
+                                                                                                                       media integrity, with important outcomes in terms of methods
+                                         shows some popular deepfakes circulating on the internet.
+                                                                                                                       and reference datasets.
+                                         These fakes are easy to spot since they were generated for fun
+                                                                                                                          Following the MediFor taxonomy, digital media verifica-
+                                         and involve well-known actors and politicians in unlikely situ-
+                                                                                                                       tion should look for physical integrity, digital integrity, and
+                                         ations. In addition, on the web it is usually possible to retrieve
+                                                                                                                       semantic integrity. In the literature, several methods have been
+                                         both the original and the manipulated version, removing any
+                                                                                                                       proposed, which expose physical inconsistencies, concerning
+                                         doubt about authenticity. However, verifying digital integrity
+                                         becomes much more difficult if the video portrays a less known                   1 https://www.dailymail.co.uk/news/article-2107109/Iconic-Abraham-
+                                         person and only the manipulated version is publicly available.                Lincoln-portrait-revealed-TWO-pictures-stitched-together.html
+                                         This scenario takes place, for example, if the attacker films a                  2 https://www.cnn.com/2018/03/26/us/emma-gonzalez-photo-doctored-
+                                                                                                                       trnd/index.html
+                                           L.Verdoliva is with the Department of Industrial Engineering, Università      3 https://www.theguardian.com/world/2015/mar/19/i-faked-the-yanis-
+                                         Federico II di Napoli, Naples, Italy. E-mail: verdoliv@unina.it.              varoufakis-middle-finger-video-says-german-tv-presenter
+                                                                                                                                                              2
+
+
+
+
+                                                                                        Splicing (composition)   Copy-move (cloning)   Inpainting (removal)
+
+
+
+
+Fig. 2. Examples of fake multimedia where two different versions of an
+image/video can be retrieved from the web. In one image Emma Gonzalez
+(left) an american activist is tearing up the American Constitution, while in a   Fig. 3. Examples of image manipulations carried out using conventional
+video Yanis Varoufakis (right) a greek politician is giving the middle-finger     media editing tools. Images come from the dataset of the 1st IEEE Image
+gesture to Germany.                                                               Forensics Challenge organized in 2013. From left to right: splicing (alien
+                                                                                  material has been inserted in the image), copy-move (an object has been
+                                                                                  cloned), inpainting (an object has been hidden by background patches).
+
+for example shadows or illumination or perspective [3], [4],
+[5]. Modern sophisticated manipulations, however, are more                        on a social network.
+and more effective in avoiding such pitfalls and methods                             The review starts with a brief analysis of the most effective
+which test digital integrity are by far more widespread and                       manipulation methods proposed in recent years (Section II).
+represent the current state of the art. Indeed, each image or                     Then, integrity verification methods are described, beginning
+video is characterized by a number of features, which depend                      with conventional approaches (Section III), then moving to
+on the different phases of its digital history: from the very                     deep learning-based approaches (Section IV), to conclude with
+same acquisition process, to the internal camera processing                       specific deepfake detection methods (Section V). In Section
+(e.g. demosaicing, compression), to all external processing and                   VI, a discussion of the state of multimedia forensics and
+editing operations [6]. Digital manipulations tend to modify                      its perspectives after the advent of deep learning is carried
+such features, leaving a trail of clues which, although invisible                 out. A list of the datasets most widespread in the field is
+to the eye, can be exploited by pixel-level analysis tools.                       presented in Section VII. Then, the further major themes of
+Instead, semantic integrity is violated when the media asset                      counterforensics (Section VIII) and fusion (Section IX) are
+under analysis conveys information which is not coherent with                     considered. Finally, future research directions are outlined
+the context or with evidence coming from correlated sources.                      (Section X) and conclusions are drawn (Section XI).
+For example, when objects are copy-pasted from images avail-
+able on the web, several near-identical copies can be detected                                      II. FAKE CONTENT GENERATION
+[7], [8], suggesting a possible manipulation. Moreover, by                           There are many ways to manipulate visual content, and new
+identifying the connections among the various versions of the                     methods are proposed by the day. This Section will briefly
+same asset, it is possible to build its manipulation history                      review some of the most widespread and promising of them.
+(image and video phylogeny) [9], [10].                                            Very common operations are adding, replicating or removing
+   Despite the continuous research efforts and the numerous                       objects, as in the examples of Figure 3. A new object can
+forensic tools developed in the past, the advent of deep learn-                   be inserted by copying it from a different image (splicing),
+ing, is changing the rules of the game and asking multimedia                      or from the same image (copy-move). Instead, an existing
+forensics for new and timely solutions. This phenomenon is                        object can be deleted by extending the background to cover
+also causing a strong acceleration in multimedia forensics                        it (inpainting) like in the popular exemplar-based inpainting
+research, which often relies itself on deep learning. There have                  [33]. All these tasks are easily accomplished with widespread
+been several reviews on this topic [11], [12], [6], [13], [14],                   image editing packages. Then, some suitable post-processing,
+however these last years have witnessed the advent of new                         like resizing, rotation or color adjustment, may be required
+methods. Hence, beyond reviewing the conventional media                           to better fit the object to the scene, both to improve the
+forensics approaches, a special attention will be devoted to                      visual appearance and to guarantee coherent perspective and
+deep learning-based approaches and to the strategies designed                     scale. In recent years, however, the same results are achieved,
+to fight deepfakes. The analysis will be restricted to passive                    with better semantic consistency, through advanced computer
+methods and visual data-based solutions. That is, it will be                      graphics (CG) approaches and deep learning (see Figure 4,
+assumed that no active strategy is in place to ensure integrity,                  last column). Manipulations that do not require sophisticated
+and that a skilled attacker modified metadata to make them                        artificial intelligence (AI) tools are sometimes referred to as
+useless, otherwise they would provide precious information                        “cheap fakes”. Nonetheless, their impact in distorting reality
+towards authenticity verification both for images and videos                      can be very high. For example, by removing, inserting or
+[15], [16], [17]. On the other hand, it is worth noting that meta-                cloning entire groups of frames one can completely change
+data are routinely canceled when media assets are uploaded                        the meaning of a video. A simple frame-rate reduction was
+                                                                                                                                                                  3
+
+
+
+
+                                Generation                    Expression transfer                   Image-to-image                         Inpainting
+
+
+
+
+                        Change of attributes                    Face swapping                 Segmentation map-to-image                   Composition
+
+
+
+
+                         Paint with features                     Text-to video                      Sketch-to-image                        Copy-move
+
+
+                               + red limbs =
+
+
+
+
+                               Text-to-image                    Change of Style                      Video-to-video                         Removal
+
+       These flowers have
+       petals that start off
+       white in color and
+       end in a dark purple
+       towards the tips.
+
+
+
+
+Fig. 4. Examples of image and video manipulations carried out using deep learning methods. Besides conventional manipulations, like composition [18],
+copy-move [19], object removal [20], inpainting [21], a large number of new tasks can be performed. These include content generation [22], [23], image/video
+synthesis from semantic labels [24], [25] or sketches [26] or text [27], changes of style and attributes [22], [28], [29], domain translation [30], up to expression
+transfer [25], face swapping typical of deepfakes [31] and talking-head video editing [32]. It is worth underlining that deep learning methods require no
+manual media editing on the part of the user, except for possible post-processing.
+
+
+
+recently used to let Nancy Pelosi, Speaker of the U.S. House                        even without a huge amount of training photos of the targeted
+of Representatives, appear as drunk or confused4 .                                  person [44]. It is even possible to animate the face of a
+   Besides these “traditional” manipulations, concerning spe-                       still portrait and express various types of emotions [45].
+cific areas of the image or video, deep learning and computer                       Beyond faces, some recent work addressed motion transfer:
+graphics are now offering a large number of new ones. First of                      the target person dances following the movements transferred
+all, a media asset can be synthesized completely from scratch.                      from a source dancer [46]. In Figure 4 some examples of
+To this end, autoencoders and generative adversarial networks                       such manipulations are presented. One can easily observe how
+allowed to develop successful solutions [34] especially for                         realistic they appear and the variety of possible automatic
+face synthesis, where a high level of photo-realism has been                        editing tools available nowadays.
+achieved [35], [22]. It is also possible to generate a completely
+                                                                                             III. C ONVENTIONAL DETECTION METHODS
+synthetic image or video using a segmentation map as input
+[36]. Image synthesis is also achievable using only a sketch                           This Section reviews the major lines of research in multi-
+[37], [24] or a text description [27]. Likewise, the face of a                      media forensics before the emergence of deep learning and
+person can be animated based on an audio input sequence [38],                       deepfakes. The most popular approaches look for artifacts
+[39]. More often, the manipulation modifies existing images                         related to the in-camera processing chain (camera-based clues)
+or videos. A well-known example is style transfer [26], [30],                       or the out-camera processing history (editing-based clues)
+which allows to change the style of a painting, switch oranges                      [47]. A defining property of the approaches proposed so far
+to apples, or reproduce an image in a different season. Major                       is the prior knowledge they rely upon, which impacts on
+efforts have been devoted to manipulating faces, for their                          their suitability for real-world applications. Following this
+high semantic value, and for the many possible applications.                        perspective, first, blind methods will be described, where no
+Methods have been proposed to change the expression of a                            prior knowledge is required. Then, the focus will shift on one-
+face [40], [41], to transfer the expression from a source to                        class methods, which need information only on pristine data,
+a target actor [42], [43], or to swap faces [31]. Recently, it                      through a collection of images/videos taken from the camera
+has been shown that effective face manipulation is feasible                         of interest or, more in general, a large set of untampered data.
+                                                                                    Eventually, supervised methods will be considered, which
+  4 https://www.washingtonpost.com/technology/2019/05/23/faked-pelosi-              rely on a suitable training set comprising both pristine and
+videos-slowed-make-her-appear-drunk-spread-across-social-media/                     manipulated data.
+                                                                                                                                                              4
+
+
+
+
+                                                                                     color
+                                                                                                  compression
+                                                                                 Interpolation
+
+
+                       filters      lens       color filter array   sensor
+
+                                              Hardware                                      Software                         Editing
+                                                      IN-CAMERA PROCESSING                                           OUT-CAMERA PROCESSING
+
+
+
+Fig. 5. An image is captured using an acquisition system whose basic components are represented in this figure. After undesired light components are reduced
+using optical filters, the lenses focus the light on the sensor. In order to extract the red-green-blue (RGB) components, a color filter array (CFA) is present.
+Each individual sensor element records light only in a certain range of wavelengths. Therefore, the missing color information at a pixel must be recovered
+from surrounding pixels, through a process known as color filter array interpolation or demosaicing. Then, a sequence of internal processing steps follow,
+including color correction, enhancement and, finally, compression. The implementation and parametrization of all these components differ based on the camera
+model and provide important clues that are exploited in the forensic multimedia analysis. Alterations carried out by the malicious user can also introduce
+artifacts that allow forensic analyses and detection.
+
+
+
+A. Blind methods                                                                     2) CFA artifacts: most digital cameras use a color filter
+                                                                                  array (CFA), with a periodic pattern, so that each individual
+   Blind approaches do not use any external data for training or                  sensor element records light only in a certain range of wave-
+for other forms of pre-processing: they rely exclusively on the                   lengths (i.e. red, green, blue). The missing color information
+media asset under analysis, and try to reveal anomalies which                     is then interpolated from surrounding pixels, an operation
+may suggest the presence of an manipulation. In particular,                       known as demosaicing. This process introduces a subtle pe-
+they look for a number of specific artifacts originated by                        riodic correlation pattern in all acquired images. Whenever
+in-camera or out-camera processing (Figure 5). In fact, the                       a manipulation occurs, this periodic pattern is perturbed. In
+image formation process inside a camera requires a number                         addition, since CFA configuration and interpolation algorithms
+of operations, both hardware and software, which are specific                     are specific of each camera model [53], [54], when a region is
+of each individual camera and leave distinctive traces on the                     spliced in a photo taken by another camera model, its periodic
+acquired image. For example, the demosaicing algorithm is                         pattern will appear anomalous. One of the first methods to
+typically different for different camera models. Therefore,                       exploit these artifacts was proposed by Popescu and Farid
+when a manipulation involves the composition of parts of                          [55] back in 2005, based on a simple linear model to capture
+images acquired from different models, demosaicing-related                        periodic correlations. Of course, periodic signals produce
+spatial anomalies arise. Likewise, the out-camera editing pro-                    strong peaks in the Fourier domain. This can be used to
+cess may introduce its own peculiar traces, as well as disrupt                    distinguish natural images from computer generated images
+fingerprint-like camera-specific patterns, phenomena which                        [55], [56], especially after high-pass filtering the image so as
+both allow reliable detection of the attack. Of course, most                      to extract more effective features [56], [57]. The problem can
+of these traces are very subtle and cannot be perceived at a                      be also recast in a Bayesian framework, as proposed in [58],
+visual inspection. However, once properly emphasized, they                        obtaining a probability map in output which allows for fine-
+represent a precious source of information to establish digital                   grained localization of image tampering. In [59] the analysis
+integrity (Figure 6).                                                             is extended to take into account also pixel correlations across
+                                                                                  color channels.
+   1) Lens distortion: each camera is equipped with a com-
+plex optical system which cannot perfectly focus light at all                        3) Noise level and noise pattern: a more general approach
+different wavelengths. These imperfections can be used for                        is to highlight noise artifacts introduced by the whole acquisi-
+forensic purposes. In [48] a method is proposed which exploits                    tion process, irrespective of their specific origin. The analysis
+the lateral chromatic aberrations, off-axis displacements of the                  of local noise level may help reveal splicings, as shown in
+light components at different wavelengths that results in a                       [60], because different cameras are characterized by different
+misalignment between the color channels, while the method                         intrinsic noise. Local noise analysis has been proposed using
+proposed in [49] relies on the aberrations generated by the                       statistical tools in the image domain [60], [61] or in the
+interaction between lens and sensor. Improved versions of the                     wavelet domain [62]. This approach is also at the basis of
+method based on lateral chromatic aberrations, with a more                        the so-called Error Level Analysis (ELA), widely used by
+efficient estimation of local displacements, are proposed in                      practitioners for its simplicity. However, noise intensity alone
+[50] and more recently in [51]. Finally, in [52] it is exploited                  is not very informative, and may easily provide wrong indi-
+the radial distortion that characterizes the wide-angle lens                      cations. Therefore, in [63] the high-pass noise residual of the
+typically used for indoor/outdoor video surveillance.                             image is used to extract rich features which better characterize
+                                                                                                                                                         5
+
+
+
+                Forged image        Ground truth             JPEG artifacts          Noise patterns       Double Compression            Copy-move
+
+
+
+    copy-move
+
+
+
+
+    splicing
+
+
+
+Fig. 6. Localization results of some blind methods for images with copy-move (top) and splicing (bottom). From left to right, manipulated image, ground
+truth, and localization heatmaps obtained with methods based on JPEG artifacts, noise patterns, double quantization artifacts, copy-move search. Of course,
+copy-move methods are not effective for splicing manipulations.
+
+
+
+local neighborhoods. The expectation-maximization algorithm                    plementations of the JPEG standard, including customized
+is then used for clustering these features and reveal possible                 quantization tables and post-processing steps [80], [15]. In [81]
+anomalies. In all above methods, the noise residual is only                    model-specific JPEG features have been defined, the JPEG
+used to detect possible anomalies.                                             dimples, which depend on how coefficients are converted from
+   Departing from this “agnostic” approach, the method pro-                    real to integer: by the ceil, floor, or rounding operator. Also,
+posed in [47] uses the noise residual to estimate the imaging                  chroma subsampling presents specific clues due to integer
+model and define an intrinsic camera fingerprint. Inconsisten-                 rounding [82].
+cies with respect to the estimated model are then used to                         Exploiting compression artifacts for detecting video manip-
+discover possible manipulations. A similar idea is extended                    ulation is also possible, but is much more difficult because of
+to videos in [64], [65], [66] where the noise residuals of                     the complexity of the video coding algorithm. Traces of MPEG
+consecutive frames are analyzed and suitable features are                      double compression were first highlighted in the seminal paper
+extracted to discover traces of both intra-frame and inter-frame               by Wang and Farid for detecting frames removal [83]. In fact,
+manipulations. Instead, in [67], the camera dependent photon                   the de-syncronization caused by removing a group of frames
+shot noise is considered as an alternative fingerprint for static              introduces spikes in the Fourier Transform of the motion
+scenes.                                                                        vectors. A successive work [84] tried to improve the double
+   4) Compression artifacts: exploiting compression artifacts,                 compression estimation especially in the more challenging sce-
+has long been a workhorse in image forensics. The many                         nario when the strength of the second compression increases
+methods proposed in the literature, mostly for JPEG com-                       and proposed a distinctive footprint, based on the variation of
+pressed images, can be classified based on the clues they                      the macroblock prediction types in the reencoded P-frames.
+rely upon. A first popular approach is to exploit the so-called                This same artifact is exploited in [85] where its estimation is
+lock artifact grid (BAG). Because of the block-wise JPEG                       improved to detect traces of inter-frame tampering, and more
+processing, discontinuities appear along the block boundaries                  recently in [86] to deal with video sequences that contain bi-
+of compressed images, giving rise to a distinctive and easily                  directional frames.
+detected grid-like pattern [68]. In the presence of splicing or                   5) Editing artifacts: the manipulation process often gener-
+copy-move manipulations, the BAGs of inserted object and                       ates a trail of precious traces, besides artifacts related to re-
+host image typically mismatch, enabling detection. Several                     compression. Indeed, when a new object is inserted in an im-
+BAG-based methods have been proposed in the literature [69],                   age, it typically needs several post-processing steps to fit well
+[70], [71], some of which even in recent years [72].                           the new context. These include geometric transformations, like
+   Another major approach relies on double compression                         rotation and scaling, contrast adjustment, but also blurring, to
+traces. In fact, when a JPEG-compressed image undergoes a                      smooth the object-background boundaries. Therefore, many
+local manipulation and is compressed again, double compres-                    papers focus on detecting these basic operations as a proxy for
+sion artifacts appear all over the image except in the forged                  possible forgeries. Some methods [60], [87] try to detect traces
+region [73]. These artifacts change depending on whether the                   of resampling, always necessary in the presence of rotation
+two compressions are spatially aligned or not, but suitable                    or resizing by exploiting periodic artifacts. Other approaches
+detection [74] and localization [75], [76] methods have been                   focus on anomalies on the boundaries of objects when a
+proposed for both cases. Another method relies on the so-                      composition is performed [88], or by blur inconsistencies [89].
+called JPEG ghosts [77], arising in the manipulated area when                     A very common manipulation consists in copy-moving
+two JPEG compressions use the same quality factor (QF). To                     image regions to duplicate or hide objects. Of course, the
+highlight ghosts, the target image is compressed at all QFs                    presence of identical regions is a strong hint of forgery, but
+and analyzed. Other methods [78], [79] look for anomalies in                   clones are often modified to disguise traces, and near-identical
+the statistical distribution of original DCT samples, assumed                  natural objects also exist, which complicate the forensic anal-
+to comply with the Benford law.                                                ysis. Studies on copy-move detection date back to 2003, with
+   A further approach is to exploit the model-specific im-                     the seminal work of Fridrich [90]. Since then, a large literature
+                                                                                                                                                                                         6
+
+
+
+
+                                                                                               Device                Images               Residuals                  PRNU fingerprint
+
+
+
+
+                                                                                                  Test Image                    PRNU estimate                         PRNU fingerprint
+
+                                                                                                                 +
+                                                                                                                                                      Correlation
+                                                                                                                       -
+
+
+
+
+                                                                                                  Denoising
+
+
+                                                                                                               Denoised Image                    Correlation field
+
+
+
+
+Fig. 7. The Varoufakis video copy-move. Three versions of the same video          Fig. 8. PRNU-based forgery localization. Top: the device PRNU pattern
+appeared on the web, with radically different content, as per the sample frames   is estimated by averaging a large number of noise residuals. Bottom: the
+shown on the top row. With reference to the video on the left where the arm is    image PRNU pattern is estimated through denoising, and compared with the
+down, a copy-move detector revealed that a sequence from one video (second        reference pattern: the low correlation in the telephone booth region suggests
+row) was temporally flipped and copy-moved onto another one (bottom row).         a possible manipulation.
+For the other two videos the detector was not able to tell apart the pristine
+from the forged one, since the discriminative region was too small.
+
+                                                                                  [101] a predictor is designed to adapt the decision threshold
+has grown on this topic. Effective and efficient solutions are                    to the local image statistics, while in [102] disturbing non-
+now available which allow for copy-move detection even in the                     unique artifacts are detected and removed. In [103] the strong
+presence of rotation, resizing, and other geometric distortions                   spatial dependencies are modeled through a Markov Random
+[91]. Methods based on keypoints [92], [93] are very efficient,                   Field so as to make joint rather than isolated decisions.
+while dense-field methods [94], [95] are more accurate and                        Further variations rely on the use of guided filtering [104],
+deal also with occlusive attacks. In [96] dense-field methods                     discriminative random fields [105] and multiscale analysis
+have been shown to be effective also to detect inpainting.                        [14].
+Extensions to video have been also proposed both for detection                       It is worth noting that this approach can be also extended to
+and localization [97], [98], the main issue being complexity.                     blind scenarios, where no prior information about the camera
+In the example of Figure 7, a method for 3D copy-move                             is known provided a suitable clustering procedure identifies
+localization exposed a copy-move with flipping in one of the                      the images which share the same PRNU [96], [106].
+videos. As for inter-frame forgeries, local modifications can be                     An alternative to using PRNU is to base the analysis on
+detected based on the consistency of the velocity field [99].                     camera model local features. Since cameras of the same
+                                                                                  model share proprietary design choices for both hardware and
+                                                                                  software, they will leave similar marks on the acquired images.
+B. One-class sensor-based and model-based methods                                 Therefore, in [107] it was proposed to extract local descriptors
+   The camera sensor can provide a wealth of precious clues. In                   from same-model noise residuals to build a reference statistical
+fact, due to manufacturing imperfections, the sensor elements                     model. Then, at test time, the same descriptors are extracted
+present small deviations from their expected behavior. Such                       in sliding-window modality from the target noise residual
+deviations form a noise-like pattern, stable in time, called                      and compared with the reference. Strong deviations from
+photo-response non-uniformity (PRNU) noise. All images                            the reference statistics suggest the presence of an attack.
+acquired by a given camera bear traces of its PRNU pattern,                       With respect to PRNU-based analysis, this approach cannot
+which can be therefore regarded as a sort of camera fingerprint.                  discriminate devices, but only models. On the other hand,
+If a region of the image is tampered with, the corresponding                      model-related artifacts are much stronger than device-related
+PRNU pattern is removed, which allows one to detect the                           PRNU, and provide more reliable information.
+manipulation.
+   PRNU-based forgery detection was first proposed in [100]
+based on two steps: i) the camera PRNU pattern is estimated                       C. Supervised methods with handcrafted features
+off-line from a large number of images taken from the camera,                        These methods are based on machine learning. Suitable
+and ii) the target image PRNU is estimated at test time, by                       features are first defined which help discriminating between
+means of a denoising filter, and compared with the reference                      pristine and manipulated images, and then a classifier is
+(see Figure 8). Clearly, this approach relies on some important                   trained on a large number of examples of both types. It
+prior knowledge, since a certain number of images taken from                      is worth underlining that features are hand-crafted by the
+the source device, or the device itself, must be available.                       forensic analyst, based on a deep understanding of the target
+On the other hand, it is extremely powerful, as it can detect                     manipulations.
+equally well all attacks, irrespective of their nature. The key                      Some features have been devised to detect specific arti-
+problem is the single-image estimation at test time, since                        facts, especially those generated by double JPEG compres-
+the PRNU pattern is a weak signal, easily overwhelmed by                          sion [108], [102], [109] or related to the camera response
+imperfectly removed image content. To reduce false alarms, in                     function (CRF) [110], [111], [112]. However, more precious
+                                                                                                                                                     7
+
+
+
+                Forged image       Ground truth            JPEG artifacts          Noise patterns       Double Compression           Copy-move
+
+
+
+   QF=90
+
+
+
+
+   Resize 90
+
+
+
+
+    QF=90
+
+
+
+
+    Resize 90
+
+
+
+Fig. 9. Localization results of the same blind methods of Figure 6 after compression (QF=90) or resizing (scale=90%). Model-dependent methods, based on
+JPEG or double quantization artifacts, suffer a much stronger performance impairment than methods based on noise pattern anomalies.
+
+
+
+are the universal features, based on suitable image statistics,              and a splicing. However, if the image is slightly compressed
+which allow detecting many types of manipulation. Therefore,                 (QF=90) or resized (scale 90%), as usual on social networks,
+good statistical models for natural images may help selecting                their performance drop dramatically, as shown in Figure 9.
+features that guarantee the highest discriminative power. As                 Copy-move detectors, instead, are more reliable, even in the
+already observed, to highlight statistical anomalies caused by               presence of post-processing, but can only detect cloning and
+manipulations, one should first remove the high-level image                  some types of inpainting. On the contrary, methods based on
+content, to be regarded as noise [113]. Therefore, the most                  noise patterns are quite general, and robust to post-processing,
+effective features are typically extracted from noise residuals,             as they often do not depend on explicit statistical models but
+either in the spatial [114], [115] or in a transform domain                  look for anomalies in the noise residual. Moreover, to improve
+[116], [117]. The pioneering work of Farid and Lyu [118],                    reliability, they can be used in a supervised modality, as shown
+back in 2003, proved the potential of features based on high-                in Figure 10. The analyst can select a suspect region of interest
+order image statistics. These features capture subtle variations             for testing, using the rest of the image as an intrinsic model
+in the image micro-textures and prove effective in many                      of pristine data.
+application fields, such as computer graphics, biometrics, and                  As for machine learning-based methods, they can achieve
+steganalysis. Therefore, it is not by chance that the most                   very high detection results: in the 2013 challenge the accuracy
+popular such features, known as rich models [119], have been                 was around 94% [120]. However, performance depends heav-
+originally proposed for steganalysis and later applied with                  ily on the alignment between training set and test data. It is
+success in forensics. After passing the image through a set                  very high when training and test sets share the same cameras,
+of high-pass filters, each one able to capture slightly different            same types of manipulation, same processing pipeline, like
+artifacts, the features are formed based on co-occurrence of                 when a single dataset is split in training and test or cross-
+selected neighbors. Then, an ensemble classifier is built. In                validation is used. As soon as unrelated datasets are used, the
+2013, two methods [120], [96] based on the fusion of these                   performance drops, sometimes close to 50%, that is, random
+features and other forensic tools [103], [95] ranked first in                guess. Lack of robustness limits the applicability of learning
+both the detection and localization phases of the first IEEE                 based approaches to very specific scenarios.
+IFS-TC Image Forensics Challenge.
+                                                                                       IV. D EEP LEARNING - BASED APPROACHES
+D. Discussion                                                                   Recently, much attention has been devoted to deep learning-
+   A major appeal of blind methods is that they do not require               based methods, where features can be directly learnt from the
+further data besides the image/video under test. However,                    data. Deep learning has proven successful for many computer
+methods based on very specific details depend heavily on                     vision applications, largely advancing the state-of-the-art. Is
+their statistical model, and mostly fail when the hypotheses                 the same happening in multimedia forensics? How are deep
+do not hold. With reference to Figure 6, for example, methods                learning ideas and architectures adapted to address the specific
+based on JPEG artifacts localize correctly both a copy-move                  challenges of this field? This Section will describe deep
+                                                                                                                                                 8
+
+
+
+                                                                                 manipulation, while in [129] a segmentation network based
+                                                                                 on U-Net is proposed.
+                                                                                    Deep learning methods have been also applied to detect
+                                                                                 copy-move forgeries. A first solution has been proposed in
+                                                                                 [130], where an end-to-end CNNs based approach implements
+                                                                                 the three main steps of a classic copy-move solution, i.e.
+                                                                                 feature extraction, matching and post-processing to reduce
+                                                                                 false alarms. This helps to jointly optimize all the modules
+                                                                                 and gives as output the predicted forgery localization maps.
+                                                                                 In [131] a different architecture is devised, which includes a
+                                                                                 multiscale feature analysis and a hierarchical feature matching,
+                                                                                 which seems to better adapt to different scenarios. Overall,
+                                                                                 deep learning based methods perform better on low resolution
+                                                                                 images with respect to conventional approaches, where prob-
+                                                                                 ably parameters have been adapted to high resolution images.
+                                                                                 More interestingly it is the analysis carried out in [132],
+Fig. 10. Using single-asset anomaly-based methods in supervised modality.
+If only a well-defined region of interest (RoI) might have been manipulated,
+                                                                                 [133], where the problem of source-target disambiguation is
+as with these two versions of Whoopy Goldberg, one can restrict the analysis     faced. In fact, copy-move methods typically generate a map
+to the RoI, and use the rest of the image as intrinsic model of pristine data.   of the original object and its clone, and do not establish
+A strong anomaly appears in the left version, not in the right one.
+                                                                                 which is the forgerd region. To this end, both in [132] and
+                                                                                 in [133], a two-branch architecture is proposed followed by a
+                                                                                 fusion module, but the manipulation detection module in [133]
+learning-based methods proposed for the detection of generic
+                                                                                 focuses on the presence of interpolation artifacts and boundary
+manipulations. Then, next Section reviews methods for the
+                                                                                 inconsistencies.
+detection of GAN-generated images and video deepfakes.
+                                                                                    Finally, in [134] a CNN based solution is devised to detect
+                                                                                 artifacts introduced by a specific Photoshop tool, Face-Aware
+A. Supervised CNNs looking at specific clues                                     Liquify, which performs image warping of human faces. The
+                                                                                 model is trained on fake images automatically generated by
+   Some papers propose CNN architectures to detect specific                      the very same tool. To increase robustness, data augmentation
+artifacts generated by the editing process. Double JPEG com-                     includes resizing (bicubic and bilinear), JPEG compression,
+pression, as seen in the previous Section, provides strong clues                 and various types of histogram editing.
+for authenticity verification. So, [121] uses the histograms of
+DCT coefficients as input to the CNN, while [122] extracts
+block-wise histogram-related statistical features, so as to en-                  B. Generic supervised CNNs
+able also localization. To better exploit the peculiarities of                       Generic CNN detectors do not look for specific types of
+forensics as well as the learning ability of CNNs, the approach                  manipulations and artifacts. Of course, training such nets is
+proposed in [123] works on noise residuals rather than on                        very challenging, due to the variety of possible attacks and
+image pixels and uses the first layers of the CNN to extract                     data histories.
+histogram-related features. Good results are achieved also                           A first group of methods take inspiration from the hand-
+when test images are compressed with quality factors (QFs)                       crafted rich models features proposed in [119] and used with
+never seen in training and when conventional methods fail                        success in image forensics. In [135] and in [136], inspired
+(second QF larger than the first one). To improve performance,                   by a similar solution used in [137] for steganalysis, a CNN is
+[124] uses a multi-domain approach relying on both spatial                       proposed with a constrained first layer that performs high-pass
+domain and frequency domain inputs.                                              filtering of the image, that suppress the scene content and allow
+   Double compression detection has been also extended to                        to work on residuals. In [135], the fixed rich-model filters are
+H.264 video analysis in [125], where a two-stream neural                         adopted, and the network is used only for feature extraction,
+network is proposed to analyze separately intra-coded frames                     followed by a SVM in charge of making the global decision.
+and predictive frames. A method specifically devised to detect                   In [136], instead, constrained filter weights are learnt during
+sequence duplication in videos is proposed in [126]. First                       training, and the CNN is used also for classification. A slightly
+coarse-level matches between candidate clones are identified,                    different perspective is considered in [138] where a CNN
+and then a Siamese network based on the ResNet architecture                      architecture is built to exactly replicate the behaviour of the
+[127] identifies fine-level correspondences.                                     original rich-model classifier [119]. Then, minor architectural
+   Other useful editing inconsistencies arise with composition.                  relaxations allow the network to be fine-tuned on domain-
+When material from different sources is spliced together,                        specific data and further improved. Therefore, a compact
+artifacts can arise at the boundaries. In [128] a multi-task                     network is obtained which can be trained also on scarce data.
+fully convolutional network is devised, which includes a                         All the methods described above allow for the detection of
+specific branch to detect boundaries between inserted regions                    small patches. Localization is then possible by using a sliding
+and background and another branch for the surface of the                         window analysis on the whole image.
+                                                                                                                                      9
+
+
+
+   All these solutions rely mostly on low-level features, as-        C. One-class training
+suming that high-level features do not help detecting possible          Assembling a training set representative of all possible
+manipulations. However, imperfect image editing, like badly          manipulations can be a prohibitive task. Hence, an alternative
+spliced material, may well leave traces, such as strong con-         is to resort to a one-class approach and look for anomalies
+trast or unnatural tampered boundaries. Hence, a two-stream          with respect to an intrinsic model of pristine data. Indeed,
+network is proposed in [139] and extended in [140]. On the           any manipulation is by definition an anomaly, and should be
+first path, rich model filters are used again to extract low-level   detectable as such. These methods possess then the desirable
+features, while a second path relies on the RGB data to look         property to detect any type of manipulations.
+for high-level traces.                                                  In [148] a single-asset (blind) one-class method has been
+                                                                     proposed. Expressive features are extracted from the noise
+    Fixed high-pass filters in the first layer have been used        residual through an autoencoder, and iterative feature labeling
+also more recently in [141], and in combination with standard        singles out two classes. The largest class defines the pris-
+filters in [142]. However in both these papers a fully connected     tine model. Then, various criteria can be used to decide on
+network is proposed in order to obtain as output the binary          whether the data of the second class are also pristine or else
+localization map, that hence accounts also for detection at          manipulated. In [149], the approach has been extended to
+image level. In [141] pixel-wise predictions are obtained            videos by including a LSTM recurrent network to account
+by applying transpose convolutions. It is also observed that         for temporal dependencies. In [150], instead, GANs are used
+typically the area of a manipulated region is much smaller than      to learn features typical of pristine images, followed by a one-
+the untouched pixels, and a focal loss is adopted to face this       class SVM trained on them to determine their distribution, and
+class imbalance, that assigns a modulating factor to the cross       eventually detect tampering of satellite images.
+entropy term. This paper mostly focuses on manipulations cre-           Several papers leverage the strong connection existing be-
+ated using deep learning based inpainting methods, while the         tween source identification and splicing detection and local-
+objective of the work proposed in [142] is to detect every type      ization. Indeed, in the presence of a splicing, the fact that
+of possible local manipulations. To this end, the training pro-      different image parts are acquired by different camera models
+cedure is built so as to classify 385 image manipulation types,      provides powerful forensic clues. In [151], a CNN is used to
+and to detect features related to local anomalies. Another           extract camera-model features from image patches, followed
+generic solution to detect and localize image manipulations          by clustering to detect anomalies. A similar approach is fol-
+has been proposed in [143]. Resampling features are used to          lowed in [152]. First, a constrained network is used to extract
+capture inconsistencies, long short-term memory (LSTM) cells         high-level camera-model features, then, another network is
+highlight transitions between pristine and forged blocks in the      trained to learn the similarity between pairs of such features.
+frequency domain, and finally an encoder-decoder network             This work has been recently extended in [153] introducing
+segments the manipulation. Localization is indeed carried out        a graph-based representation that better captures the forensic
+in [144] by first introducing a process to generate forged           relationships among all image patches within an image. A
+(harder) examples during training in order to generalize across      Siamese network is also trained in [154] to decide whether
+a large variety of possible manipulations. Then, a segmentation      two image patches have similar metadata. Once trained on
+and refinement network is used so that the algorithm is forced       pristine images with EXIF header, the network can be used
+to look at boundary artifacts.                                       on any image without further supervision. In [155], [156],
+                                                                     [157] these concepts are exploited to extract a camera-model
+                                                                     fingerprint, called noiseprint, similar to a PRNU-based device
+   In [145], [146], [147] the problem of image-level analysis        fingerprint. A denoiser CNN is trained in Siamese modality
+for forgery detection is specifically addressed. Some methods        to tell apart similar (same camera model and same position)
+[145], [146] train the CNN to extract compact features at            from different couples of patches. Once trained, the network
+the patch level, and then perform some forms of external             is able to extract the image-size noiseprint, where artifacts
+aggregation to make image-level decisions. However, a patch          related to camera model are emphasized. In [155] it is shown
+level analysis does not allow to take into account at the            that noiseprints, thanks to their spatial sensitivity, can be used
+same time both local (textural analyses) and global (contextual      to detect splicing as well as several other manipulations, while
+analyses) information. This latter requirement is not easily         in [157] the approach is extended to video forensics.
+met, because CNNs accept in input patches that are much
+smaller than the whole image needed for contextual analysis.
+In computer vision, this problem is solved by resizing the                             V. D EEPFAKE DETECTION
+image, but this process destroys the fine-grain structure of the        Human faces are by far the most expressive and
+image and hides important traces of manipulation [146], [147].       emotionally-charged pieces of information that circulate on the
+In [147] a gradient checkpointing is used to allow end-to-end        web. The face is the main biometric trait of a person, a uni-
+training of both aggregation and feature extraction, allowing        versal ID card, and a vehicle itself of non-verbal but powerful
+for their joint optimization, without any resizing. This helps       messages. Therefore, the appearance of artificial intelligence-
+analyzing the whole image through textural-sensitive features        powered tools that generate realistic faces of persons that do
+and highlight anomalies that would not appear at the patch           not exist, or modify in a credible way the attributes of faces
+level.                                                               in videos, has raised great alarm.
+                                                                                                                                          10
+
+
+
+                                                                          variations induced by heart beating, an idea already exploited
+                                                                          in [160] for computer generated faces. However, in [163]
+                                                                          the coherence of these biological signals is considered both
+                                                                          spatially and along the temporal direction.
+                                                                             Other detection methods rely on face warping artifacts
+                                                                          [165], face landmark locations [166] or head pose inconsis-
+                                                                          tencies [167]. In [165] the approach exploits the fact that
+                                                                          current deepfakes generation methods are able only to generate
+                                                                          limited resolution images, that need to be further warped to
+                                                                          match the original face in the source video. However, warping
+Fig. 11. Today’s deepfakes sometimes exhibit some obvious asymmetries,    leaves peculiar traces that can be detected using a CNN that
+such as eyes of different colors (top) or badly modeled teeth (bottom).   works on the face region and its surrounding areas. Instead, the
+However, such artifacts will likely disappear in the future.
+                                                                          observation made in [166] is that GAN-based face synthesis
+                                                                          algorithms are able to generate a face with high level of realism
+   However, computer generated faces already existed before               and with many details, but lack an explicit constraint over the
+the deep learning era. Research on distinguishing real from               locations of these parts in a face. Hence, the locations of the
+computer generated faces has been going on for years and                  facial landmark points, like the tips of the eyes, nose and the
+represents a precious starting point. Indeed, fakes generated             mouth, can be used as the discriminative features for verifying
+with CGI and deep learning have much in common, since                     the authenticity of GAN images. This same problem is also
+they both lack the characteristic features that are typical of            present in deepfake videos and can be revealed by means of
+images and videos of human faces acquired by real cameras. In             3D head pose estimation [167].
+[158] face asymmetry is proposed as a discriminative feature                 Other common artifacts of GAN-generated images are re-
+to tell apart computer generated from real images of human                lated to how color is synthesized. In fact, the generator is
+faces. Then, in [159] the focus shifts to videos, and detection           constrained so as to limit the occurrence of saturated and
+relies on the spatial-temporal deformations of a 3D model that            under-exposed pixels [168], not infrequent in real images.
+fits the face. In particular, natural faces follow more complex           Other disparities in color components are exploited in [169],
+and various geometric deformations then synthetic ones, and               in fact deep networks generate images in the RGB color
+cause higher perturbations of the 3D model. Also, natural faces           space without any type of constraint on color correlations,
+belong to living persons. So, the method proposed in [160]                and artifacts arise if looking at features in other spaces such as
+relies on the small variations in the appearance of the face              HSV and YCbCr, especially in the chrominance components.
+due to the periodic blood flow caused by heart beating.                      A clear advantage of all these methods is that visual
+   The following subsections review the work that has been                artifacts are not affected by resizing and compression. On
+devoted explicitly to detect local manipulations to images or             the other hand, fake media that can be recognized also by
+videos or fully sinthetic media created using deep learning               human viewers represent less of a menace. Moreover, with
+strategies. First, the methods based on handcrafted features              the current pace of technology, it is very likely that next-
+will be described, then those relying themselves on deep                  generation deepfakes will overcome such imperfections and
+learning will be analyzed.                                                synthesize visually perfect fakes.
+                                                                             A different approach is followed in [170]. The idea is to
+                                                                          protect individuals by acquiring some peculiar soft traits that
+A. Methods based on handcrafted features                                  characterize them and are very difficult to reproduce for a
+   A rather general approach is to look for high-level visual             generator. In particular, it is observed that facial expressions
+artifacts in the face. Methods following this approach try to             and head movements are strongly correlated, and changing the
+highlight specific failures in the generation process which               former without modifying the latter may expose a manipula-
+does not reproduce perfectly all the details of a real face.              tion. On the down side, to apply this approach, a large and
+For example, in GAN-generated faces a mismatch may occur                  diverse collection of videos in a wide range of contexts must
+between the color of the left and right eye, as well as other             be available for all individuals of interest.
+forms of asymmetry, like a earring only on one side, or ears
+with markedly different characteristics. Deepfakes, instead,
+often present unconvincing specular reflections in the eyes,              B. Methods based on deep learning
+either missing or represented as white blobs, or roughly                     With reference to GAN images, a first investigation has
+modeled teeth, which appear as a single white blob (see Figure            been carried out in [171], where several CNN architectures
+11). All these artifacts are exploited in [161], where simple             have been tested in a supervised setting to discriminate GAN
+features are built in order to capture them. [162] relies on              images from real ones. Several solutions appear to be very
+eye blinking, which has a specific frequency and duration in              effective, but the performance decreases significantly when
+humans, which is not replicated in deepfake videos. A solution            training and test mismatch, or when data are compressed
+based on a long-term recurrent network, working only on eye               using the pipeline typical of social networks. In [172], as a
+sequences, is designed to catch such temporal inconsistencies.            preliminary step for forensic analyses, it is shown that each
+In [163] and in [164] deepfakes are revealed by the lack of               specific GAN architecture is characterized by its own artificial
+                                                                                                                                                  11
+
+
+
+         Pristine                                                                 scores obtained at frame level can be aggregated [177], or else
+                                                                                  an ensembling approach can be applied, using different color
+                                                                                  spaces as input [186].
+                                                                                     Clearly, better results can be expected by strategies that take
+                                                                                  explicitly into account the temporal direction. In fact, even if
+        Deepfakes
+                                                                                  current generation methods are very effective, they perform
+                                                                                  face manipulation on a frame-by-frame basis and hence may
+                                                                                  incorrectly follow the face movements. Several methods have
+                                                                                  been proposed in the literature to exploit this point. In [187],
+                                                                                  [188] a convolutional Long Short Term Memory (LSTM)
+Fig. 12. Localization results provided by a deep network on a pristine video
+(top) and a deepfake (bottom). Excellent results are obtained with high-quality   network is used to exploit such dependencies and improve
+videos, while artifacts appear if the videos are compressed at low bit-rates.     upon single-frame analysis. In [189], instead, a solution based
+                                                                                  on recurrent convolutional models has been proposed. Features
+                                                                                  are extracted at multiple levels and processed in individual
+fingerprint, present in all generated images, much like a real                    recurrent networks, in order to exploit micro, meso and
+camera is characterized by its PRNU pattern. A similar goal                       macroscopic features for manipulation detection. A significant
+is pursued in [173] through a suitably trained CNN. This last                     improvement can be achieved even by using only 5 frames. In
+work also shows that these fingerprints persist across different                  [190] the optical flow field is estimated to exploit discrepancies
+image frequencies and patches, and are not biased by GAN                          in motion across frames, but only some preliminary results are
+artifacts. In [174], instead, a GAN simulator is proposed to                      presented.
+reproduce common GAN-image artifacts, which manifest as                              Despite these interesting results, it must be underlined that
+spectral peaks in the Fourier domain. Then, a classifier is                       most of these detectors tend to overfit the training set, and per-
+trained, which takes the spectrum as input. Another work [175]                    form badly on new data [191]. This is becoming a major issue
+tries to attribute a test image to a specific generator in a white-               in multimedia forensics, considering the fast growing number
+box scenario. The basic idea is to invert the generation process.                 of deep learning-based manipulation methods. Therefore, new
+Once the original latent vector is recovered, it is fed again to                  proposals should ensure good generalization ability, which
+the network, and the output is compared with the test image. A                    calls for better validation of detectors, with multiple datasets
+similar idea is also suggested in [176], where using projection-                  and different types of manipulations. Focus on this problem is
+based methods the authors show that it is possible to detect                      first found in [192], where an autoencoder-based architecture
+that an image was synthesized by a specific network, even if                      is proposed which adapts to new manipulations with just
+it is of very high quality.                                                       a few examples. This same approach has been followed in
+   Switching to solutions for deepfake detection in videos,                       [193] by using a deeper network and including a segmentation
+in [177] two simple architectures are proposed with a small                       task. An autoencoder is also used in [194], where a pixel-
+number of levels and parameters that exploit mesoscopic                           wise mask is used to enforce the model to learn intrinsic
+features. A first solution (Meso-4) has four layers of convo-                     representation from the forgery region, so as to avoid to detect
+lutions and pooling and is then followed by a dense network                       artifacts present in the training set. In [195] it is proposed a
+with one hidden layer. The second solution (MesoInception-                        method based on incremental learning to reduce the burden
+4) instead is based on a variant of the inception module that                     and the risks of re-training networks on larger and larger
+includes dilated convolutions. However, experiments carried                       datasets as new forms of manipulation appear. A different
+out in [178] clearly show that, in a supervised setting, very                     perspective is followed in [196], where a pre-processing step
+deep general-purpose networks [179], [180], [181], outperform                     is introduced in order to reduce low level artifacts of GAN
+forensics-oriented shallow CNNs, as well as methods based on                      images and force the discriminator to learn more general
+handcrafted features, especially in the presence of the strong                    forensic features. Instead, in [197] a careful pre- and post-
+compression typical of video codecs. For the detection task                       processing and data augmentation are applied to improve
+these methods use specific strategies to extract the faces from                   transferability. The work shows that CNN-generated images
+the frames, as input to the network. However, also localization                   share some common flaws that allow one to trace their origin
+strategies can be devised on the whole frame. In Fig.12 the                       even on unseen architectures, datasets and training methods.
+pixel-level localization results of a deep network are presented                  The main idea is to make a very large augmentation in the
+using the approach described in [182], however this analysis                      training step by means of several and different post-processing
+can be accomplished in different ways [183]. Training on                          operations, like blurring and compression and combinations of
+uncompressed data ensures perfect results on high-quality                         them, even if they are not performed at test time.
+videos, while artifacts appear when the test video is strongly                       Turning to videos, recently some interesting solutions have
+compressed. Further improvements can be obtained by in-                           been considered to improve generalization. In [198] this is
+cluding an attention mechanism, as done in [184]. Promising                       achieved using hierarchical neural memory networks. Beyond
+results are also obtained in [185] by using capsule-network                       exploiting long-term dependencies, the method includes an
+architectures which require fewer parameters to train than                        attention mechanism and an adversarial training strategy. This
+very deep networks. It should be noted that these methods                         helps to increase robustness to compression and to transfer
+operate on still frames. Therefore, to boost performance, the                     learning to better deal with unseen manipulations. A com-
+                                                                                                                                         12
+
+
+
+pletely different perspective is followed in [199]. In this work                                  TABLE I
+the focus is on the boundary of forged faces. In fact the                      R ESULTS OF CNN- BASED METHODS ON D EEPFAKES
+observation is that they all share a common blending operation.
+                                                                                                            Accuracy
+Hence the generalization ability of the network increases, since
+it is not based on the artifacts of a specific face manipulation                             Uncompressed   High Quality   Low Quality
+method. In [157] generalization is gained by training the             Handcrafted features     99.03%         77.12%         65.58%
+method only on pristine videos and by extracting the camera           Deep network             99.28%         90.18%         80.95%
+fingerprint information (noiseprint) gathered from multiple
+                                                                      Very deep network        99.59%         98.85%         94.28%
+frames. This can significantly improve the detection results
+on various types of face manipulations, even if the network
+never saw such forgeries in training.                                training and test sets, possibly carved from the same dataset,
+                                                                     is not very informative. Therefore, it is important to adopt
+     VI. D EEP LEARNING IN MULTIMEDIA FORENSICS :                    stronger validation protocols, including experiments where
+                       CONSIDERATIONS                                training and test set are unrelated and account for realistic
+                                                                     and challenging conditions, such as compression, multiple
+   The review of previous Sections testifies of an exponential       manipulations, unseen forgeries. In the absence of such strong
+growth in the number of papers proposing deep learning               validation, the results of the supervised deep learning methods
+methods for multimedia forensic problems. But, where are we          do not yet appear completely convincing.
+now? Are forensic analysts winning or losing their “war”?               One-class methods seem to perform reasonably well also in
+Which lessons have we learned? Amidst all these proposals,           challenging real-world conditions, and this looks as a promis-
+it is not easy to extract truly innovative ideas, solid scientific   ing approach to deal with such complex scenarios. Clearly,
+trends, effective and robust solutions.                              for one-class methods, no alignment problem exists. On the
+   For data-driven methods, lacking theoretical models, experi-      other hand, the fundamental question of what can be labelled
+mental results take a fundamental role, and hence experimental       as “pristine” remains open. Many operations are not malicious
+protocols are extremely important. Let us consider supervised        and should not be detected, yet they change the statistics of
+methods, for the time being, with perfectly aligned training         an image with respect to what is output by a camera. For
+and test sets, that is, disjoint training and test samples drawn     example, one can apply histogram equalization to improve
+from the very same dataset/distribution. Experimental evidence       the appearance of a photo, but that is not a forgery. Even
+shows that, in this setting, deep learning methods work ex-          resizing has a different meaning based on the context: it is a
+tremely well. In ideal conditions this is not so important,          sign of a manipulation when used to change the dimension of
+because then simpler approaches work just equally well. In           an object to perform splicing, while it is an innocent operation
+challenging conditions, however, when forensic traces are            when used to save space. For these reasons, looking for local
+weak, deep learning, especially very deep architectures, can         anomalies seems to be a good direction, which overcomes
+provide a large performance gain with respect to conven-             ambiguities. In general, the training phase is crucial to make
+tional methods. In Table I, to compare approaches based on           a network work in the correct and desired way, and there is a
+handcrafted features, deep networks, and very deep networks,         strong need of large datasets that try to cover many different
+accuracy results on DeepFakes videos are reported from [178].        situations.
+In the presence of strong compression, there is a gap of
+about 15% between machine learning and deep learning, and                                    VII. DATASETS
+15% more using a very deep network. This can make a
+big difference in practical applications, since many standard           For learning based approaches, it is of paramount impor-
+processing steps tend to weaken forensic traces, as when video       tance to have good data for training. Moreover, to assess
+are routinely compressed and resized as soon as they are             the performance of new proposals, it is important to com-
+uploaded on a social network. This is certainly a remarkable         pare results on multiple datasets with different features. The
+achievement of deep learning methods.                                research community has made considerable efforts through
+                                                                     the years to release a number of datasets with image and
+   However, a validation protocol which considers only perfect
+                                                                     video manipulations. However, not all of them possess the
+alignment is intrinsically weak, and falls short of its goal.
+                                                                     right properties to support the development of learning-based
+Indeed, perfect alignment is a very favorable setting, which
+                                                                     methods. Many such methods, in fact, split a single dataset
+is easily obtained in simulations and rarely observed in real-
+                                                                     in training, validation, and test set, a practice that may easily
+world operations. Main causes of misalignment are: i) the tar-
+                                                                     induce some forms of polarization or over-fitting if the dataset
+get media asset has been generated or manipulated in ways that
+                                                                     is not built with care. In this Section, the most widespread
+were never seen in the training set; ii) its processing history
+                                                                     datasets are described, and their features briefly discussed.
+is not covered by training set samples. Both situations are
+extremely common. New forms of manipulations are invented
+by the day, and cannot be represented in the training set when       A. Images
+they first appear. Moreover, images and videos can undergo             Table II reports a list of datasets with manipulated images.
+a long sequence of transformations [200] and accounting for          Some of them are rather old and necessarily outdated, and
+all of them is not reasonable. Working well with aligned             some even present important flaws. It is surprising to see recent
+                                                                                                                                           13
+
+
+
+papers relying on unsuited datasets and presenting them as
+challenging testbeds.
+   The Columbia (color) dataset, presented in 2006 [201],               Images
+is one of the first ones made available to the forensics
+community. It comprises 180 forged images with splicing,
+some examples of which are shown in Figure 13. Despite its
+
+                                                                        Ground truth
+merits, it presents several major problems: i) it is unrealistic,
+since the forgery is clearly visible; ii) the spliced region is not
+subject to any type of post-processing; iii) only uncompressed
+images are present; iv) only four cameras are used to take both
+the host images and the spliced regions. Moreover, it is not          Fig. 13. Examples from the Columbia dataset. Top: images with splicing,
+clear how to define the forged areas, given that both regions         bottom: ground truth. In all cases the inserted region is very large and
+                                                                      obviously detectable.
+come from pristine data. For these reasons, this dataset should
+not be used both in the training and the testing phase, nor to
+perform fine-tuning, otherwise overly optimistic results will         properties and those of the background increases.
+be observed.                                                             There is also a realistic dataset to test double JPEG compres-
+   Also widespread is the Casia dataset, proposed in 2013             sion [76] and, recently, a synthetic dataset of single and double
+[202]. In the first version (v1) splicings present sharp bound-       JPEG compressed blocks with 1,120 quantization tables, has
+aries and are easily detectable. The second version (v2),             been released, aimed at training deep networks [122].
+however, is more realistic, and inserted objects are post-               To test algorithms in the wild, the U.S. National Institute
+processed to better fit the scene. Nonetheless, it exhibits a         of Standards and Technology (NIST) has released several
+strong polarization, highlighted in [203]. In fact, tampered          large datasets [208]. The first one, NC2016, contains some
+images and pristine images are JPEG compressed with differ-           redundancies: each spliced photo is presented four times, JPEG
+ent quality factors (the former at higher quality). Therefore,        compressed at low and high quality, and with and without post-
+a classifier trained to tell tampered and pristine images apart,      processing on the splicing boundaries. These multiple versions
+may instead learn their different processing history, thereby         are meant to study how performance depends on such details.
+working very well on test images from the same dataset, and           However, this feature is never exploited in the literature. On
+very poorly on new unrelated images.                                  the contrary, several papers split the dataset in training and
+   Another dataset with splicings is DSO-1 [5] a subset taken         test carelessly, including the same image parts in both sets,
+from the IEEE Image Forensics Challenge (unfortunately, the           and artificially boosting the performance. In subsequent years,
+original datasets prepared for the challenge is not available         NIST published three more datasets, NC2017, MFC2018,
+anymore and the ground truths were never released by the              MFC2019, without the above redundancies. These datasets
+organizers). Here, the manipulations are carried out with great       are very large and present a great variety of manipulations,
+care and most of them are realistic. Images are saved in the          resolutions, formats, compression levels, acquisition devices.
+uncompressed PNG format, but most of them had been JPEG               Moreover, multiple manipulations are often carried out on the
+compressed before. Minor problems are the fixed resolution            same image and even on the same objects. In several cases, a
+of images, and missing information on how the dataset was             separate development dataset is associated with the main one
+created, e.g., how many cameras were used, which could help           to ensure correct training of learning-based methods. Overall,
+interpreting results.                                                 they represent a very challenging and reliable testbed for new
+   Forgeries of various nature are present in the Realistic           proposals.
+Tampering Dataset proposed by Korus in [204]. The manipu-                Recently, a very large dataset has been released in [209],
+lated images, all uncompressed, appear indeed very realistic,         called DEFACTO, which collects over 200,000 images with
+although there is only a small number of them. The dataset            realistic manipulations, including splicings, copy-moves, re-
+includes also the PRNU patterns of the four cameras used to           movals and face morphing. Another very large dataset is the
+acquire all images, enabling the use of sensor-based methods.         PS-Battles Dataset, where a collection of 102,028 images
+   The Wild Web Dataset [205] is a collection of real cases           is presented, each containing the original image but also
+from the internet. Therefore, there are no certified information      a varying number of manipulated versions [210]. For what
+on the manipulations, but the authors made a huge effort to           concern facial modifications a dataset has been proposed
+gather different versions of the same images and to extract           in [139] which contains around 4,000 real and manipulated
+meaningful ground-truths.                                             images, using two different face swapping algorithms. A large
+   Many datasets have been proposed specifically for copy-            dataset of GAN-generated images using available software
+move forgery detection [91], [92], [206], [95], [207], the            [192], [172] are available at [211].
+forgery most studied in the literature. Some of them are
+designed to challenge copy-move methods by adding multiple
+operations on the copied object, such as rotation, resizing,          B. Videos
+change of illumination. However, the more an object is                  Only a few datasets are available for experiments on videos,
+modified, the more detectable it becomes for methods based            but their number has been growing rapidly in this last year.
+on camera artifacts, since the distance between its statistical       Creating high-quality realistic forged videos using standard
+                                                                                                                                       14
+
+
+
+                                                                TABLE II
+                                       L IST OF DATASETS INCLUDING GENERIC IMAGE MANIPULATIONS
+
+ dataset          ref.    year   manipulations                   # prist. / forged         image size                 format
+ Columbia gray    [212]   2004   splicing (unrealistic)             933 / 912              128×128                    BMP
+ Columbia color   [201]   2006   splicing (unrealistic)             182 / 180         757×568 - 1152×768            TIF, BMP
+ MICC F220        [92]    2011   copy-move                          110 / 110          722×480 - 800×600               JPG
+ MICC F2000       [92]    2011   copy-move                         1,300 / 700            2048×1536                    JPG
+ VIPP             [76]    2012   double JPEG compres.                68 / 69          300×300 - 3456×5184              JPG
+ FAU              [91]    2012   copy-move                           48 / 48         2362×1581 − 3888×2592          PNG, JPG
+ Casia v1         [202]   2013   splicing, copy-move                800 / 921              374×256                     JPG
+ Casia v2         [202]   2013   splicing, copy-move              7,200 / 5,123       320×240 − 800×600           JPG, BMP, TIF
+ DSO-1             [5]    2013   splicing                           100 / 100             2048×1536                   PNG
+ CoMoFoD          [206]   2013   copy-move                          260 /260          512×512, 3000×2000            PNG, JPG
+ Wild Web         [213]   2015   real-world cases                  90 / 9,657         72×45 − 3000×2222        PNG, BMP, JPG, GIF
+ GRIP             [95]    2015   copy-move                           80 / 80               1024×768                   PNG
+ RTD (Korus)      [204]   2016   splicing, copy-move                220 / 220             1920×1080                    TIF
+ COVERAGE         [207]   2016   copy-move                          100 / 100              400×486                     TIF
+ NC2016           [208]   2016   splicing, copy-move, removal       560 / 564        500×500 − 5,616×3,744             JPG
+ NC2017           [208]   2017   various                          2667 / 1410        160×120 − 8000×5320       RAW, PNG, BMP, JPG
+ FaceSwap         [139]   2017   face swapping                    1,758 / 1,927       450×338 - 7360×4912              JPG
+ MFC2018          [208]   2018   various                         14,156 / 3,265      128×104 − 7952×5304     RAW, PNG, BMP, JPG, TIF
+ PS-Battles       [210]   2018   various                        11,142 / 102,028     130×60 − 10,000×8558           PNG, JPG
+ MFC2019          [214]   2019   various                         10,279 / 5,750      160×120 − 2624×19,680   RAW, PNG, BMP, JPG, TIF
+ DEFACTO          [209]   2019   various                           – / 229,000        240×320 − 640×640                TIF
+ GAN collection   [172]   2019   GAN generated                  356,000 / 596,000    256×256 − 1024×1024              PNG
+
+
+
+editing tools is very time-consuming, hence, only a few small           using four different manipulation tools. Two of them are based
+datasets are available on-line featuring classic manipulations,         on computer-graphics and two on deep learning, two perform
+like copy-moves and splicings [97], [149], [98]. Many more,             changes of expression and two face swapping, Figure 14 shows
+and much larger datasets include video manipulated with AI-             a few examples. The dataset is available in uncompressed and
+based tools [215], [191], [178], [216], [217], [218], [219],            H264 compressed format, with two quality levels, in order to
+[220] (Table III).                                                      stimulate developing methods robust to compression. Recently,
+   In [215] a face-swapping video dataset, DF-TIMIT, has                Google and Jigsaw contributed the dataset with 3,000 more
+been built, with 620 deepfake videos obtained with a GAN-               manipulated videos, created ad hoc using 28 actors [217]. Also
+based approach. The original data come from a database which            in [216] a new deepfake video dataset has been introduced,
+contains 10 videos for each of 43 subjects. 16 couples of               called Celeb-DF. It comprises 5,639 manipulated videos, the
+subjects were manually chosen from the database in order                real videos are based on publicly available YouTube video
+to generate videos with swapped faces from subject one                  clips of 59 celebrities of diverse genders, ages, and ethnic
+to subject two and viceversa, producing both a low quality              groups. Forged videos are created by swapping faces for each
+and a high quality video. In [191], instead, proposes the               pair of the 59 subjects using an improved deepfake synthesis
+Fake Face in the Wild Dataset, FFW, comprising only 150                 method. Instead in [218] the first release of the dataset used
+manipulated videos which, however, show a large variety                 for the Facebook DeepFake Detection Challenge (DFDC) is
+of approaches, including splicing and CG faces, using both              described. It is composed by 4,113 deepfake videos created
+manual effort and completely automatic procedures. Finally,             using two different synthesis algorithms on the basis of 1,131
+in [221], manipulated videos retrieved from the web have been           original videos featuring 66 enrolled actors. The final dataset
+collected in a dataset that includes 200 fake videos and 180            made available for the Kaggle competition [219] (started on
+real videos. An extended version of this dataset also presents          December 2019) is instead much larger. It comprises 100,000
+near-duplicates found on the web.                                       manipulated videos and around 19,000 pristine ones. A very
+   The first large dataset with automatically manipulated faces,        recent dataset has been built in [220], comprising 10,000 fake
+FaceForensics++, has been proposed in [178]. It contains 1,000          videos built using 100 actors and applying 7 perturbations,
+original videos downloaded from the YouTube-8M dataset                  like color saturation, blurring and compression, with different
+[222] and 4,000 manipulated videos obtained from them by                parameters for a total of 35 possible post-processing so as to
+                                                                                                                                                  15
+
+
+
+                                                                       TABLE III
+                                                  L IST OF DATASETS INCLUDING VIDEO MANIPULATIONS
+
+       dataset                   ref.     year    manipulations                   # prist. / forged       frame size              format
+       DF-TIMIT                 [215]    2018     deepfake                            – / 620         64×64 − 128×128              JPG
+       FFW                      [191]    2018     splicing, CGI, deepfake             – / 150          480p, 720p, 1080p     H.264, YouTube
+       FVC-2018                 [221]    2018     real-world cases                 2,458 / 3,957            various              various
+       FaceForensics++          [178]    2019     deepfake, CG-manipulations       1,000 / 4,000       480p, 720p, 1080p   H.264, CRF=0, 23, 40
+       DDD                      [217]    2019     deepfake                          363 / 3,068             1080p          H.264, CRF=0, 23, 40
+       Celeb-DF                 [216]    2019     deepfake                           – / 5,639              various              MPEG4
+       DFDC-preview             [218]    2019     deepfake                         1,131 / 4,113        180p − 2160p              H.264
+       DFDC                     [219]    2019     deepfake                       19,154 / 100,000       240p − 2160p              H.264
+       DeeperForensics-1.0      [220]    2020     deepfake                        50,000 / 10,000           1080p                   –
+
+
+
+         Target Video              Source Video               Face2Face          devices in different scenarios under controlled acquisition
+                                                                                 conditions. The VISION dataset instead [227] includes 34,427
+                                                                                 images and 1,914 videos from 35 devices of 11 major brands.
+                                                                                 Media assets are both in their original format and as they
+                                                                                 appear after uploading/downloding on various platforms (Face-
+                                                                                 book, YouTube, WhatsApp) so as to allow studies on data
+       NeuralTextures              FaceSwap                  Deepfake            downloaded from social networks. Another mixed dataset,
+                                                                                 SOCRATES, is proposed in [228]. It contains 6,200 images
+                                                                                 and 680 videos captured using 67 smartphones of 14 brands
+                                                                                 and 42 models. Finally, this year the video-ACID database
+                                                                                 has been published [229], with over 12,000 videos from 46
+                                                                                 physical devices of 36 different models.
+Fig. 14. Example manipulated videos from FaceForensics++. A single original
+video (top-left) is manipulated by four different tools (Face2Face, NeuralTex-                        VIII. C OUNTERFORENSICS
+tures, FaceSwap, DeepFake) using information drawn from a different source
+video.                                                                              In multimedia forensics, like in other security-related fields,
+                                                                                 one should always account for the presence of an adversary
+                                                                                 which actively tries to mislead the analyses. In fact, a skilled
+better represent a real scenario.
+                                                                                 attacker, aware of the principles on which forensic tools rely,
+                                                                                 may enact a number of counter-forensic measures on purpose
+C. Original media                                                                to evade detectors [230]. Forensic tools should prove robust to
+   Since some methods work on anomaly detection and are                          such attacks, as well as to all real-world conditions that tend
+trained only on pristine data, it makes sense to describe also                   to impair the performance observed in laboratory. Therefore,
+a list of useful publicly available resources based on datasets                  the many counterforensics methods designed to fool current
+of authentic images and videos. Of course, they can also be                      detectors represent a precious help towards the development
+used to simulate different types of manipulation and carry out                   of multimedia forensics, since they highlight the weaknesses
+initial experiments on a synthetic dataset. They are commonly                    of current solutions and stimulate research for more robust
+used for source/camera identification, but this task is strictly                 ones [231].
+related to media forgery detection. For example, in case of a                       A large body of literature concerns attacks targeted to spe-
+composition, by identifying the origin of image patches, one                     cific forensic methods, which try to exploit their weaknesses.
+can detect the presence of multiple sources.                                     For example, some methods try to hide traces of resampling
+   The Dresden image database [223] is the most popular one.                     that manifest as strong peaks in the Fourier domain [232]. Also
+It contains over 14,000 JPEG images captured by 73 digital                       sensor traces, and especially PRNU fingerprints, are popular
+cameras of 25 different models. Raw images, instead, can                         targets because of their importance in forensics. So, methods
+be found in the RAISE dataset [224], composed by 8,156                           have been proposed to remove the true device fingerprint from
+images taken by 3 different cameras. A further dataset was                       an image, and also to inject the fingerprint of a different
+released for the 2018 Kaggle competition [225] on camera                         device in it [230]. Besides hindering source identification,
+model identification and is also available on-line. It is com-                   these attacks can reduce the ability to discriminate manipulated
+posed by 2,750 images from 10 different camera models. A                         from pristine data. As said before, however, they stimulated the
+dataset that contains SDR (Standard Dynamic Range) and                           design of more robust detectors [233], and then more powerful
+HDR (High Dynamic Range) images has been presented in                            attacks [234], in an arms race typical of such two-player
+[226]. A total of 5,415 images were captured by 23 mobile                        games. Attacks to traditional methods will not be explored,
+                                                                                                                                             16
+
+
+
+                                                                                                         TABLE IV
+                            ad-hoc perturbation                                  R ESULTS ON FACE 2FACE MANIPULATIONS IN THE PRESENCE OF
+                                                                                              ADVERSARIAL NOISE AND COMPRESSION
+
+
+         Original                                         Attacked                                              Accuracy
+                                                                                                 Uncompressed   High Quality   Low Quality
+
+                                                                              no attack            99.93%         98.13%         87.81%
+Fig. 15. Fooling deepfake detectors. A suitable inconspicuous adversarial     low attack           80.43%         94.83%         85.83%
+noise pattern can be added to a deepfake video to mislead the CNN detector
+            “Fake”it as pristine.
+into classifying                                            “Pristine”        medium attack        56.37%         89.93%         83.30%
+                                                                              strong attack        52.23%         82.00%         80.30%
+
+
+referring the reader to a very recent review by Barni et al.
+[235], and focus instead on counterforensics for deep learning-              model traces. The attack does not only fool camera model
+based methods.                                                               classifiers, but reduces also the power of forensic analyses
+   Back in 2014, in the context of image recognition, it has                 based on traces of in-camera processing. Along this same
+been shown [236] that convolutional neural networks are                      direction, in [248] an autoencoder-based method is proposed
+extremely vulnerable to adversarial attacks. By injecting a                  to remove GAN fingerprints and impair the performance of
+suitable inconspicuous noise pattern in the target image, the                systems designed to detect GAN-generated images. Instead
+attacker can induce the network to change classification in                  [249] proposes a GAN-based architecture with a twofold goal,
+any desired way (see Figure 15). Actually, this is not a                     to inject traces of a real camera in synthetic images and, at
+new problem, the vulnerability of machine learning had been                  the same time, reduce peculiar traces of GAN generation.
+known for several years, especially in applications like spam                Therefore, attacked images cannot be recognized anymore as
+and malware detection, and has been thoroughly studied [237]                 computer-generated and are instead recognized as real images
+in the adversarial machine learning field. In any case, these                of the target camera. The attack takes place in a black-box
+alarming findings have spawned intense research on this topic                scenario, with no information on the attacked detectors.
+in computer vision.                                                             Notably, all these approaches preserve a very good image
+                                                                             quality, with no perceivable visual artifacts, demonstrating the
+   In multimedia forensics, some early papers [238], [239]
+                                                                             urgent need of stronger and more robust detection methods.
+focused on attacking machine learning detectors based on
+the rich model handcrafted features, obtaining mixed results
+with high complexity. Indeed, attacking CNNs seems to be                                                IX. F USION
+easier and more effective [240]. Backpropagation provides a                     A system with the ambition to provide reliable decisions
+strong help to design gradient-based adversarial perturbations.              about the integrity of images and videos must necessarily
+However, differently from what happens in computer vision                    integrate multiple tools, to cover most, if not all, the operating
+[241], it appears that adversarial noise designed to fool a                  conditions of interest. In fact, each individual method works
+specific CNN architecture does not transfer to different ar-                 under suitable hypotheses, and can become completely useless
+chitectures trained for the same task [242], [243]. This is                  when these do not hold. For example, a tool for copy-move
+probably because the adversarial noise lives in the same space               detection will not help in case of a splicing. Fusing multiple
+(high frequencies) where major forensic clues live. Lossy                    tools, however, is not only important to widen the spectrum
+compression is a further intrinsic defence against adversarial               of detectable forgeries, but also to improve the detection
+attacks [244]. Indeed, strong lossy compression, ubiquitous in               capability with respect to each single one. In fact, the traces
+real-world scenarios, removes not only useful forensic traces                to be detected are usually extremely weak, and can be easily
+but also adversarial noise, reducing the effectiveness of such               masked by intentional attacks, as described in the previous
+attacks [245]. Table IV shows some experimental results on                   Section, and even by standard processing steps. Therefore,
+Face2Face manipulated videos [178]. Attacks crafted with                     the integration of multiple tools designed to detect similar
+FSGM [241] with various strengths ( = 1, 2, 3) have been                    attacks with different approaches, may be expected to improve
+applied only on faces (so as to not distort the visual quality,              performance, and especially robustness, to both innocent and
+Figure 15) and the performance of a CNN-based detector are                   malicious disturbances. On the other hand, maximizing the
+evaluated. With  = 3 the detector accuracy becomes close to                 number of clues is standard practice in investigative proce-
+50% (random choice). However, if videos are compressed, a                    dures.
+large part of the adversarial noise is removed, and the detector                The typical workflow of a forensic tool is to extract suitable
+performance improves again.                                                  low-level features from the original data, process them to
+   Recently, some methods have been specifically developed to                obtain a scalar score or a probability vector, and eventually
+attack CNN detectors for multimedia forensics applications. In               process the latter (score thresholding, max probability choice)
+[246] a GAN-based architecture is proposed to hide the traces                to make the final decision. Fusion may take place at all three
+of median filtering in order to fool state-of-the-art CNN-based              levels, called feature, measurement, and abstract level, with
+detectors. A different perspective is followed in [247], where               pros and cons. As observed in [250], working at the feature
+a generative method has been proposed to falsify the camera                  level presents serious drawbacks when a large number of tools
+                                                                                                                                                     17
+
+
+
+              Original Image             Reference Mask          Forged Image         in multimedia forensics. In [253] several forensic tools, based
+                                                                                      on complementary hypotheses, are fused following various
+                                                                                      strategies, with results confirming that measurement-level fu-
+                                                                                      sion is more effective than abstract-level fusion. In [204],
+       Copy-move               Noise-based           CFA-based            CNN-based   instead, contextual information is taken into account by means
+                                                                                      of prior Markovian models, while in [254] multi-scale fusion
+                                                                                      is investigated to improve the localization accuracy of tools
+                                                                                      operating in sliding-window modality.
+                                                                                         It is worth mentioning that fusion is a common characteristic
+Fig. 16. Using information fusion to detect multiple manipulations. Different
+tools provide different pieces of information, which may locally agree,               of all the winning approaches in several forensic challenges,
+disagree, or being complementary. A human expert can likely make sense of             like in the IEEE Forensics challenge [120], [96], the fraud
+all such clues, but transferring this expertise to a computer may be difficult.       detection contest on receipts [255] or the Camera Model
+                                                                                      Identification Challenge organized for the 2018 IEEE Signal
+                                                                                      Processing Cup and hosted on Kaggle [225]. More in general,
+are involved, especially for the number of features to deal                           in the data science community, it is standard practice to com-
+with, and the problem of creating representative datasets for                         bine the probability vectors output by multiple deep networks,
+all possible situations of interest. On the other hand, with                          even by simple averaging. Empirically, this fusion improves
+abstract-level fusion, precious information may have been                             robustness when moving from training to test data, more and
+already discarded, reducing the ability to exploit cross-tool                         more with the increasing number of networks, in line with the
+dependencies. Working at the measurement level may be a                               “wisdom of the crowd” principle.
+reasonable compromise in between these two extremes. In
+any case, while fusion is certainly a major asset to improve
+performance, it is not obvious how to combine wildly different                                              X. F UTURE WORK
+pieces of information in a sensible way, as shown by the                                 As clearly shown by this survey, in the last fifteen years
+example of Figure 16. Here, an expert can easily understand                           there has been intense research on multimedia forensics, and
+that manipulations occurred, and where, but transferring such                         great progresses. Nonetheless, many issues remain unsolved,
+a skill to a machine is not trivial. Another example is shown                         new challenges appear by the day and, eventually, most of the
+in Figure 17, where the two versions of Emma Gonzalez are                             road seems to be still ahead of us. This is not so surprising,
+analyzed using a CNN-based localization approach. For the                             though. For sure, the advent of deep learning has given
+first image the heatmap shows that there is no manipulation,                          extraordinary impulse to both media manipulation methods
+while for the second image the forged area is highlighted.                            and forensic tools, opening new research areas. A more
+What is interesting is that a further manipulation was carried                        fundamental reason, however, is the two-player nature of this
+out by the malicious user, who also replicated some text inside                       research field. The presence of skilled attackers is a guarantee
+the poster, which is detected by a copy-move based detector.                          that no tool will protect us forever, and new solutions will be
+Indeed, to create a realistic forgeries multiple modifications                        always necessary to cope with unforeseen menaces. With this
+were needed and hence multiple traces were left. How to fuse                          premise, it is important trying to identify the most promising
+these results is clearly not trivial.                                                 areas for future research.
+   Despite the intense research activity in multimedia foren-                            A first topic is fusion. As manipulations get smarter and
+sics, there has been limited attention on the fusion of diverse                       smarter, individual tools will become ever less effective against
+and complementary tools. One of the first contributes is the                          a wide variety of attacks. Therefore, multiple detection tools,
+study of Bayram et al. [113] back in 2006. Their results clearly                      multiple networks, multiple approaches must be put to work
+show that detectors based on fusion dominate all individual                           together, and how to best combine all available pieces of
+base detectors in terms of accuracy, and the gain is more                             information should be the object of a more sustained research.
+significant when operating at the abstract level. In [250],                           Besides multi-tool fusion, also multi-asset analysis should be
+[251] fusion is addressed in a more systematic way, rely-                             pursued. More and more, the individual media assets should
+ing on the Dempster-Shafer theory (DST) of evidence [252]                             be analyzed together with all correlated evidence. A picture or
+to meaningfully combine multiple tools at the measurement                             a video used to spread a fake news should not be studied in
+level. The DST provides a methodology to include concepts                             isolation but together with the accompanying text [256], audio
+like uncertainty, reliability, and compatibility in the decision                      [257], and all available contextual information [258]. Also, the
+process. In fact, to attribute the correct importance to a detector                   approach can be changed based on the availability of additional
+score, one should take into account its overall reliability, the                      information, e.g., metadata or near-identical versions of the
+level of confidence associated with the specific decision and                         image/video under test. Eventually, a whole array of semantic-
+its compatibility with other detectors. Experiments in [250],                         level analyses should be pursued, as envisioned by the recent
+[251] show that the DST approach, with reasonable fusion                              initiative launched by DARPA on Semantics Forensics.
+rules, outperforms consistently all individual tools and also                            Focusing more specifically on deep learning-based tools,
+abstract-level fusion, thanks to the use of richer information. It                    the main technical issue is probably the (in)ability of deep
+even outperforms machine-learning fusion in the absence of a                          networks to adapt to situations not seen in the training phase.
+training set well-aligned with the test set, a recurrent situation                    This issue emerges in several circumstances. First of all, media
+                                                                                                                                                         18
+
+
+
+
+Fig. 17. From left to right: the pristine Emma Gonzalez image, the heatmap obtained using a CNN-based localization method, the manipulated image, and the
+corresponding heatmap obtained with the same CNN-based detector. The last image shows the output of a copy-move detector operating on the manipulated
+version. Therefore, multiple clues were found: splicing and cloning. Also in this case deciding the right fusion strategy is not easy.
+
+
+
+assets undergo a number of innocent processing steps, like                       Artificial intelligence has largely changed these rules. High-
+compression, resizing, rotation, re-capturing, etc., that modify              quality fakes now seem to come out from an assembly line
+significantly their high-order statistics, so precious for forgery            calling for an extraordinary effort on part of both scientists and
+detection. Besides innocent transformations, malicious ones                   policymakers. In fact, today’s multimedia forensics is in full
+should be also considered, designed specifically to disguise                  development, major agencies are funding large research initia-
+forensic clues. It is unlikely that all combinations of such                  tives, and scientists form many different field are contributing
+transformations can be represented in a training set. Therefore,              actively, with fast advances in ideas and tools.
+higher robustness should be pursued by other means. Also, to                     It is difficult to forecast whether such efforts will be able
+deal with the rapid advances in manipulation technology, deep                 to ensure information integrity in the future, or some forms of
+networks should be able to adapt readily to new manipulations,                active protection will become necessary. This is an arms race,
+without a full re-training, which may be simply impossible                    and one part is no smarter than the other. For the present time,
+for lack of training data or entail a catastrophic forgetting                 a large arsenal of tools is being developed, and knowing them,
+phenomena.                                                                    the principles on which they rely, and their scope of application
+   Another hot issue for deep learning-based methods is in-                   is a prerequisite to protect institutions and ordinary people.
+terpretability. The black-box nature of deep learning makes it
+difficult to understand why a certain decision is made. A deep                                    XII. ACKNOWLEDGEMENT
+network may correctly classify a cat’s picture as “cat”, but                     We gratefully acknowledge the support of this research by
+we do not know exactly which specific features motivated this                 a Google Faculty Award. In addition, this material is based
+decision. Of course, this is a serious issue for some forensic                on research sponsored by the Air Force Research Laboratory
+applications. For example, a judge would hardly base decisions                and the Defense Advanced Research Projects Agency under
+only on statistical bases. More in general, being able to track               agreement number FA8750-16-2-0204. The U.S. Government
+the reasoning of a deep network would allow to improve its                    is authorized to reproduce and distribute reprints for Gov-
+design and training phase, and provide higher robustness with                 ernmental purposes notwithstanding any copyright notation
+respect to malicious attacks.                                                 thereon. The views and conclusions contained herein are those
+   Lastly, we underline a resurgent of interest on active au-                 of the authors and should not be interpreted as necessarily
+thentication methods [259], [260]. In past decades, a large                   representing the official policies or endorsements, either ex-
+body of research was produced on digital watermarking [261].                  pressed or implied, of the Air Force Research Laboratory and
+There is now much interest in blockchain technology [262], in                 the Defense Advanced Research Projects Agency or the U.S.
+criptography [263], and even new active methods have been                     Government.
+proposed to ensure the integrity of digital media [264] or to
+protect individuals from becoming the victims of AI attacks
+                                                                                                            R EFERENCES
+[265]. As we said before, despite its long history, multimedia
+forensics appears to be still in full development, with high                    [1] H. Farid, “Image forgery detection,” IEEE Signal Processing Magazine,
+                                                                                    vol. 26, no. 2, pp. 16–25, 2009.
+demands from industry and society and many answers yet to                       [2] ——, Photo Forensics. The MIT Press, 2016.
+be given.                                                                       [3] M. Johnson and H. Farid, “Exposing digital forgeries in complex
+                                                                                    lighting environments,” IEEE Transactions on Information Forensics
+                                                                                    and Security, vol. 2, no. 3, pp. 450–461, 2007.
+                         XI. C ONCLUSION                                        [4] E. Kee, J. O’Brien, and H. Farid, “Exposing photo manipulation with
+                                                                                    inconsistent shadows,” ACM Transactions on Graphics, vol. 32, no. 3,
+  Fifteen years ago multimedia forensics was a niche field                          pp. 28–58, 2013.
+of practical interest only for a restricted set of players in-                  [5] T. de Carvalho, C. Riess, E. Angelopoulou, H. Pedrini, and A. Rocha,
+volved in law enforcement, intelligence, private investigations.                    “Exposing digital image forgeries by illumination color classification,”
+                                                                                    IEEE Trans. Inf. Forensics Security, vol. 8, no. 7, pp. 1182–1194, 2013.
+Both attacks and defences had an artisan flavor, and required                   [6] A. Piva, “An overview on image forensics,” ISRN Signal Processing,
+painstaking work and dedication.                                                    pp. 1–22, 2012.
+                                                                                                                                                             19
+
+
+
+ [7] Y. Wu, W. Abd-Almageed, and P. Natarajan, “Deep matching and                [32] O. Fried, A. Tewari, M. Z. abd A. Finkelstein, E. Shechtman, D. Gold-
+     validation network: An end-to-end solution to constrained image splic-           man, K. Genova, Z. Jin, C. Theobalt, and M. Agrawala, “Text-based
+     ing localization and detection,” in ACM International Conference on              editing of talking-head video,” ACM Transactions on Graphics, vol. 38,
+     Multimedia, 2017, pp. 1480–1502.                                                 no. 4, 2019.
+ [8] Y. Lui, X. Zhu, X. Zhao, and Y. Cao, “Adversarial learning for              [33] C. Barnes, E. Shechtman, A. Finkelstein, and D. B. Goldman, “Patch-
+     constrained image splicing detection and localization based on atrous            Match: A randomized correspondence algorithm for structural image
+     convolution,” IEEE Trans. Inf. Forensics Security, vol. 14, no. 10, pp.          editing,” ACM Transactions on Graphics, vol. 28, no. 3, 2009.
+     2551–2566, 2019.                                                            [34] H. Huang, P. Yu, and C. Wang, “An introduction to image synthesis
+ [9] Z. Dias, A. Rocha, and S. Goldenstein, “Video phylogeny: Recovering              with generative adversarial nets,” arXiv:1803.04469v2, 2018.
+     near-duplicate video relationships,” in IEEE International Workshop on      [35] T. Karras, T. Aila, S. Laine, and J. Lehtinen, “Progressive growing of
+     Information Forensics and Security, 2011.                                        GANs for improved quality, stability, and variation,” in International
+[10] D. Moreira, A. Bharati, J. Brogan, A. Pinto, M. Parowski, K. W.                  Conference on Learning Representations, 2018.
+     Bowyer, P. Flynn, A. Rocha, and W. Scheirer, “Image provenance              [36] T.-C. Wang, M.-Y. Liu, J.-Y. Zhu, G. Liu, A. Tao, J. Kautz, and
+     analysis at scale,” IEEE Trans. Image Process., vol. 14, no. 10, pp.             B. Catanzaro, “Video-to-video synthesis,” in Conference on Neural
+     6109–6123, 2018.                                                                 Information Processing Systems, 2018.
+[11] A. Rocha, W. Scheirer, T. Boult, and S. Goldenstein, “Vision of the         [37] E. Zakharov, A. Shysheya, E. Burkov, and V. Lempitsky, “Few-shot
+     unseen: Current trends and challenges in digital image and video                 adversarial learning of realistic neural talking head models,” arXiv
+     forensics,” ACM Computing Surveys, vol. 43, no. 4, 2011.                         preprint arXiv:1905.08233v2, 2019.
+[12] S. Milani, M. Fontani, P. Bestagini, M. Barni, A. Piva, M. Tagliasacchi,    [38] S. Suwajanakorn, S. Seitz, and I. Kemelmacher-Shlizerman, “Synthe-
+     and S. Tubaro, “An overview on video forensics,” APSIPA Transactions             sizing Obama: learning lip sync from audio,” ACM Transactions on
+     on Signal and Information Processing, vol. 1, 2012.                              Graphics, vol. 36, no. 4, 2017.
+[13] M. Stamm, M. Wu, and K. R. Liu, “Information forensics: An overview         [39] J. Chung, A. Jamaludin, and A. Zisserman, “You said that?” in British
+     of the first decade,” IEEE access, pp. 167–200, 2011.                            Machine Vision Conference, 2017.
+[14] P. Korus, “Digital image integrity a survey of protection and verifica-     [40] Y. Choi, M. Choi, M. Kim, J.-W. Ha, S. Kim, and J. Choo, “StarGAN:
+     tion techniques,” Digital Signal Processing, vol. 71, pp. 1–26, 2017.            Unified generative adversarial networks for multi-domain image-to-
+[15] E. Kee, M. Johnson, and H. Farid, “Digital image authentication                  image translation,” in IEEE Conference on Computer Vision and
+     from JPEG headers,” IEEE Transactions on Information Forensics and               Pattern Recognition, 2018.
+     Security, vol. 6, no. 3, pp. 1066–1075, 2011.                               [41] S. Qian, K.-Y. Lin, W. Wu, Y. Liu, Q. Wang, F. Shen, C. Qian, and
+[16] M. Iuliani, D. Shullani, M. Fontani, S. Meucci, and A. Piva, “A video            R. He, “Make a face: Towards arbitrary high fidelity face manipula-
+     forensic framework for the unsupervised analysis of MP4-like file                tion,” in IEEE International Conference on Computer Vision, 2019.
+     container,” IEEE Trans. Inf. Forensics Security, vol. 14, no. 3, pp. 635–   [42] J. Thies, M. Zollhöfer, M. Stamminger, C. Theobalt, and M. Nießner,
+     645, 2018.                                                                       “Face2Face: Real-time face capture and reenactment of RGB videos,”
+[17] D. Güera, S. Baireddy, P. Bestagini, S. Tubaro, and E. Delp, “We need           in IEEE Conference on Computer Vision and Pattern Recognition, Jun.
+     no pixels: Video manipulation detection using stream descriptors,” in            2016, pp. 2387–2395.
+     ICML Workshops, 2019.                                                       [43] H. Kim, P. Garrido, A. Tewari, W. Xu, J. Thies, M. Nießner, P. Pérez,
+[18] F. Tan, C. Bernier, B. Cohen, V. Ordonez, and C. Barnes, “Where and              C. Richardt, M. Zollhöfer, and C. Theobalt, “Deep video portraits,”
+     who? automatic semantic-aware person composition,” in IEEE Winter                ACM Transactions on Graphics (TOG), 2018.
+     Conference on Applications of Computer Vision, 2018.                        [44] Y. Nirkin, Y. Keller, and T. Hassner, “FSGAN: Subject agnostic face
+[19] J. Thies, M. Zollhöfer, and M. Nießner, “Deferred neural rendering:             swapping and reenactment,” in International Conference on Computer
+     image synthesis using neural textures,” ACM Transactions on Graphics             Vision, 2019.
+     (TOG), vol. 38, no. 4, 2019.                                                [45] H. Averbuch-Elor, D. Cohen-Or, J. Kopf, and M. Cohen, “Bringing
+[20] R. Shetty, M. Fritz, and B. Schiele, “Adversarial scene editing: Auto-           portraits to life,” ACM Transactions on Graphics, vol. 36, no. 4, 2017.
+     matic object removal from weak supervision,” in Conference on Neural        [46] C. Chan, S. Ginosar, T. Zhouy, and A. Efros, “Everybody dance now,”
+     Information Processing Systems, 2018.                                            in International Conference on Computer Vision, 2019.
+[21] C. Yang, X. Lu, Z. Lin, E. Shechtman, O. Wang, and H. Li, “High-            [47] A. Swaminathan, M. Wu, and K. J. R. Liu, “Digital image forensics
+     resolution image inpainting using multi-scale neural patch synthesis,” in        via intrinsic fingerprints,” IEEE Trans. Inf. Forensics Security, vol. 3,
+     IEEE Conference on Computer Vision and Pattern Recognition, 2017,                no. 1, pp. 101–117, 2008.
+     pp. 6721–6729.                                                              [48] M. Johnson and H. Farid, “Exposing digital forgeries through chromatic
+[22] T. Karras, S. Laine, and T. Aila, “A style-based generator architecture          aberration,” in Proceedings of the 8th Workshop on Multimedia and
+     for generative adversarial networks,” in IEEE Conference on Computer             Security, 2006, pp. 48–55.
+     Vision and Pattern Recognition, 2019, pp. 4401–4410.                        [49] I. Yerushalmy and H. Hel-Or, “Digital image forgery detection based on
+[23] A. Brock, J. Donahue, and K. Simonyan, “Large scale GAN training                 lens and sensor aberration,” International Journal of Computer Vision,
+     for high fidelity natural image synthesis,” in International Conference          vol. 92, no. 1, pp. 71–91, 2011.
+     on Learning Representations, 2019.                                          [50] T. Gloe, K. Borowk, and A. Winkler, “Efficient estimation and large
+[24] T. Park, M.-Y. Liu, T.-C. Wang, and J.-Y. Zhu, “Semantic image                   scale evaluation of lateral chromatic aberration for digital image
+     synthesis with spatially adaptive normalization,” in IEEE Conference             forensics,” in Proc. SPIE, vol. 7541, 2010.
+     on Computer Vision and Pattern Recognition, 2019, pp. 2337–2346.            [51] O. Mayer and M. Stamm, “Accurate and efficient image forgery
+[25] T.-C. Wang, M.-Y. Liu, A. Tao, G. Liu, J. Kautz, and B. Catanzaro,               detection using lateral chromatic aberration,” IEEE Trans. Inf. Forensics
+     “Few-shot Video-to-Video Synthesis,” in Neural Information Process-              Security, vol. 13, no. 7, pp. 1762–1777, 2018.
+     ing Systems, 2019.                                                          [52] H. Fu and X. Cao, “Forgery authentication in extreme wide-angle lens
+[26] P. Isola, J.-Y. Zhu, T. Zhou, and A. A. Efros, “Image-to-image                   using distortion cue and fake saliency map,” IEEE Trans. Inf. Forensics
+     translation with conditional adversarial networks,” in IEEE Conference           Security, vol. 7, no. 4, pp. 1301–1314, 2012.
+     on Computer Vision and Pattern Recognition, 2017.                           [53] S. Bayram, H. Sencar, N. Memon, and I. Avcibas, “Source camera
+[27] S. Reed, Z. Akata, X. Yan, L. Logeswaran, B. Schiele, and H. Lee,                identification based on CFA interpolation,” in IEEE International
+     “Generative adversarial text-to-image synthesis,” in International Con-          Conference on Image Processing, 2005.
+     ference on Machine Learning, 2016.                                          [54] H. Cao and A. Kot, “Accurate detection of demosaicing regularity for
+[28] P.-W. Wu, Y.-J. Lin, C.-H. Chang, E. Chang, and S.-W. Liao, “RelGAN:             digital image forensics,” IEEE Trans. Inf. Forensics Security, vol. 4,
+     Multi-Domain Image-to-Image Translation via Relative Attributes,” in             no. 5, pp. 899–910, 2009.
+     International Conference on Computer Vision, 2019.                          [55] A. Popescu and H. Farid, “Exposing digital forgeries in color filter array
+[29] L. Engstrom, A. Ilyas, S. Santurkar, D. Tsipras, B. Tran, and A. Madry,          interpolated images,” IEEE Trans. Signal Process., vol. 53, no. 10, pp.
+     “Adversarial robustness as a prior for learned representations,” arXiv           3948–3959, 2005.
+     preprint arXiv:1906.00945v2, 2019.                                          [56] A. Gallagher and T. Chen, “Image authentication by detecting traces
+[30] J. Y. Zhu, T. Park, P. Isola, and A. Efros, “Unpaired image-to-                  of demosaicing,” in IEEE CVPR Workshops, 2008.
+     image translation using cycle-consistent adversarial networks,” in IEEE     [57] A. Dirik and N. Memon, “Image tamper detection based on demosaic-
+     International Conference on Computer Vision, 2017.                               ing artifacts,” in IEEE International Conference on Image Processing,
+[31] Y. Nirkin, I. Masi, A. T. Tran, T. Hassner, and G. Medioni, “On face             2009.
+     segmentation, face swapping, and face perception,” in IEEE Conference
+     on Automatic Face and Gesture Recognition, 2018.
+                                                                                                                                                                20
+
+
+
+[58] P. Ferrara, T. Bianchi, A. De Rosa, and A. Piva, “Image forgery                [84] D. Vázquez-Padı́n, M. Fontani, T. Bianchi, P. Comesana, A. Piva,
+     localization via fine-grained analysis of CFA artifacts,” IEEE Trans.               and M. Barni, “Detection of video double encoding with GOP size
+     Inf. Forensics Security, vol. 7, no. 5, pp. 1566–1577, 2012.                        estimation,” in IEEE International Workshop on Information Forensics
+[59] J. Ho, O. Au, J. Zhou, and Y. Guo, “Inter-channel demosaicing traces                and Security, 2012, pp. 151–156.
+     for digital image forensics,” in IEEE International Conference on              [85] A. Gironi, M. Fontani, T. Bianchi, A. Piva, and M. Barni, “A video
+     Multimedia and Expo, 2010.                                                          forensic technique for detecting frame deletion and insertion,” in IEEE
+[60] A. Popescu and H. Farid, “Statistical tools for digital forensics,” in              International Conference on Acoustics, Speech and Signal Processing,
+     International Workshop on Information Hiding, 2004, pp. 128–147.                    2014, pp. 6226–6230.
+[61] S. Lyu, X. Pan, and X. Zhang, “Exposing region splicing forgeries              [86] D. Vázquez-Padı́n, M. Fontani, D. Shullani, F. Pérez-González, A. Piva,
+     with blind local noise estimation,” International Journal of Computer               and M. Barni, “Video Integrity Verification and GOP Size Estimation
+     Vision, vol. 110, no. 2, pp. 202–221, 2014.                                         via Generalized Variation of Prediction Footprint,” IEEE Transactions
+[62] B. Mahdian and S. Saic, “Using noise inconsistencies for blind image                on Information Forensics and Security, in press, 2019.
+     forensics,” Image and Vision Computing, vol. 27, no. 10, pp. 1497–             [87] M. Kirchner, “Fast and reliable resampling detection by spectral
+     1503, 2009.                                                                         analysis of fixed linear predictor residue,” in 10th ACM workshop on
+[63] D. Cozzolino, G. Poggi, and L. Verdoliva, “Splicebuster: A new                      Multimedia and security, 2008, pp. 11–20.
+     blind image splicing detector,” in IEEE International Workshop on              [88] J. Dong, W. Wang, T. Tan, and Y. Shi, “Run-length and edge statistics
+     Information Forensics and Security, 2015, pp. 1–6.                                  based approach for image splicing detection,” in International work-
+[64] C.-C. Hsu, T.-Y. Hung, C.-W. Lin, and C.-T. Hsu, “Video forgery                     shop on Digital Watermarking, 2006, pp. 177–187.
+     detection using correlation of noise residue,” in IEEE International           [89] K. Bahrami, A. Kot, L. Li, and H. Li, “Blurred image splicing
+     Workshop on Multimedia Signal Processing, 2008, pp. 170–174.                        localization by exposing blur type inconsistency,” IEEE Trans. Inf.
+[65] P. Mullan, D. Cozzolino, L. Verdoliva, and C. Riess, “Residual-                     Forensics Security, vol. 10, no. 5, pp. 999–1009, 2015.
+     based forensic comparison of video sequences,” in IEEE International           [90] J. Fridrich, D. Soukal, and J. Lukáš, “ Detection of copy-move forgery
+     Conference on Image Processing, 2017.                                               in digital images,” in Proc. of the 3rd Digital Forensic Research
+[66] X. Ding, G. Yang, R. Li, L. Zhang, Y. Li, and X. Sun, “Identification               Workshop, 2003.
+     of motion-compensated frame rate up-conversion based on residual               [91] V. Christlein, C. Riess, J. Jordan, and E. Angelopoulou, “An evaluation
+     signals,” IEEE Trans. Inf. Forensics Security, vol. 28, no. 7, pp. 1497–            of popular copy-move forgery detection approaches,” IEEE Trans. Inf.
+     1512, 2018.                                                                         Forensics Security, vol. 7, no. 6, pp. 1841–1854, 2012.
+[67] M. Kobayashi, T. Okabe, and Y. Sato, “Detecting forgery from static            [92] I. Amerini, L. Ballan, R. Caldelli, A. D. Bimbo, and G. Serra, “A
+     scene video based on inconsistency in noise level functions,” IEEE                  SIFT-Based Forensic Method for CopyMove Attack Detection and
+     Trans. Inf. Forensics Security, vol. 5, no. 4, pp. 883–892, 2010.                   Transformation Recovery,” IEEE Trans. Inf. Forensics Security, vol. 6,
+[68] Z. Fan and R. de Queiroz, “Identification of bitmap compression                     no. 3, pp. 1099–1110, 2011.
+     history: JPEG detection and quantizer estimation,” IEEE Transactions           [93] E. Silva, T. Carvalho, A. Ferreira, and A. Rocha, “Going deeper into
+     on Image Processing, vol. 12, no. 2, pp. 230–235, 2003.                             copy-move forgery detection: Exploring image telltales via multi-scale
+[69] W. Luo, Z. Qu, J. Huang, and G. Qiu, “A novel method for detect-                    analysis and voting processes,” Journal of Visual Communication and
+     ing cropped and recompressed image block,” in IEEE International                    Image Representation, vol. 29, pp. 16–32, 2015.
+     Conference on Acoustics, Speech and Signal Processing, 2007.                   [94] S.-J. Ryu, M. Kirchner, M.-J. Lee, and H.-K. Lee, “Rotation invariant
+[70] W. Li, Y. Yuan, and N. Yu, “Passive detection of doctored JPEG image                localization of duplicated image regions based on zernike moments,”
+     via block artifact grid extraction,” Signal Processing, vol. 89, no. 9, pp.         IEEE Trans. Inf. Forensics Security, vol. 8, no. 8, pp. 1355–1370,
+     1821–1829, 2009.                                                                    August 2013.
+[71] Z. Lin, J. He, X. Tang, and C.-K. Tang, “Fast, automatic and fine-             [95] D. Cozzolino, G. Poggi, and L. Verdoliva, “Efficient dense-field copy-
+     grained tampered JPEG image detection via DCT coefficient analysis,”                move forgery detection,” IEEE Trans. Inf. Forensics Security, vol. 10,
+     Pattern Recognition, vol. 42, no. 11, pp. 2492–2501, 2009.                          no. 11, pp. 2284–2297, 2015.
+[72] C. Iakovidou, M. Zampoglou, S. Papadopoulos, and Y. Kompatsiaris,              [96] D. Cozzolino, D. Gragnaniello, and L. Verdoliva, “Image forgery
+     “Content-aware detection of JPEG grid inconsistencies for intuitive                 localization through the fusion of camera-based, feature-based and
+     image forensics,” Journal of Visual Communication and Image Rep-                    pixel-based techniques,” in IEEE International Conference on Image
+     resentation, vol. 54, pp. 155 – 170, 2018.                                          Processing, 2014, pp. 5302–5306.
+[73] J. Lukáš and J. Fridrich, “Estimation of primary quantization matrix in      [97] P. Bestagini, S. Milani, M. Tagliasacchi, and S. Tubaro, “Local tam-
+     double compressed JPEG images,” in Proc. of the 3rd Digital Forensic                pering detection in video sequences,” in IEEE International Workshop
+     Research Workshop, 2003.                                                            on Multimedia Signal Processing, 2013, pp. 488–493.
+[74] Y.-L. Chen and C.-T. Hsu, “Detecting recompression of JPEG images              [98] L.D’Amiano, D.Cozzolino, G.Poggi, and L.Verdoliva, “A PatchMatch-
+     via periodicity analysis of compression artifacts for tampering detec-              based dense-field algorithm for video copy-move detection and lo-
+     tion,” IEEE Trans. Inf. Forensics Security, vol. 6, no. 2, pp. 396–406,             calization,” IEEE Transactions on Circuits and Systems for Video
+     2011.                                                                               Technology, vol. 29, no. 3, pp. 669–682, March 2019.
+[75] M. Barni, A. Costanzo, and L. Sabatini, “Identification of cut & paste         [99] Y. Wu, X. Jiang, T. Sun, and W. Wang, “Exposing video interframe
+     tampering by means of double-JPEG detection and image segmenta-                     forgery based on velocity field consistency,” in IEEE International
+     tion,” in IEEE International Symposium on Circuits and Systems, 2010.               Conference on Acoustics, Speech and Signal Processing, 2014, pp.
+[76] T. Bianchi and A. Piva, “Image forgery localization via block-grained               2674–2678.
+     analysis of JPEG artifacts,” IEEE Trans. Inf. Forensics Security, vol. 7,     [100] J. Lukàš, J. Fridrich, and M. Goljan, “Detecting digital image forgeries
+     no. 3, pp. 1003–1017, 2012.                                                         using sensor pattern noise,” in Proc. SPIE, 2006, pp. 362–372.
+[77] H. Farid, “Exposing digital forgeries from JPEG ghosts,” IEEE Trans-          [101] M. Chen, J. Fridrich, J. Lukàš, and M. Goljan, “Imaging sensor noise
+     actions on Information Forensics and Security, vol. 4, no. 1, pp. 154–              as digital x-ray for revealing forgeries,” in International Workshop on
+     160, 2009.                                                                          Information Hiding, 2007, pp. 342–358.
+[78] D. Fu, Y. Shi, and W. Su, “A generalized Benfords law for JPEG                [102] M. Chen, J. Fridrich, M. Goljan, and J. Lukàš, “Determining image
+     coefficients and its applications in image forensics,” in Proc. SPIE,               origin and integrity using sensor noise,” IEEE Trans. Inf. Forensics
+     Security, Steganography, and Watermarking of Multimedia Contents                    Security, vol. 3, no. 4, pp. 74–90, 2008.
+     IX, 2007.                                                                     [103] G. Chierchia, G. Poggi, C. Sansone, and L. Verdoliva, “A Bayesian-
+[79] C. Pasquini, G. Boato, and F. Pèrez-Gonzàlez, “Statistical detection of           MRF approach for PRNU-based image forgery detection,” IEEE Trans.
+     JPEG traces in digital images in uncompressed formats,” IEEE Trans.                 Inf. Forensics Security, vol. 9, no. 4, pp. 554–567, 2014.
+     Inf. Forensics Security, vol. 12, no. 12, pp. 2890–2905, 2017.                [104] G. Chierchia, D. Cozzolino, G. Poggi, C. Sansone, and L. Verdoliva,
+[80] H. Farid, “Digital image ballistics from JPEG quantization,” 2006.                  “Guided filtering for prnu-based localization of small-size image forg-
+[81] S. Agarwal and H. Farid, “Photo forensics from JPEG dimples,” in                    eries,” in IEEE International Conference on Acoustics, Speech and
+     IEEE Int. Workshop on Information Forensics and Security, 2017.                     Signal Processing, 2014.
+[82] B. Lorch and C. Riess, “Image forensics from chroma subsampling               [105] S. Chakraborty and M. Kirchner, “PRNU-based forgery detection
+     of high-quality JPEG images,” in Proc. of the ACM Workshop on                       with discriminative random fields,” in International Symposium on
+     Information Hiding and Multimedia Security, 2019.                                   Electronic Imaging: Media Watermarking, Security, and Forensics,
+[83] W. Wang and H. Farid, “Exposing digital forgeries in video by detecting             2017.
+     double MPEG compression,” in Proceedings of the 8th Workshop on
+     Multimedia and Security, 2006, pp. 37–47.
+                                                                                                                                                             21
+
+
+
+[106] D. Cozzolino, F. Marra, G. Poggi, C. Sansone, and L. Verdoliva,             [131] J.-L. Zhong and C.-M. Pun, “An End-to-End Dense-InceptionNet
+      “PRNU-based forgery localization in a blind scenario,” in International           for Image Copy-Move Forgery Detection,” IEEE Transactions on
+      Conference on Image Analysis and Processing, 2017, pp. 569–579.                   Information Forensics and Security, in press, 2019.
+[107] L. Verdoliva, D. Cozzolino, and G. Poggi, “A feature-based approach         [132] Y. Wu, W. Abd-Almageed, and P. Natarajan, “BusterNet: Detecting
+      for image tampering detection and localization,” in IEEE International            copy-move image forgery with source/target localization,” in European
+      Workshop on Information Forensics and Security, 2014, pp. 149–154.                Conference on Computer Vision, 2018, pp. 170–186.
+[108] J. He, Z. Lin, L., and X. Tang, “Detecting doctored JPEG images             [133] M. Barni, Q.-T. Phan, and B. Tondi, “Copy Move Source-
+      via DCT coefficient analysis,” in European Conference on Computer                 Target Disambiguation through Multi-Branch CNNs,” arXiv preprint
+      Vision, 2006, pp. 425–435.                                                        arXiv:1912.12640v1, 2019.
+[109] X. Jiang, P. He, T. Sun, F. Xie, and S. Wang, “Detection of dou-            [134] S.-Y. Wang, O. Wang, A. Owens, R. Zhang, and A. Efros, “Detecting
+      ble compression with the same coding parameters based on quality                  Photoshopped Faces by Scripting Photoshop,” in International Confer-
+      degradation mechanism analysis,” IEEE Trans. Inf. Forensics Security,             ence on Computer Vision, 2019.
+      vol. 13, no. 1, pp. 170–185, 2018.                                          [135] Y. Rao and J. Ni, “A deep learning approach to detection of splicing
+[110] Z. Lin, R. Wang, X. Tang, and H.-Y. Shum, “Detecting doctored images              and copy-move forgeries in images,” in IEEE International Workshop
+      using camera response normality and consistency,” in IEEE Conference              on Information Forensics and Security, 2016, pp. 1–6.
+      on Computer Vision and Pattern Recognition, 2005, pp. 1087–1092.            [136] B. Bayar and M. Stamm, “A deep learning approach to universal
+[111] T. Ng, “Camera response function signature for digital forensics part II:         image manipulation detection using a new convolutional layer,” in ACM
+      signature extraction,” in IEEE International Workshop on Information              Workshop on Information Hiding and Multimedia Security, 2016.
+      Forensics and Security, 2009, pp. 161–165.                                  [137] Y. Qian, J. Dong, W. Wang, and T. Tan, “Deep learning for steganalysis
+[112] Y.-F. Hsu and S.-F. Chang, “Camera response functions for image                   via convolutional neural networks,” in Proc. SPIE, vol. 9409-0Y, 2015.
+      forensics: An automatic algorithm for splicing detection,” IEEE Trans.      [138] D. Cozzolino, G. Poggi, and L. Verdoliva, “Recasting residual-based
+      Inf. Forensics Security, vol. 5, no. 4, pp. 816–825, 2010.                        local descriptors as convolutional neural networks: an application to
+[113] S. Bayram, I. Avcibaş, B. Sankur, and N. Memon, “Image manipulation              image forgery detection,” in ACM Workshop on Information Hiding
+      detection,” Journal of Electronic Imaging, vol. 15, no. 4, pp. 1–17,              and Multimedia Security, 2017, pp. 1–6.
+      2006.                                                                       [139] P. Zhou, X. Han, V. Morariu, and L. Davis, “Two-stream neural
+[114] X. Zhao, S. Wang, S. Li, J. Li, and Q. Yuan, “Image splicing detection            networks for tampered face detection,” in IEEE CVPR Workshops,
+      based on noncausal Markov model,” in IEEE International Conference                2017, pp. 1831–1839.
+      on Image Processing, 2013.                                                  [140] ——, “Learning rich features for image manipulation detection,” in
+[115] H. Li, W. Luo, X. Qiu, and J. Huang, “Identification of various image             IEEE Conference on Computer Vision and Pattern Recognition, 2018.
+      operations using residual-based features,” IEEE Trans. Circuits Syst.       [141] H. Li and J. Huang, “Localization of deep inpainting using high-pass
+      Video Technol., vol. 28, no. 1, pp. 31–45, 2018.                                  fully convolutional network,” in IEEE International Conference on
+[116] S. Lyu and H. Farid, “How realistic is photorealistic?” IEEE Trans.               Computer Vision, 2019, pp. 8301–8310.
+      Signal Process., vol. 53, no. 2, pp. 845–850, 2005.                         [142] Y. Wu, W. AbdAlmageed, and P. Natarajan, “ManTra-Net: Manip-
+[117] Z. He, W. Lu, W. Sun, and J. Huang, “Digital image splicing detec-                ulation Tracing Network For Detection And Localization of Image
+      tion based on Markov features in DCT and DWT domain,” Pattern                     Forgeries With Anomalous Features,” in IEEE Conference on Computer
+      recognition, vol. 45, pp. 4292–4299, 2012.                                        Vision and Pattern Recognition, 2019.
+[118] H. Farid and S. Lyu, “Higher-order wavelet statistics and their appli-      [143] J. Bappy, C. Simons, L. Nataraj, B. Manjunath, and A. Roy-
+      cation to digital forensics,” in IEEE Workshop on Statistical Analysis            Chowdhury, “Hybrid LSTM and EncoderDecoder Architecture for
+      in Computer Vision, 2003, pp. 1–8.                                                Detection of Image Forgeries,” IEEE Trans. Image Process., vol. 28,
+[119] J. Fridrich and J. Kodovsky, “Rich models for steganalysis of digital             no. 7, pp. 3286–3300, July 2019.
+      images,” IEEE Trans. Inf. Forensics Security, vol. 7, pp. 868–882, 2012.    [144] P. Zhou and B.-C. C. X. H. M. Najibi1, “Generate, segment and
+[120] D. Cozzolino, D. Gragnaniello, and L. Verdoliva, “Image forgery                   refine: Towards generic manipulation segmentation,” arXiv preprint
+      detection through residual-based local descriptors and block-matching,”           arXiv:1811.09729v3, 2019.
+      in IEEE International Conference on Image Processing, 2014, pp.             [145] N. Rahmouni, V. Nozick, J. Yamagishi, and I. Echizen, “Distinguish-
+      5297–5301.                                                                        ing computer graphics from natural images using convolution neural
+[121] Q. Wang and R. Zhang, “Double JPEG compression forensics based                    networks,” in IEEE Workshop on Information Forensics and Security,
+      on a convolutional neural network,” EURASIP Journal on Information                2017, pp. 1–6.
+      Security, pp. 1–12, 2016.                                                   [146] M. Boroumand and J. Fridrich, “Deep learning for detecting processing
+[122] J. Park, D. Cho, W. Ahn, and H.-K. Lee, “Double JPEG detection in                 history of images,” in IS&T Electronic Imaging: Media Watermarking,
+      mixed JPEG quality factors using deep convolutional neural network,”              Security, and Forensics, 2018.
+      in European Conference on Computer Vision, 2018.                            [147] F. Marra and D. Gragnaniello and L. Verdoliva and G. Poggi, “A
+[123] M. Barni, L. Bondi, N. Bonettini, P. Bestagini, A. Costanzo, M. Mag-              Full-Image Full-Resolution End-to-End-Trainable CNN Framework for
+      gini, B. Tondi, and S. Tubaro, “Aligned and non-aligned double                    Image Forgery Detection,” arXiv preprint arXiv:1909.06751, 2019.
+      JPEG detection using convolutional neural networks,” Journal of Visual      [148] D. Cozzolino and L. Verdoliva, “Single-image splicing localization
+      Communication and Image Representation, vol. 49, pp. 153–163, 2017.               through autoencoder-based anomaly detection,” in IEEE Workshop on
+[124] I. Amerini, T. Uricchio, L. Ballan, and R. Caldelli, “Localization of             Information Forensics and Security, 2016, pp. 1–6.
+      JPEG double compression through multi-domain convolutional neural           [149] D. D’Avino, D. Cozzolino, G. Poggi, and L. Verdoliva, “Autoencoder
+      networks,” in IEEE Computer Vision and Pattern Recognition Work-                  with recurrent neural networks for video forgery detection,” in IS&T
+      shops, 2017.                                                                      International Symposium on Electronic Imaging: Media Watermarking,
+[125] S.-H. Nam, J. Park, D. Kim, I.-J. Yu, T.-Y. Kim, and H.-K. Lee, “Two-             Security, and Forensics, 2017.
+      Stream Network for Detecting Double Compression of H.264 Videos,”           [150] S. Yarlagadda, D. Gera, P. Bestagini, F. M. Zhu, S. Tubaro, and E. Delp,
+      in IEEE International Conference on Image Processing, 2019.                       “Satellite image forgery detection and localization using gan and
+[126] C. Long, A. Basharat, and A. Hoogs, “A Coarse-to-fine Deep Convo-                 one-class classifier,” in IS&T International Symposium on Electronic
+      lutional Neural Network Framework for Frame Duplication Detection                 Imaging: Media Watermarking, Security, and Forensics, 2018.
+      and Localization in Forged Videos,” in IEEE CVPR Workshops, 2019.           [151] L. Bondi, S. Lameri, D. Güera, P. Bestagini, E. Delp, and S. Tubaro,
+[127] K. He, X. Zhang, S. Ren, and J. Sun, “Deep residual learning for image            “Tampering detection and localization through clustering of camera-
+      recognition,” in IEEE Conference on Computer Vision and Pattern                   based CNN features,” in IEEE CVPR Workshops, 2017.
+      Recognition, 2016, pp. 770–778.                                             [152] O. Mayer and M. Stamm, “Learned forensic source similarity for
+[128] R. Salloum, Y. Ren, and C. C. J. Kuo, “Image splicing localization                unknown camera models,” in IEEE International Conference on Acous-
+      using a multi-task fully convolutional network (MFCN),” Journal of                tics, Speech and Signal Processing, April 2018, pp. 2012–2016.
+      Visual Communication and Image Representation, pp. 201–209, 2018.           [153] ——, “Exposing fake images with forensic similarity graphs,” arXiv
+[129] X. Bi, Y. Wei, B. Xiao, and W. Li, “RRU-Net: The Ringed Residual U-               preprint arXiv:1912.02861v1, 2019.
+      Net for Image Splicing Forgery Detection,” in IEEE Computer Vision          [154] M. Huh, A. Liu, A. Owens, and A. Efros, “Fighting fake news: Image
+      and Pattern Recognition Workshops, 2019.                                          splice detection via learned self-consistency,” in European Conference
+[130] Y. Wu, W. Abd-Almageed, and P. Natarajan, “Image copy-move forgery                on Computer Vision, 2018.
+      detection via an end-to-end deep neural network,” in IEEE Winter
+      Conference on Applications of Computer Vision, 2018.
+                                                                                                                                                            22
+
+
+
+[155] D. Cozzolino and L. Verdoliva, “Noiseprint: A CNN-based camera             [180] G. Huang, Z. Liu, L. van der Maaten, and K. Weinberger, “Densely
+      model fingerprint,” IEEE Trans. Inf. Forensics Security, vol. 15, no. 1,         connected convolutional networks,” in IEEE Conference on Computer
+      pp. 14–27, 2020.                                                                 Vision and Pattern Recognition, 2018, pp. 4700–4708.
+[156] ——, “Camera-based image forgery localization using convolutional           [181] F. Chollet, “Xception: Deep learning with depthwise separable con-
+      neural networks,” in European Signal Processing Conference, Sep.                 volutions,” in IEEE Conference on Computer Vision and Pattern
+      2018.                                                                            Recognition, 2017, pp. 1800–1807.
+[157] D. Cozzolino, G. Poggi, and L. Verdoliva, “Extracting camera-based         [182] A. Rössler, D. Cozzolino, L. Verdoliva, C. Riess, J. Thies, and
+      fingerprints for video forensics,” in CVPR Workshops, 2019, pp. 130–             M. Nießner, “Faceforensics: A large-scale video dataset for forgery
+      137.                                                                             detection in human faces,” arXiv preprint arXiv:1803.09179, 2018.
+[158] D.-T. Dang-Nguyen, G. Boato, and F. DeNatale, “Discrimination              [183] J. Li, T. Shen, W. Zhang, H. Ren, D. Zeng, and T. Mei, “Zoom-
+      between computer generated and natural human faces based on asym-                ing into Face Forensics: A Pixel-level Analysis,” arXiv preprint
+      metry information,” in European Signal Processing Conference, 2012,              arXiv:1912.05790v1, 2019.
+      pp. 1234–1238.                                                             [184] J. Stehouwer, H. Dang, F. Liu, X. Liu, and A. Jain, “On the detection of
+[159] D.-T. Dang-Nguyen, G. Boato, and F. De Natale, “3D-model-based                   digital face manipulation,” arXiv preprint arXiv:1910.01717v1, 2019.
+      video analysis for computer generated faces identification,” IEEE          [185] H. Nguyen, J. Yamagishi, and I. Echizen, “Capsule-forensics: using
+      Transactions on Information Forensics and Security, vol. 10, no. 8,              Capsule networks to detect forged images and videos,” in IEEE
+      pp. 1752–1763, Aug 2015.                                                         International Conference on Acoustics, Speech and Signal Processing,
+[160] V. Conotter, E. Bodnari, G. Boato, and H. Farid, “Physiologically-based          2019.
+      detection of computer generated faces in video,” in IEEE International     [186] P. He, H. Li, and H. Wang, “Detection of fake images via the ensemble
+      Conference on Image Processing, Oct 2014, pp. 1–5.                               of deep representations from multi color spaces,” in IEEE International
+[161] F. Matern, C. Riess, and M. Stamminger, “Exploiting visual artifacts to          Conference on Image Processing, 2019, pp. 2299–2303.
+      expose deepfakes and face manipulations,” in IEEE WACV Workshop            [187] D. Güera and E. Delp, “Deepfake video detection using recurrent neural
+      on Image and Video Forensics, 2019.                                              networks,” in IEEE International Conference on Advanced Video and
+[162] Y. Li, M.-C. Chang, and S. Lyu, “In Ictu Oculi: Exposing AI created              Signal Based Surveillance, 2018.
+      fake videos by detecting eye,” in IEEE Workshop on Information             [188] S. Sohrawardi, A. Chintha, B. Thai, S. Seng, A. Hickerson, R. Ptucha,
+      Forensics and Security, 2018.                                                    and M. Wright, “Poster: Towards robust open-world detection of deep-
+[163] U. Ciftci, I. Demir, and L. Yin, “FakeCatcher: Detection of Syn-                 fakes,” in ACM SIGSAC Conference on Computer and Communications
+      thetic Portrait Videos using Biological Signals,” arXiv preprint                 Security, 2019.
+      arXiv:1901.02212v2, 2019.                                                  [189] E. Sabir, J. Cheng, A. Jaiswal, W. Abd-Almageed, I. Masi, and
+[164] S. Fernandes, S. Raj, E. Ortiz, I. Vintila, M. Salter, G. Urosevic, and          P. Natarajan, “Recurrent convolutional strategies for face manipulation
+      S. Jha, “Predicting Heart Rate Variations of Deepfake Videos using               detection in videos,” in CVPR Workshops, 2019.
+      Neural ODE,” in ICCV Workshops, 2019.                                      [190] I. Amerini, L. Galteri, R. Caldelli, and A. D. Bimbo, “Deepfake Video
+[165] Y. Li and S. Lyu, “Exposing deepfake videos by detecting face warping            Detection through Optical Flow based CNN,” ICCV Workshops, 2019.
+      artifacts,” in IEEE CVPR Workshops, 2019.                                  [191] A. Khodabakhsh, R. Ramachandra, K. Raja, P. Wasnik, and C. Busch,
+[166] X. Yang, Y. Li, H. Qi, and S. Lyu, “Exposing GAN-synthesized faces               “Fake face detection methods: Can they be generalized?” in Interna-
+      using landmark locations,” in ACM Workshop on Information Hiding                 tional Conference of the Biometrics Special Interest Group, Sep. 2018.
+      and Multimedia Security, June 2019, pp. 113–118.                           [192] D. Cozzolino, J. Thies, A. Rössler, C. Riess, M. Nießner, and L. Ver-
+[167] X. Yang, Y. Li, and S. Lyu, “Exposing deep fakes using inconsistent              doliva, “ForensicTransfer: Weakly-supervised domain adaptation for
+      head pose,” in IEEE International Conference on Acoustics, Speech                forgery detection,” arXiv preprint arXiv:1812.02510, 2018.
+      and Signal Processing, 2019.                                               [193] H. Nguyen, F. Fang, J. Yamagishi, and I. Echizen, “Multi-task learning
+[168] S. McCloskey and M. Albright, “Detecting GAN-Generated Imagery                   for detecting and segmenting manipulated facial images and videos,”
+      Using Saturation Cues,” in IEEE International Conference on Image                in IEEE International Conference on Biometrics: Theory, Applications
+      Processing, 2019, pp. 4584–4588.                                                 and Systems, 2019.
+[169] H. Li, B. Li, S. Tan, and J. Huang, “Detection of deep network             [194] M. Du, S. Pentyala, Y. Li, and X. Hu, “Towards generalizable
+      generated images using disparities in color components,” arXiv preprint          forgery detection with locality-aware autoencoder,” arXiv preprint
+      arXiv:1808.07276v1, 2018.                                                        arXiv:1909.05999v1, 2019.
+[170] S. Agarwal and H. Farid, “Protecting world leaders against deep fakes,”    [195] F. Marra, C. Saltori, G. Boato, and L. Verdoliva, “Incremental learning
+      in IEEE CVPR Workshops, 2018, pp. 38–45.                                         for the detection and classification of gan-generated images,” in IEEE
+[171] F. Marra, D. Gragnaniello, D. Cozzolino, and L. Verdoliva, “Detection            Workshop on Information Forensics and Security, 2019.
+      of GAN-generated fake images over social networks,” in 1st IEEE            [196] X. Xuan, B. Peng, W. Wang, and J. Dong, “On the generalization of
+      International Workshop on Fake MultiMedia, April 2018.                           GAN image forensics,” in Chinese Conference on Biometric Recogni-
+[172] F. Marra, D. Gragnaniello, L. Verdoliva, and G. Poggi, “Do GANs                  tion, 2019.
+      leave artificial fingerprints?” in 2nd IEEE International Workshop on      [197] S.-Y. Wang, O. Wang, Z. R, A. Owens, and A. Efros, “CNN-
+      Fake MultiMedia, March 2019.                                                     generated images are surprisingly easy to spot... for now,” arXiv
+[173] N. Yu, L. Davis, and M. Fritz, “Attributing Fake Images to GANs:                 preprint arXiv:1912.11035v1, 2019.
+      Learning and Analyzing GAN Fingerprints,” International Conference         [198] T. Fernando, C. Fookes, S. Denman, and S. Sridharan, “Exploiting
+      on Computer Vision, 2019.                                                        human social cognition for the detection of fake and fraudulent faces
+[174] X. Zhang, S. Karaman, and S.-F. Chang, “Detecting and simulating                 via memory networks,” arXiv preprint arXiv:1911.07844v1, 2019.
+      artifacts in GAN fake images,” in IEEE Workshop on Information             [199] L. Li, J. Bao, T. Zhang, H. Yang, D. Chen, F. Wen, and B. Guo,
+      Forensics and Security (WIFS), 2019.                                             “Face X-ray for More General Face Forgery Detection,” arXiv preprint
+[175] M. Albright and S. McCloskey, “Source Generator Attribution via                  arXiv:1912.13458v1, 2019.
+      Inversion,” in CVPR Workshops, 2019, pp. 96–103.                           [200] T. Bianchi and A. Piva, “Image and video processing history recovery,”
+[176] T. Karras, S. Laine, M. Aittala, J. Hellsten, J. Lehtinen, and T. Aila,          in Handbook of Digital Forensics of Multimedia Data and Devices,
+      “Analyzing and Improving the Image Quality of StyleGAN,” arXiv                   T. Ho and S. Li, Eds. Wiley-IEEE Press, 2015.
+      preprint arXiv:1912.04958, 2019.                                           [201] Y.-F. Hsu and S.-F. Chang, “Detecting image splicing using geometry
+[177] D. Afchar, V. Nozick, J. Yamagishi, and I. Echizen, “Mesonet: a                  invariants and camera characteristics consistency,” in IEEE Interna-
+      compact facial video forgery detection network,” in IEEE International           tional Conference on Multimedia and Expo, 2006, pp. 549–552.
+      Workshop on Information Forensics and Security, 2018, pp. 1–7.             [202] J. Dong, W. Wang, and T. Tan, “Casia image tampering detection eval-
+[178] A. Rössler, D. Cozzolino, L. Verdoliva, C. Riess, J. Thies, and                 uation database,” in IEEE China Summit and International Conference
+      M. Nießner, “FaceForensics++: Learning to detect manipulated facial              on Signal and Information Processing, 2013, pp. 422–426.
+      images,” in International Conference on Computer Vision (ICCV),            [203] G. Cattaneo and G. Roscigno, “A possible pitfall in the experimental
+      2019.                                                                            analysis of tampering detection algorithms,” in International Confer-
+[179] C. Szegedy, V. Vanhoucke, S. Ioffe, J. Shlens, and Z. Wojna, “Rethink-           ence on Network-Based Information Systems, 2014, pp. 279–286.
+      ing the inception architecture for computer vision,” in IEEE Conference    [204] P. Korus and J. Huang, “Evaluation of random field models in multi-
+      on Computer Vision and Pattern Recognition, 2016, pp. 2818–2826.                 modal unsupervised tampering localization,” in IEEE International
+                                                                                       Workshop on Information Forensics and Security, december 2016, pp.
+                                                                                       1–6.
+                                                                                                                                                            23
+
+
+
+[205] M. Zampoglou, S. Papadopoulos, and Y. Kompatsiaris, “Large-scale            [232] M. Kirchner and R. Böhme, “Hiding traces of resampling in digital
+      evaluation of splicing localization algorithms for web images,” Multi-            images,” IEEE Transactions on Information Forensics and Security,
+      media Tools and Applications, vol. 76, no. 4, pp. 4801–4834, 2017.                vol. 3, no. 4, pp. 582–592, 2008.
+[206] S. G. D. Tralic, I. Zupancic and M. Grgic, “CoMoFoD - New Database          [233] M. Goljan, J. Fridrich, and M. Chen, “Defending against fingerprint-
+      for Copy-Move Forgery Detection,” in Proc. 55th International Sym-                copy attack in sensor-based camera identification,” IEEE Trans. Inf.
+      posium ELMAR, 2013, pp. 49–54.                                                    Forensics Security, vol. 6, pp. 227–236, March 2011.
+[207] B. Wen, Y. Zhu, R. Subramanian, T.-T. Ng, X. Shen, and S. Winkler,          [234] F. Marra, F. Roli, D. Cozzolino, C. Sansone, and L. Verdoliva,
+      “COVERAGE a novel database for copy-move forgery detection,” in                   “Attacking the triangle test in sensor-based camera identification,” in
+      IEEE International Conference on Image processing, 2016, pp. 161–                 IEEE International Conference on Image Processing, 2014, pp. 5307–
+      165.                                                                              5311.
+[208] H. Guan, M. Kozak, E. Robertson, Y. Lee, A. Yates, A. Delgado,              [235] M. Barni, M. Stamm, and B. Tondi, “Adversarial multimedia foren-
+      D. Zhou, T. Kheyrkhah, J. Smith, and J. Fiscus, “MFC datasets: Large-             sics: Overview and challenges ahead,” in European Signal Processing
+      scale benchmark datasets for media forensic challenge evaluation,” in             Conference, 2018, pp. 962–966.
+      IEEE WACV Workshops, 2019, pp. 63–72.                                       [236] C. Szegedy, W. Zaremba, I. Sutskever, J. Bruna, D. Erhan, I. Good-
+[209] G. Mahfoudi, B. Tajini, F. Retraint, F. Morain-Nicolier, J. Dugelay,              fellow, and R. Fergus, “Intriguing properties of neural networks,” in
+      B. France, and M. Pic, “DEFACTO: Image and Face Manipulation                      International Conference on Learning Representations, 2014.
+      Dataset,” in European Signal Processing Conference, 2019.                   [237] B. Biggio and F. Roli, “Wild patterns: Ten years after the rise of
+[210] S. Heller, L. Rossetto, and H. Schuldt, “The PS-Battles Dataset –                 adversarial machine learning,” Pattern Recognition, vol. 84, pp. 317–
+      an Image Collection for Image Manipulation Detection,” CoRR, vol.                 331, 2018.
+      abs/1804.04866, 2018. [Online]. Available: http://arxiv.org/abs/1804.       [238] F. Marra, G. Poggi, F. Roli, C. Sansone, and L. Verdoliva, “Counter-
+      04866                                                                             forensics in machine learning based forgery detection,” in SPIE Media
+[211] “GAN datasets,” http://www.grip.unina.it/web-download.html.                       Watermarking, Security, and Forensics, 2015.
+[212] T.-T. Ng, and S.-F. Chang, “A data set of authentic and spliced image       [239] Z. Chen, B. Tondi, X. Li, R. Ni, Y. Zhao, and M. Barni, “A gradient-
+      blocks,” 2004.                                                                    based pixel-domain attack against svm detection of global image ma-
+[213] M. Zampoglou, S. Papadopoulos, and Y. Kompatsiaris, “Detecting                    nipulations,” in IEEE Workshop on Information Forensics and Security,
+      image splicing in the wild (web),” in IEEE International Conference               2017.
+      on Multimedia and Expo Workshops, 2015.                                     [240] D. Güera, Y. Wang, L. Bondi, P. Bestagini, S. Tubaro, and E. Delp, “A
+[214] “MFC2019,”                              https://www.nist.gov/itl/iad/mig/         counter-forensic method for CNN-based camera model identification,”
+      media-forensics-challenge-2019-0.                                                 in CVPR Workshops, 2017, pp. 28–35.
+[215] P. Korshunov and S. Marcel, “DeepFakes: a new threat to face recog-         [241] I. Goodfellow, J. Shlens, and C. Szegedy, “Intriguing properties of
+      nition? assessment and detection,” arXiv preprint arXiv:1812.08685v1,             neural networks,” in Explaining and harnessing adversarial examples,
+      2018.                                                                             2015.
+[216] Y. Li, X. Yang, P. Sun, H. Qi, and S. Lyu, “Celeb-DF (v2): A new            [242] D. Gragnaniello, F. Marra, G. Poggi, and L. Verdoliva, “Analysis of
+      dataset for deepfake forensics,” arXiv preprint arXiv:1909.12962v3,               adversarial attacks against CNN-based image forgery detectors,” in
+      2018.                                                                             European Signal Processing Conference, 2018, pp. 384–389.
+[217] N. Dufour, A. Gully, P. Karlsson, A.V. Vorbyov, T. Leung, J. Childs         [243] M. Barni, K. Kallas, E. Nowroozi, and B. Tondi, “On the transferability
+      and C. Bregler, “Deepfakes Detection Dataset,” 2019.                              of adversarial examples against CNN-based image forensics,” in IEEE
+[218] B. Dolhansky, R. Howes, B. Pflaum, N. Baram, and C. C. Ferrer, “The               International Conference on Acoustics, Speech and Signal Processing,
+      deepfake detection challenge (DFDC) preview dataset,” arXiv preprint              2019.
+      arXiv:1910.08854v2, 2019.                                                   [244] N. Das, M. Shanbhogue, S.-T. Chen, F. Hohman, S. Li, L. Chen,
+[219] “Deepfake      Detection      Challenge,”     https://www.kaggle.com/c/           M. Kounavis, and D. Chau, “SHIELD: Fast, Practical Defense and
+      deepfake-detection-challenge.                                                     Vaccination for Deep Learning Using JPEG Compression,” in Proc.
+[220] L. Jiang, W. Wu, R. Li, C. Qian, and C. Loy, “DeeperForensics-1.0:                of the 24th ACM SIGKDD International Conference on Knowledge
+      A Large-Scale Dataset for Real-World Face Forgery Detection,” arXiv               Discovery, 2018, pp. 196–204.
+      preprint arXiv:2001.03024v1, 2020.                                          [245] F. Marra, D. Gragnaniello, and L. Verdoliva, “On the vulnerability of
+[221] O. Papadopoulou, M. Zampoglou, S. Papadopoulos, and Y. Kompat-                    deep learning to adversarial attacks for camera model identification,”
+      siaris, “A corpus of debunked and verified user-generated videos,”                Signal Processing: Image Communication, vol. 65, 2018.
+      Online Information Review, 2018.                                            [246] D. Kim, H.-U. Jang, S.-M. Mun, S. Choi, and H.-K. Lee, “Median
+[222] S. Abu-El-Haija, N. Kothari, J. Lee, P. Natsev, G. Toderici, B. Varadara-         Filtered Image Restoration and Anti-Forensics Using Adversarial Net-
+      jan, and S. Vijayanarasimhan, “YouTube-8M: A largescale video clas-               works,” IEEE Signal Processing Letters, vol. 25, no. 2, pp. 278–282,
+      sification benchmark,” arXiv preprint arXiv:1609.08675, 2016.                     Feb 2018.
+[223] T. Gloe and R. Böhme, “The ‘Dresden Image Database’ for benchmark-         [247] C. Chen, X. Zhao, and M. C. Stamm, “Generative adversarial attacks
+      ing digital image forensics,” in Proceedings of the 25th Annual ACM               against deep-learning-based camera model identification,” IEEE Trans.
+      Symposium On Applied Computing, vol. 2, Mar. 2010, pp. 1585–1591.                 Inf. Forensics Security, in press, October 2019.
+[224] D. Dang-Nguyen, C. Pasquini, V. Conotter, and G. Boato, “RAISE: a           [248] J. Neves, R.Tolosana, R. Vera-Rodriguez, V. Lopes, and H. Proenca,
+      raw images dataset for digital image forensics,” in 6th ACM Multimedia            “Real or fake? spoofing state-of-the-art face synthesis detection sys-
+      Systems Conference, 2015, pp. 219–1224.                                           tems,” arXiv preprint arXiv:1911.05351v2, 2019.
+[225] “Kaggle Camera Model Identification Challenge,” https://www.kaggle.         [249] D. Cozzolino, J. Thies, A. Rössler, C. Riess, M. Nießner, and
+      com/c/sp-society-camera-model-identification.                                     L. Verdoliva, “SpoC: Spoofing camera fingerprints,” arXiv preprint
+[226] O. Al Shaya, P. Yang, R. Ni, Y. Zhao, and A. Piva, “A New Dataset                 arxiv.org/abs/1911.12069, 2019.
+      for Source Identification of High Dynamic Range Images,” Sensors,           [250] M. Fontani, T. Bianchi, A. De Rosa, A. Piva, and M. . Barni, “A frame-
+      vol. 18, 2018.                                                                    work for decision fusion in image forensics dased on Dempster-Shafer
+[227] D. Shullani, M. Fontani, M. Iuliani, O. A. Shaya, and A. Piva, “VI-               theory of evidence,” IEEE Transactions on Information Forensics and
+      SION: a video and image dataset for source identification,” EURASIP               Security, vol. 8, no. 4, pp. 593–607, april 2013.
+      Journal on Information Security, pp. 1–16, 2017.                            [251] P. Ferrara, M. Fontani, T. Bianchi, A. De Rosa, and A. Piva, “Unsu-
+[228] C. Galdi, F. Hartung, and J.-L. Dugelay, “Videos versus still images:             pervised fusion for forgery localization exploiting background infor-
+      asymmetric sensor pattern noise comparison on mobile phones,” in                  mation,” in IEEE International Conference on Multimedia and Expo
+      IS&T EI: Media Watermarking, Security and Forensics, 2017.                        Workshops, july 2015, pp. 1–6.
+[229] B. Hosler, X. Zhao, O. Mayer, C. Chen, J. Shackleford, and M. Stamm,        [252] A. P. Dempster, “Upper and lower probabilities induced by a multival-
+      “The Video Authentication and Camera Identification Database: A New               ued mapping,” Ann. Math. Statist., vol. 38, pp. 325–339, 1967.
+      Database for Video Forensics,” IEEE Access, vol. 7, 2019.                   [253] D. Cozzolino, F. Gargiulo, C. Sansone, and L. Verdoliva, “Multiple
+[230] T. Gloe, M. Kirchner, A. Winkler, and R. Böhme, “Can we trust digital            classifier systems for image forgery detection,” in International Con-
+      image forensics?” in ACM international conference on Multimedia,                  ference on Image Analysis and Processing, september 2013.
+      2007, pp. 78–86.                                                            [254] P. Korus and J. Huang, “Multi-scale fusion for improved localization of
+[231] R. Böhme and M. Kirchner, “Counter-forensics: attacking image foren-             malicious tampering in digital images,” IEEE Transactions on Image
+      sics,” in Digital Image Forensics, H. Sencar and N. Memon, Eds.                   Processing, vol. 25, no. 3, pp. 1312–1326, march 2016.
+      Springer, 2012.
+                                                                                                                                                      24
+
+
+
+[255] C. Artaud, N. Sidére, A. Doucet, J.-M. Ogier, and V. Poulain D’Andecy         for tampered image detection and source camera identification,” IEEE
+      Yooz, “Find it! fraud detection contest report,” in IEEE International         Trans. Inf. Forensics Security, vol. 15, pp. 620–634, 2020.
+      Conference on Pattern Recognition, 2018.                                 [261] I. Cox, M. Miller, J. Bloom, J. Fridrich, and T. Kalker, Digital
+[256] K. Dhruv, G. J. Singh, G. Manish, and V. Vasudeva, “MVAE: Multi-               Watermarking and Steganography. Morgan Kaufmann, 2008.
+      modal variational autoencoder for fake news detection,” in ACM World     [262] H. Hasan and K. Salah, “Combating deepfake videos using blockchain
+      Wide Web Conference, 2019.                                                     and smart contracts,” IEEE Access, 2019.
+[257] P. Korshunov, M. Halstead, D. Castan, M. Graciarena, M. McLaren,         [263] D. Boneh, A. Grotto, P. McDaniel, and N. Papernot, “How relevant is
+      B. Burns, A. Lawson, and S. Marcel, “Tampered speaker inconsistency            the Turing test in the age of sophisbots?” IEEE Security & Privacy,
+      detection with phonetically aware audio-visual features,” in ICML              vol. 17, pp. 64–71, 2019.
+      Workshop on Detecting Audio-Visual Fakes, 2019.                          [264] P. Korus and N. Memon, “Content authentication for neural imaging
+[258] C. Boididou, S. Papadopoulos, M. Zampoglou, L. Apostolidis, O. Pa-             pipelines: End-to-end optimization of photo provenance in complex
+      padopoulou, and Y. Kompatsiaris, “Detection and visualization of               distribution channels,” in IEEE Conference on Computer Vision and
+      misleading content on twitter,” International Journal of Multimedia            Pattern Recognition, 2019, pp. 8621–8629.
+      Information Retrieval, 2017.                                             [265] Y. Li, X. Yang, B. Wu, and S. Lyu, “Hiding faces in plain sight:
+[259] P. Singh and H. Farid, “Robust homomorphic image hashing,” in IEEE             Disrupting AI face synthesis with adversarial perturbations,” arXiv
+      CVPR Workshops, 2019.                                                          preprint arXiv:1906.09288v1, 2019.
+[260] Y. Zheng, Y. Cao, and C.-H. Chang, “A PUF-based data-device hash
+

@@ -1,0 +1,5 @@
+CAT-Net: Compression Artifact Tracing Network for Detection and Localization of Image Splicing
+Kwon, Myung-Joon, Yu, In-Jae, Nam, Seung-Hun, Lee, Heung-Kyu (2021). 2021 IEEE Winter Conference on Applications of Computer Vision (WACV). doi:10.1109/wacv48630.2021.00042
+
+ABSTRACT (as returned by Crossref/OpenAlex):
+Detecting and localizing image splicing has become essential to fight against malicious forgery. A major challenge to localize spliced areas is to discriminate between authentic and tampered regions with intrinsic properties such as compression artifacts. We propose CAT-Net, an end-to-end fully convolutional neural network including RGB and DCT streams, to learn forensic features of compression artifacts on RGB and DCT domains jointly. Each stream considers multiple resolutions to deal with spliced object's various shapes and sizes. The DCT stream is pretrained on double JPEG detection to utilize JPEG artifacts. The proposed method outperforms state-of-the-art neural networks for localizing spliced regions in JPEG or non-JPEG images.
