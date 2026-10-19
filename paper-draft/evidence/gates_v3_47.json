@@ -1,0 +1,144 @@
+{
+ "criteria": {
+  "min_genuine": 20,
+  "max_upper95": 0.15
+ },
+ "calibrated_on": "2026-10-19",
+ "genuine_by_type": {
+  "bank_statement": 12,
+  "chat": 12,
+  "web_page": 3,
+  "order_invoice": 3,
+  "payment_receipt": 12,
+  "social_post": 2,
+  "message_alert": 3
+ },
+ "checks": {
+  "file_metadata": {
+   "status": "live",
+   "n": 47,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 0,
+   "upper95": 0.076,
+   "reason": null
+  },
+  "content_logic": {
+   "status": "live",
+   "n": 47,
+   "flagged": 0,
+   "low_severity_findings": 2,
+   "not_applicable": 0,
+   "upper95": 0.076,
+   "reason": null
+  },
+  "layout_grid": {
+   "status": "advisory",
+   "n": 14,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 33,
+   "upper95": 0.215,
+   "reason": "applicable on only 14 genuine real screenshots (need 20); 6 more needed"
+  },
+  "rendering": {
+   "status": "advisory",
+   "n": 47,
+   "flagged": 5,
+   "low_severity_findings": 0,
+   "not_applicable": 0,
+   "upper95": 0.226,
+   "reason": "false-alarm rate 5/47 with upper bound 0.23 above 0.15"
+  },
+  "v1.ela": {
+   "status": "advisory",
+   "n": 30,
+   "flagged": 30,
+   "low_severity_findings": 0,
+   "not_applicable": 17,
+   "upper95": 1.0,
+   "reason": "false-alarm rate 30/30 with upper bound 1.00 above 0.15"
+  },
+  "v1.ghost": {
+   "status": "advisory",
+   "n": 30,
+   "flagged": 15,
+   "low_severity_findings": 0,
+   "not_applicable": 17,
+   "upper95": 0.668,
+   "reason": "false-alarm rate 15/30 with upper bound 0.67 above 0.15"
+  },
+  "v1.quant": {
+   "status": "live",
+   "n": 30,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 17,
+   "upper95": 0.114,
+   "reason": null
+  },
+  "v1.noise": {
+   "status": "advisory",
+   "n": 47,
+   "flagged": 46,
+   "low_severity_findings": 0,
+   "not_applicable": 0,
+   "upper95": 0.996,
+   "reason": "false-alarm rate 46/47 with upper bound 1.00 above 0.15"
+  },
+  "v1.clone": {
+   "status": "live",
+   "n": 47,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 0,
+   "upper95": 0.076,
+   "reason": null
+  },
+  "typed.payment_receipt": {
+   "status": "advisory",
+   "n": 9,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 3,
+   "upper95": 0.299,
+   "reason": "applicable on only 9 genuine real screenshots (need 20); 11 more needed"
+  },
+  "typed.bank_statement": {
+   "status": "advisory",
+   "n": 7,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 5,
+   "upper95": 0.354,
+   "reason": "applicable on only 7 genuine real screenshots (need 20); 13 more needed"
+  },
+  "typed.order_invoice": {
+   "status": "advisory",
+   "n": 2,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 1,
+   "upper95": 0.658,
+   "reason": "applicable on only 2 genuine real screenshots (need 20); 18 more needed"
+  },
+  "typed.chat": {
+   "status": "advisory",
+   "n": 5,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 7,
+   "upper95": 0.434,
+   "reason": "applicable on only 5 genuine real screenshots (need 20); 15 more needed"
+  },
+  "typed.message_alert": {
+   "status": "advisory",
+   "n": 0,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 3,
+   "upper95": 1.0,
+   "reason": "applicable on only 0 genuine real screenshots (need 20); 20 more needed"
+  }
+ }
+}

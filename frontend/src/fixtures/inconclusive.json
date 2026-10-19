@@ -34,9 +34,6 @@
     "processing_ms": 2144.9,
     "model": "word-forensics-gbm-v2"
   },
-  "fake_score": 0.0,
-  "is_fake": false,
-  "verdict_text": "Inconclusive - verify with the issuer",
   "assurance": {
     "level": 0,
     "label": "Unverified",

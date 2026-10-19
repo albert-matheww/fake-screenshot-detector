@@ -34,9 +34,6 @@
     "processing_ms": 6988.4,
     "model": "word-forensics-gbm-v2"
   },
-  "fake_score": 0.09,
-  "is_fake": false,
-  "verdict_text": "No inconsistency found by the checks that could run",
   "assurance": {
     "level": 1,
     "label": "No contradiction found (still unverified)",

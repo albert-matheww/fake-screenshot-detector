@@ -1,0 +1,14 @@
+pages 9
+verdict {'inconclusive': 9}
+assurance {(1, 'consistent'): 7, (0, 'possible_issue'): 2}
+running-balance rule {'clear': 7, 'not_applicable': 2}
+live findings {'time.invalid': 2}
+   statement_1-1.png inconclusive 1 consistent clear [] [] clear
+   statement_2-1.png inconclusive 1 consistent clear [] [] clear
+   statement_3-1.png inconclusive 1 consistent clear [] [] clear
+   statement_3-2.png inconclusive 0 possible_issue clear [] ['time.invalid'] finding
+   statement_3-3.png inconclusive 0 possible_issue clear [] ['time.invalid'] finding
+   statement_3-4.png inconclusive 1 consistent not_applicable [] [] clear
+   statement_4-1.png inconclusive 1 consistent not_applicable [] [] clear
+   statement_5-1.png inconclusive 1 consistent clear [] [] clear
+   statement_5-2.png inconclusive 1 consistent clear [] [] clear

@@ -26,14 +26,14 @@ export const FIELD_KIND_LABELS = { refs: "Reference number", amounts: "Amount", 
 export const FIELD_STATUS_TEXT = {
   matched: "Matches",
   differs: "Differs",
-  near: "Differs by one digit",
+  near: "Differs slightly: compare by eye",
   unclear: "Not found in the screenshot",
   not_in_source: "Not in the second source",
 };
 export const RECONCILE_STATUS_TEXT = {
   corroborated: "The second source agrees with the screenshot.",
   conflict: "The second source and the screenshot disagree.",
-  review: "A reference differs by one digit. Compare it by eye.",
+  review: "A reference or an amount differs slightly (one digit, or one extra leading digit). Compare it by eye.",
   partial: "Some facts match, but not enough to count as corroboration.",
   nothing_matched: "Nothing in the second source could be found in the screenshot.",
   no_facts: "The second source has no amount, date or reference to compare.",

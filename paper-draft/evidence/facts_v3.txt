@@ -1,0 +1,39 @@
+== lines of code
+178 backend/app.py
+15 backend/screencheck/__init__.py
+74 backend/screencheck/assurance.py
+51 backend/screencheck/capture.py
+294 backend/screencheck/checks.py
+39 backend/screencheck/common.py
+93 backend/screencheck/compare.py
+151 backend/screencheck/fields.py
+64 backend/screencheck/gates.py
+85 backend/screencheck/legacy_cues.py
+111 backend/screencheck/pipeline.py
+132 backend/screencheck/reconcile.py
+20 backend/screencheck/reconcile_api.py
+202 backend/screencheck/router.py
+89 backend/screencheck/verdict.py
+393 backend/textforensics.py
+342 backend/semantic.py
+2333 total
+== frontend components
+      17
+== versions
+Python 3.14.3
+tesseract 5.5.3
+Flask==3.0.3
+flask-cors==4.0.1
+Pillow==12.3.0
+numpy==2.5.1
+gunicorn==26.0.0
+pytesseract==0.3.13
+scikit-learn==1.9.0
+joblib==1.5.3
+scipy==1.18.0
+== checks
+294:ALL_IDS = ["file_metadata", "content_logic", "layout_grid", "rendering"] + legacy_cues.IDS + [f"typed.{t}" for t in TYPED]
+== data
+3932
+== git
+      41

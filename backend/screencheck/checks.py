@@ -9,7 +9,7 @@ Whether a check's finding is allowed to move the verdict ("live") or is only sho
 from __future__ import annotations
 
 import re
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -141,27 +141,59 @@ def typed_payment(ctx) -> Dict[str, Any]:
     return result("typed.payment_receipt", "Payment receipt checks", "finding" if f else "clear", f)
 
 
+_NUMTOK = re.compile(r"(?<![\w.,/:])(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)(?![\w/:])")
+_DATETIME = re.compile(r"\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4}|\d{1,2}:\d{2}(?::\d{2})?|\d{9,}|\b\d{1,2}\s?(?:st|nd|rd|th)?\s(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\b(?:\s\d{2,4})?|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s\d{1,2}\b(?:,?\s\d{4})?", re.I)
+
+
+_BROKEN = re.compile(r"\d+\s?[-\u2013]\s?\d{2}\b|(?<![\w.,/:])0\d+(?![\w./:,])")   # "57-42" (a lost decimal point) and "05" (0.5 read without its point)
+_ANYTOK = re.compile(r"#|(?<![\w.,/:])(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)(?![\w/:])")
+
+
+def _row_numbers(line: str) -> List[float]:
+    """The numeric columns of a statement row. Dates, times and long reference numbers are removed first; a number that was clearly
+    misread (a lost decimal point, a leading zero) becomes NaN so that the row is treated as a gap and not as a wrong link."""
+    t = _DATETIME.sub(" ", line)
+    t = _BROKEN.sub(" # ", t)
+    return [float("nan") if m.group(0) == "#" else float(m.group(1).replace(",", "")) for m in _ANYTOK.finditer(t)]
+
+
 def typed_bank(ctx) -> Dict[str, Any]:
-    """Running balance: each row's balance should equal the previous balance plus/minus its amount."""
+    """Running balance. Each row has an amount (or a debit and a credit column) and the balance after it. Two orders are tried, oldest first
+    (the balance changes by the amount of the later row) and newest first (by the amount of the earlier row), and the order that fits is used."""
     lines = semantic.rows_from_words(_confident(ctx["words"]))
-    rows = []
-    for ln in lines:
-        a = _line_amounts(ln)
-        if len(a) >= 2:
-            rows.append((a[-2], a[-1], ln))
-        elif len(a) == 1:
-            rows.append(None)       # an amount or a balance that could not be read: a gap, not a link (OCR often drops a decimal point)
+    parsed = [_row_numbers(ln) for ln in lines]
+    counts = [len(p) for p in parsed if len(p) >= 2]
+    if len(counts) < 5:
+        return result("typed.bank_statement", "Bank statement checks", "not_applicable",
+                      why="Fewer than five rows with an amount and a running balance were read.")
+    width = 3 if sum(c >= 3 for c in counts) > len(counts) / 2 else 2        # debit, credit, balance or amount, balance
+    rows: List[Optional[Tuple[float, float]]] = []
+    for p in parsed:
+        if len(p) >= width and width == 3:
+            debit, credit, bal = p[-3:]
+            if any(x != x for x in (debit, credit, bal)) or (debit > 0) == (credit > 0):
+                rows.append(None)                  # both or neither: the row cannot be read as one movement
+            else:
+                rows.append((debit if debit > 0 else credit, bal))
+        elif len(p) >= 2 and width == 2:
+            rows.append(None if any(x != x for x in p[-2:]) else (p[-2], p[-1]))
+        elif len(p) >= 1 and any("." in str(x) for x in p):
+            rows.append(None)                      # an amount or a balance that could not be read: a gap, not a link
     real = [r for r in rows if r is not None]
     if len(real) < 5:
         return result("typed.bank_statement", "Bank statement checks", "not_applicable",
                       why="Fewer than five rows with an amount and a running balance were read.")
-    consistent = []
-    for i in range(1, len(rows)):
-        if rows[i] is None or rows[i - 1] is None:
-            continue
-        amt, bal, _ = rows[i]
-        pbal = rows[i - 1][1]
-        consistent.append(abs(abs(bal - pbal) - amt) <= 0.011)
+
+    def links(newest_first: bool) -> List[bool]:
+        out = []
+        for i in range(1, len(rows)):
+            if rows[i] is None or rows[i - 1] is None:
+                continue
+            amt = rows[i - 1][0] if newest_first else rows[i][0]
+            out.append(abs(abs(rows[i][1] - rows[i - 1][1]) - amt) <= 0.011)
+        return out
+    asc, desc = links(False), links(True)
+    consistent = desc if sum(desc) > sum(asc) else asc
     n = len(consistent)
     if n < 4:
         return result("typed.bank_statement", "Bank statement checks", "not_applicable",
@@ -178,7 +210,7 @@ def typed_bank(ctx) -> Dict[str, Any]:
         f.append({"id": "bank.running_balance", "severity": "medium",
                   "message": "The running balance breaks at one place (the previous balance plus or minus the amount does not give the balance shown) "
                              "while the other rows follow it.",
-                  "evidence": {"rows": [i + 2 for i in fails], "consistent_share": round(share, 2)}})
+                  "evidence": {"rows": [i + 2 for i in fails], "consistent_share": round(share, 2), "newest_first": consistent is desc}})
     return result("typed.bank_statement", "Bank statement checks", "finding" if f else "clear", f)
 
 

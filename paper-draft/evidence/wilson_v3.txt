@@ -1,0 +1,18 @@
+Wilson 95% intervals for proportions in Chapter 7 (computed with backend/screencheck/common.py:wilson)
+compare mode, edit pairs with differences found: 9/9 = 1.000, interval 0.701 to 1.000
+compare mode, harmless re-saves wrongly flagged: 3/27 = 0.111, interval 0.039 to 0.281
+reconcile mutation test, faithful sources corroborated: 17/17 = 1.000, interval 0.816 to 1.000
+Rico, content rules raised a live finding: 2/300 = 0.007, interval 0.002 to 0.024
+second real set, second version: edited flagged: 2/9 = 0.222, interval 0.063 to 0.547
+second real set, second version: genuine flagged: 3/23 = 0.130, interval 0.045 to 0.321
+content router, correct of answered: 18/18 = 1.000, interval 0.824 to 1.000
+structure router, correct: 4/23 = 0.174, interval 0.070 to 0.371
+gate: zero false alarms in n=20: 0/20 = 0.000, interval 0.000 to 0.161
+gate: zero false alarms in n=22: 0/22 = 0.000, interval 0.000 to 0.149
+gate: zero false alarms in n=23: 0/23 = 0.000, interval 0.000 to 0.143
+gate: one false alarm in n=34: 1/34 = 0.029, interval 0.005 to 0.149
+gate: two false alarms in n=45: 2/45 = 0.044, interval 0.012 to 0.148
+STFD pipeline: verdict suspicious: 4/3932 = 0.001, interval 0.000 to 0.003
+STFD pipeline: advisory flag meets the mask (of flags): 280/1056 = 0.265, interval 0.239 to 0.293
+mutation test: clean documents, medium or high finding, PNG: 5/240 = 0.021, interval 0.009 to 0.048
+mutation test: clean documents, medium or high finding, shared: 1/240 = 0.004, interval 0.001 to 0.023

@@ -1,0 +1,13 @@
+13 SMS texts x 4 list screenshots = 52 pairs; 7 true pairs, 45 pairs where the payment is not in that list
+true pairs  (payment IS in the list): {'partial': 2, 'review': 5}
+other pairs (payment is NOT in the list): {'nothing_matched': 36, 'partial': 7, 'review': 2}
+true pairs corroborated: 0 of 7 | false corroborations among other pairs: 0 of 45 | false conflicts among other pairs: 0
+
+per true pair:
+  sms_02    payment_gpay_list_03.jpg   partial
+  sms_03     payment_gpay_list_03.jpg   review
+  sms_04      payment_gpay_list_03.jpg   partial
+  sms_07      payment_gpay_list_01.jpg   review
+  sms_08         payment_gpay_list_01.jpg   review
+  sms_09    payment_gpay_list_01.jpg   review
+  sms_13         payment_gpay_list_02.jpg   review

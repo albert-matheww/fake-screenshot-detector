@@ -288,3 +288,52 @@ def test_chat_ignores_the_status_bar_clock_and_the_chat_list_of_a_desktop_window
     for i, t in enumerate(["5:01PM", "4:44PM", "2:05PM", "12:50PM", "11:31AM"]):
         desk["words"] += _row([(t, 450)], 300 + 90 * i, f"s{i}")  # sidebar list, newest first
     assert checks.typed_chat(desk)["status"] == "clear"
+
+
+def test_item_sum_rule_stays_silent_when_a_price_could_not_be_read():
+    import semantic
+    def invoice(price_text):
+        words = []
+        rows = [("Backpack", "37.85"), ("Notebook", "44.24"), ("Desk lamp", price_text), ("Pen set", "15.21"), ("Subtotal", "187.30"), ("Total", "187.30")]
+        for i, (a, b) in enumerate(rows):
+            words += _row([(a, 40), (b, 800)], 100 + 50 * i, f"i{i}")
+        return words
+    assert not any(f["id"] == "arith.items_vs_subtotal" for f in semantic.check_text(invoice("90-00")))      # OCR lost the decimal point
+    assert any(f["id"] == "arith.items_vs_subtotal" for f in semantic.check_text(invoice("70.00")))          # a readable price that does not add up is still found
+    assert not any(f["id"] == "arith.items_vs_subtotal" for f in semantic.check_text(invoice("90.00")))
+
+
+def _stmt(rows, newest_first, cols=3):
+    """rows: list of (debit, credit, balance) in chronological order; printed newest first or oldest first with far-apart columns."""
+    seq = list(reversed(rows)) if newest_first else rows
+    words = []
+    for i, (d, c, b) in enumerate(seq):
+        cells = [(f"{i + 1}/08/2026", 40), (f"{d:g}" if d else "0.00", 520), (f"{c:g}" if c else "0.00", 640), (f"{b:,.2f}", 800)]
+        words += _row(cells, 60 + 45 * i, f"s{i}")
+    return {"words": words, "capture": {}}
+
+
+def _chrono(start=1000.0):
+    moves = [(50.0, 0), (0, 200.0), (30.0, 0), (0, 15.5), (120.0, 0), (0, 40.0), (75.0, 0), (10.0, 0)]
+    out, bal = [], start
+    for d, c in moves:
+        bal = round(bal - d + c, 2)
+        out.append((d, c, bal))
+    return out
+
+
+def test_running_balance_with_debit_and_credit_columns_in_either_order():
+    for newest_first in (False, True):
+        assert checks.typed_bank(_stmt(_chrono(), newest_first))["status"] == "clear"
+
+
+def test_running_balance_break_is_found_with_debit_and_credit_columns_in_either_order():
+    for newest_first in (False, True):
+        rows = _chrono()
+        d, c, b = rows[4]
+        rows[4] = (d, c, b + 333.0)               # one balance changed
+        assert checks.typed_bank(_stmt(rows, newest_first))["status"] == "finding"
+        rows = _chrono()
+        d, c, b = rows[3]
+        rows[3] = (d, c + 77.0 if c else d + 77.0, b)    # one amount changed
+        assert checks.typed_bank(_stmt(rows, newest_first))["status"] == "finding"

@@ -9,7 +9,7 @@ chat             word-rendering model   n=11 {'clear': 9, 'finding': 2}
 payment_receipt  word-rendering model   n=4 {'clear': 4}
 chat             type-specific rule     n=11 {'not_applicable': 6, 'clear': 5}
 payment_receipt  type-specific rule     n=4 {'not_applicable': 3, 'clear': 1}
-seconds per image: median 0.59 max 1.53
+seconds per image: median 1.12 max 2.91
    chat_instagram_01.jpg inconclusive 1 clear clear not_applicable
    chat_instagram_02.jpg inconclusive 1 clear clear not_applicable
    chat_instagram_03.jpg inconclusive 1 clear clear not_applicable

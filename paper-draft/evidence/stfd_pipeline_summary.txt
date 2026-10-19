@@ -1,0 +1,12 @@
+images 3932 | verdicts {'inconclusive': 3928, 'suspicious': 4}
+automatic type {'unknown': 3649, 'social_post': 268, 'payment_receipt': 9, 'web_page': 2, 'bank_statement': 2, 'message_alert': 2}
+advisory (rendering) flagged 1056 0.269 | marked region meets the edit mask: 280 0.265
+version-1 hints that raised a finding (images) {'v1.noise': 3908, 'v1.clone': 61}
+live findings (images) 98 | by check {'content_logic': 98}
+pixel reliability {'high': 3932}
+1_Copy-move: n=758 suspicious=2 live=9 advisory=178 (23.5%) advisory_meets_mask=50 (28.1%)
+2_Splicing: n=830 suspicious=1 live=28 advisory=216 (26.0%) advisory_meets_mask=74 (34.3%)
+3_Removal: n=1016 suspicious=0 live=20 advisory=234 (23.0%) advisory_meets_mask=4 (1.7%)
+4_Insertion: n=701 suspicious=0 live=26 advisory=246 (35.1%) advisory_meets_mask=117 (47.6%)
+5_Replacement: n=627 suspicious=1 live=15 advisory=182 (29.0%) advisory_meets_mask=35 (19.2%)
+edited area as share of the image: 10th/50th/90th percentile [0.0013, 0.0041, 0.0251]

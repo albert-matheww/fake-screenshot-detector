@@ -124,23 +124,34 @@ def invoice(rng, mut=None):
 
 
 def statement(rng, mut=None):
+    """Two layouts: oldest first with an amount and a balance, or newest first with debit, credit and balance columns (like a real e-statement)."""
+    layout = rng.choice(["amount_balance", "debit_credit_newest_first"])
     bal = round(rng.uniform(800, 5000), 2)
-    rows = [("Account statement", "Balance", "Amount")]
-    balances, amts = [], []
+    moves, balances = [], []
     for _ in range(8):
         a = round(rng.uniform(3, 220), 2)
-        bal = round(bal + (a if rng.random() < 0.4 else -a), 2)
-        balances.append(bal); amts.append(a)
+        credit = rng.random() < 0.4
+        bal = round(bal + (a if credit else -a), 2)
+        moves.append((a, credit)); balances.append(bal)
     k = rng.randrange(2, 6)
     if mut == "balance":
         balances[k] = round(balances[k] + rng.choice([-1, 1]) * rng.uniform(10, 300), 2)
     if mut == "amount":
-        amts[k] = round(amts[k] + rng.uniform(10, 90), 2)
+        moves[k] = (round(moves[k][0] + rng.uniform(10, 90), 2), moves[k][1])
     d0 = dt.date(2025, 1, 5)
-    for i in range(8):
+    if layout == "amount_balance":
+        rows = [("Account statement", "Balance", "Amount")]
+        for i in range(8):
+            dd = d0 + dt.timedelta(days=3 * i)
+            rows.append((f"{dd.day} {MON[dd.month - 1][:3]}  {rng.choice(THINGS)}", money(balances[i]), money(moves[i][0])))
+        return draw_lines(rows, rng, w=1100), "bank_statement"
+    rows = [("Date  Description", "Balance", "Credit", "Debit")]
+    for i in reversed(range(8)):
         dd = d0 + dt.timedelta(days=3 * i)
-        rows.append((f"{dd.day} {MON[dd.month - 1][:3]}  {rng.choice(THINGS)}", money(balances[i]), money(amts[i])))
-    return draw_lines(rows, rng, w=1100), "bank_statement"
+        a, credit = moves[i]
+        debit_s, credit_s = ("0.00", money(a)) if credit else (money(a), "0.00")
+        rows.append((f"{dd.day:02d}/{dd.month:02d}/{dd.year}  {rng.choice(THINGS)}", money(balances[i]), credit_s, debit_s))
+    return draw_lines(rows, rng, w=1250), "bank_statement"
 
 
 def payment(rng, mut=None):
@@ -156,7 +167,7 @@ def payment(rng, mut=None):
 
 
 def chat(rng, mut=None):
-    t = rng.randrange(1 * 60, 10 * 60)             # between 01:00 and 10:00, so 12-hour times never cross noon
+    t = rng.randrange(2 * 60, 10 * 60)             # between 02:00 and 10:00, so 12-hour times never cross noon and a time 45 minutes earlier is still after 01:00
     ts = []
     for _ in range(8):
         t += rng.randrange(1, 7)

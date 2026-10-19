@@ -1,0 +1,2 @@
+real fake_score 0.4948 {'ela_score': 0.8806, 'noise_score': 0.9399, 'edge_score': 0.9374, 'ghost_score': 0.7167, 'arithmetic_score': 0.9}
+fake fake_score 0.4163 {'ela_score': 0.8799, 'noise_score': 0.9366, 'edge_score': 0.9336, 'ghost_score': 0.4333, 'arithmetic_score': 0.9}

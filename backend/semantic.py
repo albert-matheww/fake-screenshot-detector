@@ -170,10 +170,13 @@ def check_text(words: Sequence[Dict[str, Any]], today: Optional[_dt.date] = None
     # --- arithmetic: only the unambiguous invariants.
     subtotal = total = None
     items: List[float] = []
+    unreadable_item = False       # a line between the first item and the subtotal that has digits but no readable price (OCR often drops a decimal point)
     for ln in lines:
         l = ln.lower()
         a = _amount(ln)
         if a is None:
+            if items and subtotal is None and re.search(r"\d", ln) and not re.search(r"\b(tax|vat|gst|shipping|delivery|discount|fee|tip|balance|total|date|time)\b", l):
+                unreadable_item = True
             continue
         if re.search(r"\bsub\s?-?total\b", l):
             subtotal = a
@@ -187,7 +190,7 @@ def check_text(words: Sequence[Dict[str, Any]], today: Optional[_dt.date] = None
         out.append({"id": "arith.total_below_subtotal", "severity": "high",
                     "message": f"Total ({total:,.2f}) is smaller than Subtotal ({subtotal:,.2f}) although no discount "
                                "or credit line is shown.", "evidence": {"total": total, "subtotal": subtotal}})
-    if subtotal is not None and len(items) >= 3 and abs(sum(items) - subtotal) > 0.011 and not re.search(
+    if subtotal is not None and len(items) >= 3 and not unreadable_item and abs(sum(items) - subtotal) > 0.011 and not re.search(
             r"\b(discount|coupon|promo|qty|x\s?\d)\b", low):
         out.append({"id": "arith.items_vs_subtotal", "severity": "medium",
                     "message": f"The listed item prices add up to {sum(items):,.2f}, but the Subtotal says {subtotal:,.2f}.",

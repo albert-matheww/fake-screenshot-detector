@@ -18,6 +18,9 @@ _RE_ISO = re.compile(r"(?<!\d)(20\d{2})-(\d{1,2})-(\d{1,2})(?!\d)")
 _RE_DMY = re.compile(r"(?<![\d:])(\d{1,2})[/\-.](\d{1,2})[/\-.](20\d{2}|\d{2})(?![\d:])")
 _RE_D_MON_Y = re.compile(r"(?<!\d)(\d{1,2})(?:st|nd|rd|th)?[\s,.\-]+" + _MON + r"\.?[\s,.\-]+(20\d{2}|\d{2})(?!\d)", re.I)
 _RE_MON_D_Y = re.compile(_MON + r"\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(20\d{2})(?!\d)", re.I)
+_RE_D_MON = re.compile(r"(?<!\d)(\d{1,2})(?:st|nd|rd|th)?[\s,.\-]+" + _MON + r"\b(?![\s,.\-]*\d)", re.I)
+_RE_MON_D = re.compile(r"\b" + _MON + r"\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?![\d:])", re.I)
+_RE_NUMBER = re.compile(r"(?<![\d.,])(\d{1,3}(?:,\d{3})+|\d{2,6})(?![\d.,])")
 _RE_TIME = re.compile(r"(?<![\d:.])(\d{1,2}):(\d{2})(?::\d{2})?\s*([ap]\.?m\.?)?(?![\d:])", re.I)
 _RE_REF = re.compile(r"(?<![\d.,])(\d{4}[ -]\d{4}[ -]\d{4}|\d{10,22})(?![\d])")
 _RE_UPI = re.compile(r"\b[a-z0-9][a-z0-9._-]{1,40}@[a-z][a-z0-9]{1,20}\b", re.I)
@@ -60,6 +63,14 @@ def extract_text(text: str) -> Dict[str, List[Any]]:
         add_date(m, _valid_date(int(m.group(3)), _MONTHS[m.group(1).lower()[:3]], int(m.group(2))))
     for m in _RE_DMY.finditer(text):
         add_date(m, _valid_date(int(m.group(3)), int(m.group(2)), int(m.group(1))))
+    date_hits = len(spans)
+    # a day and a month with no year ("16 October", as Google Pay writes it): kept as "--MM-DD"
+    for m in list(_RE_D_MON.finditer(_blank(text, spans))):
+        mo, dd = _MONTHS[m.group(2).lower()[:3]], int(m.group(1))
+        if 1 <= dd <= 31 and f"--{mo:02d}-{dd:02d}" not in dates:
+            dates.append(f"--{mo:02d}-{dd:02d}")
+        spans.append(m.span())
+        date_hits += 1
     text1 = _blank(text, spans)
 
     times: List[int] = []
@@ -93,6 +104,11 @@ def extract_text(text: str) -> Dict[str, List[Any]]:
         if v not in upi:
             upi.append(v)
 
+    numbers: List[int] = []
+    for m in _RE_NUMBER.finditer(text3):
+        v = int(m.group(1).replace(",", ""))
+        if v not in numbers:
+            numbers.append(v)
     amounts: List[float] = []
     for m in _RE_AMOUNT.finditer(text3):
         num = m.group("num")
@@ -102,7 +118,7 @@ def extract_text(text: str) -> Dict[str, List[Any]]:
         v = round(float(num.replace(",", "")), 2)
         if 0 < v < 1e9 and v not in amounts:
             amounts.append(v)
-    return {"amounts": amounts, "dates": dates, "times": times, "refs": refs, "upi_ids": upi}
+    return {"amounts": amounts, "dates": dates, "times": times, "refs": refs, "upi_ids": upi, "numbers": numbers, "date_hits": ["d"] * date_hits}
 
 
 def extract_words(words: Sequence[Dict[str, Any]]) -> Dict[str, List[Any]]:
@@ -131,5 +147,5 @@ def fmt_time(v: int) -> str:
 
 
 def display(fields: Dict[str, List[Any]]) -> Dict[str, List[str]]:
-    return {"amounts": [f"{v:,.2f}" for v in fields["amounts"]], "dates": list(fields["dates"]),
+    return {"amounts": [f"{v:,.2f}" for v in fields["amounts"]], "dates": [d.replace("--", "--", 1) for d in fields["dates"]],
             "times": [fmt_time(v) for v in fields["times"]], "refs": list(fields["refs"]), "upi_ids": list(fields["upi_ids"])}

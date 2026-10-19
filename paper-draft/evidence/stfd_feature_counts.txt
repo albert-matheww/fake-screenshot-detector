@@ -1,0 +1,4 @@
+== clean run (feat_run.log)
+3932 images, 196422 words (12085 edited, 173598 unedited, 10739 ambiguous) in 646s
+== degraded copy (feat_shared.log)
+3932 images, 179451 words (11140 edited, 156684 unedited, 11627 ambiguous) in 381s

@@ -38,6 +38,15 @@
   "payment_gpay_list_01.jpg": "payment_receipt",
   "payment_gpay_list_02.jpg": "payment_receipt",
   "payment_gpay_list_03.jpg": "payment_receipt",
-  "payment_gpay_list_04.jpg": "payment_receipt"
+  "payment_gpay_list_04.jpg": "payment_receipt",
+  "statement_1-1.png": "bank_statement",
+  "statement_2-1.png": "bank_statement",
+  "statement_3-1.png": "bank_statement",
+  "statement_3-2.png": "bank_statement",
+  "statement_3-3.png": "bank_statement",
+  "statement_3-4.png": "bank_statement",
+  "statement_4-1.png": "bank_statement",
+  "statement_5-1.png": "bank_statement",
+  "statement_5-2.png": "bank_statement"
  }
 }

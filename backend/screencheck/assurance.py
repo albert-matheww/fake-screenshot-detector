@@ -38,8 +38,12 @@ def assess(verdict: str, checks: List[Dict[str, Any]], words_read: int, reconcil
     content_clear = [c for c in content if c["status"] == "clear"]
 
     status, level = None, None
-    if verdict in ("evidence_of_editing", "suspicious") or live_find:
+    live_strong = [c for c in live_find if c.get("severity") in ("medium", "high")]
+    if verdict in ("evidence_of_editing", "suspicious") or live_strong:
         status, level = "contradiction", 0
+        reasons += [f["message"] for c in live_find for f in c["findings"]][:3]
+    elif live_find:      # only low-severity findings, such as an impossible clock time, which is usually an OCR misread
+        status, level = "possible_issue", 0
         reasons += [f["message"] for c in live_find for f in c["findings"]][:3]
     elif content_find:
         status, level = "possible_issue", 0

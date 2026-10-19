@@ -1,0 +1,32 @@
+300 rendered receipts in 28s (100 per condition)
+
+OCR exactness: the true fact is among the values read (any read) / read by both reads (confident)
+  png     ref: single 100/100, either 100/100, both 100/100 | amount: single 82/100, either 84/100, both 57/100 | date: single 100/100, either 100/100, both 99/100
+  shared  ref: single 100/100, either 100/100, both 100/100 | amount: single 85/100, either 86/100, both 67/100 | date: single 98/100, either 100/100, both 98/100
+  heavy   ref: single 99/100, either 100/100, both 99/100 | amount: single 97/100, either 100/100, both 86/100 | date: single 94/100, either 100/100, both 93/100
+
+FAITHFUL second source: status counts
+  single read          png     {'corroborated': 82, 'review': 17, 'conflict': 1}
+  single read          shared  {'corroborated': 84, 'review': 13, 'conflict': 2, 'partial': 1}
+  single read          heavy   {'corroborated': 91, 'conflict': 3, 'partial': 5, 'review': 1}
+  two-read consensus   png     {'corroborated': 84, 'review': 16}
+  two-read consensus   shared  {'corroborated': 86, 'review': 14}
+  two-read consensus   heavy   {'corroborated': 100}
+
+ALTERED second source: share NOT corroborated / share called conflict or review
+  ref, one digit   single read          png: 100/100 (96%-100%) flagged 100 | shared: 100/100 (96%-100%) flagged 100 | heavy: 100/100 (96%-100%) flagged 100
+  ref, one digit   two-read consensus   png: 100/100 (96%-100%) flagged 100 | shared: 100/100 (96%-100%) flagged 100 | heavy: 100/100 (96%-100%) flagged 100
+  ref, two digits  single read          png: 100/100 (96%-100%) flagged 100 | shared: 100/100 (96%-100%) flagged 100 | heavy: 100/100 (96%-100%) flagged 100
+  ref, two digits  two-read consensus   png: 100/100 (96%-100%) flagged 100 | shared: 100/100 (96%-100%) flagged 100 | heavy: 100/100 (96%-100%) flagged 99
+  amount           single read          png: 100/100 (96%-100%) flagged 100 | shared: 100/100 (96%-100%) flagged 100 | heavy: 100/100 (96%-100%) flagged 100
+  amount           two-read consensus   png: 100/100 (96%-100%) flagged 70 | shared: 100/100 (96%-100%) flagged 78 | heavy: 100/100 (96%-100%) flagged 86
+  date             single read          png: 100/100 (96%-100%) flagged 100 | shared: 100/100 (96%-100%) flagged 99 | heavy: 100/100 (96%-100%) flagged 95
+  date             two-read consensus   png: 100/100 (96%-100%) flagged 99 | shared: 100/100 (96%-100%) flagged 99 | heavy: 100/100 (96%-100%) flagged 93
+
+False conflict on a FAITHFUL source (status conflict):
+  single read          png     1/100
+  single read          shared  2/100
+  single read          heavy   3/100
+  two-read consensus   png     0/100
+  two-read consensus   shared  0/100
+  two-read consensus   heavy   0/100

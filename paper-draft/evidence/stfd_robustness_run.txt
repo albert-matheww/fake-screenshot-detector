@@ -1,0 +1,23 @@
+18 fits in 194s
+all features, clean-trained, 5 grouped splits: clean-test word AUC mean 0.789 sd 0.014 (min 0.771, max 0.806); degraded-test mean 0.668 sd 0.012
+bootstrap over source groups, seed 0, clean test AUC 95% interval: [0.776, 0.831]
+
+ablation (seed 0, trained on clean images): clean-test AUC, degraded-test AUC
+  all features                                                   features= 95 clean 0.806 (+0.000) degraded 0.665
+  without edge and contrast                                      features= 72 clean 0.789 (-0.017) degraded 0.659
+  without colour                                                 features= 86 clean 0.799 (-0.007) degraded 0.652
+  without strokes                                                features= 86 clean 0.801 (-0.006) degraded 0.648
+  without background                                             features= 85 clean 0.802 (-0.004) degraded 0.666
+  without seam                                                   features= 90 clean 0.807 (+0.001) degraded 0.656
+  without JPEG grid                                              features= 91 clean 0.805 (-0.001) degraded 0.657
+  without histograms                                             features= 75 clean 0.785 (-0.022) degraded 0.652
+  without geometry                                               features= 87 clean 0.803 (-0.004) degraded 0.661
+  without line context                                           features= 88 clean 0.779 (-0.028) degraded 0.599
+  no comparison with neighbours (raw and geometry only)          features= 50 clean 0.754 (-0.052) degraded 0.560
+  comparison with neighbours only                                features= 45 clean 0.758 (-0.049) degraded 0.675
+
+trained on degraded images (seed 0):
+  all features                                                   clean 0.694 degraded 0.733
+  no comparison with neighbours (raw and geometry only)          clean 0.616 degraded 0.662
+
+random-word baseline: 12085 of 185683 labelled words are edited words (6.508%); per image, a random measurable word is an edited word with probability averaging 7.434%

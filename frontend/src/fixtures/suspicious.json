@@ -68,9 +68,6 @@
     "processing_ms": 7310.2,
     "model": "word-forensics-gbm-v2"
   },
-  "fake_score": 0.52,
-  "is_fake": false,
-  "verdict_text": "Possible inconsistency - review recommended",
   "assurance": {
     "level": 0,
     "label": "Unverified",

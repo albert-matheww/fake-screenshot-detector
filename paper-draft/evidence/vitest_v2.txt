@@ -1,0 +1,14 @@
+
+ ✓ src/lib/overlay.test.js  (7 tests) 3ms
+ ✓ src/lib/demo.test.js  (8 tests) 5ms
+ ✓ src/services/api.test.js  (11 tests) 9ms
+ ✓ src/components/ImageUpload.test.jsx  (3 tests) 36ms
+ ✓ src/components/Panels.test.jsx  (5 tests) 86ms
+ ✓ src/App.test.jsx  (4 tests) 135ms
+ ✓ src/components/AnalysisResults.test.jsx  (20 tests) 234ms
+
+ Test Files  7 passed (7)
+      Tests  58 passed (58)
+   Start at  21:12:29
+   Duration  1.04s (transform 246ms, setup 503ms, collect 747ms, tests 508ms, environment 2.84s, prepare 476ms)
+

@@ -1,0 +1,988 @@
+[
+ {
+  "type": "1_Copy-move",
+  "file": "4ff08203b1da",
+  "ids": [
+   "text.placeholder_number",
+   "id.card_luhn",
+   "id.card_luhn",
+   "id.card_luhn",
+   "id.card_luhn",
+   "id.card_luhn"
+  ],
+  "msgs": [
+   "A number looks like a placeholder (long run of one digit, or 123456789).",
+   "A full card number fails the Luhn checksum."
+  ]
+ },
+ {
+  "type": "1_Copy-move",
+  "file": "569ed2723c34",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 27:49 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "1_Copy-move",
+  "file": "597e2f849de5",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 49:30 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "1_Copy-move",
+  "file": "4f8a602b1ede",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:57 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "1_Copy-move",
+  "file": "416c6fc9fea6",
+  "ids": [
+   "id.iban_checksum"
+  ],
+  "msgs": [
+   "IBAN XP002006011620089 fails the standard mod-97 checksum."
+  ]
+ },
+ {
+  "type": "1_Copy-move",
+  "file": "d43bc37d3125",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 99:05 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "1_Copy-move",
+  "file": "c62749265a88",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:54 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "1_Copy-move",
+  "file": "728e54d9aa7d",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:53 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "1_Copy-move",
+  "file": "b03012febcf1",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 97:15 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "dbe5af3f3d79",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 48:11 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "c8e0caf46752",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 49:22 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "9828cab27644",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:40 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "e829231641de",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 30:13 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "5db5c654ebf4",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 48:59 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "6ee4fce5f26c",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 49:08 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "dce286edff37",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:04 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "4d142e5e0ab0",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:51 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "ca11c6a681d8",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:25 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "82650249c9b7",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:44 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "a5d54c832785",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 13:66 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "56d90f58036e",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:20 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "9e96d0e68827",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 49:10 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "76959ad865e4",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:06 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "3d5714be1333",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:43 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "3282c8cddc39",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:39 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "662712febc85",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:28 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "ba061b74dc6f",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 41:10 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "7c313f4fb02d",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:43 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "8729ab10a69b",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 41:01 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "3375a68f20c7",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:11 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "4f55adf176c1",
+  "ids": [
+   "id.card_luhn"
+  ],
+  "msgs": [
+   "A full card number fails the Luhn checksum."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "697d5bef995a",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:41 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "6e2553f9ccd4",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:32 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "8fea85633473",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:39 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "b6c40352ad02",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:54 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "14df3768fc15",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:14 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "2_Splicing",
+  "file": "bddc522cf586",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:05 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "79b728275dcc",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:51 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "acc9a0754b05",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:30 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "8c05f6edc850",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:11 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "2bbea8ca0c1e",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:22 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "6e14e7a0b5ba",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:55 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "cd0cbccffeb6",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:39 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "0f4470d77a40",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:41 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "57641cfeb8b8",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 46:57 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "8ea4cfdfd3ca",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:04 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "8cc1f258ca86",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 18:60, 1:66 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "90b0eb1a5f48",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 09:60 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "55af9b0b0e64",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 60:12 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "c75beec53bb8",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:28 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "38fca99ef612",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 41:11 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "3c0082946bb3",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 00:86, 30:30 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "cb509a3052c3",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 49:08 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "4e0bafe7e8ef",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:44 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "c060829dca3b",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 47:32 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "7d411f83ded0",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:29 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "3_Removal",
+  "file": "64c4e641cf3e",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:23 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "4a189cecc589",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:07 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "653bf2e66952",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 41:00 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "89c52d1a2332",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:32 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "52feeaadaecf",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 41:10 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "0b4b08e91979",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:43 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "0e82dcf6f9dc",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:51 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "fd11e17bb740",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 41:43 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "2458396ea117",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 41:01 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "213dca87887e",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:23 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "c648ef6dc529",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:42 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "0c8bfff5f744",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:25 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "e3e7c06946f7",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:28 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "52540210ed42",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:44 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "3eb9b916d3a7",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:04 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "45a07fbc11e2",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:22 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "3facdcce4660",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 41:11 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "01111cf66900",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:54 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "3ad8bd5f3ef2",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 49:08 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "072c64cf8379",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:30 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "cd8466ea6c73",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:41 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "af597bc058fc",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:50 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "fef7659a07a0",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:11 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "f23e2bd6e438",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 49:22 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "f7ded89e940e",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 99:32 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "44d5a2bf130a",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:39 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "4_Insertion",
+  "file": "400139972b2d",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 47:32 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "244b82433dda",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:29 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "e4597b525bff",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 47:32 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "fd8c08868d63",
+  "ids": [
+   "id.card_luhn"
+  ],
+  "msgs": [
+   "A full card number fails the Luhn checksum."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "76755916d9af",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:04 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "4e025cbb292a",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:41 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "2a7ad2b6f0c5",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 73:35 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "ceb2a9a15a36",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 43:44 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "9b0cc3a9ddcf",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 42:39 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "730a29ce5b1e",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 41:11 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "b17a32250824",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 44:28 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "d3ef326bcaf2",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:11 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "00f36f420e9e",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 49:08 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "e92ab5bb4bf7",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 46:57 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "810481c67809",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 45:23 (OCR error is possible)."
+  ]
+ },
+ {
+  "type": "5_Replacement",
+  "file": "1f6033a6b5ad",
+  "ids": [
+   "time.invalid"
+  ],
+  "msgs": [
+   "Impossible clock time(s) shown: 60:12 (OCR error is possible)."
+  ]
+ }
+]

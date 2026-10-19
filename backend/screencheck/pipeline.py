@@ -108,5 +108,4 @@ def analyze_bytes(raw_bytes: bytes, config=None, forced_type: Optional[str] = No
                   "top_word_probability": top_render or 0.0, "thresholds": {"suspicious": am.THR_LO, "evidence": am.THR_HI}},
         "meta": {"sha256": hashlib.sha256(raw_bytes).hexdigest(), "processing_ms": round((time.time() - t0) * 1000, 1),
                  "model": "v3: type router + calibration-gated checks (rendering model advisory)"},
-        "fake_score": decision["risk_score"], "is_fake": decision["verdict"] == "evidence_of_editing", "verdict_text": decision["verdict_label"],
     }

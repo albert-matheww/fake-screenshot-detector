@@ -1,0 +1,150 @@
+[
+ {
+  "name": "all features",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 95,
+  "clean_test": 0.8062518622767733,
+  "bootstrap_clean_test_auc_95": [
+   0.7763409471022713,
+   0.8309434855977926
+  ],
+  "degraded_test": 0.6648277649569964
+ },
+ {
+  "name": "all features",
+  "seed": 1,
+  "trained_on": "clean",
+  "n_features": 95,
+  "clean_test": 0.7935572812977421,
+  "degraded_test": 0.6827878020915552
+ },
+ {
+  "name": "all features",
+  "seed": 2,
+  "trained_on": "clean",
+  "n_features": 95,
+  "clean_test": 0.794589396248016,
+  "degraded_test": 0.6564034070439515
+ },
+ {
+  "name": "all features",
+  "seed": 3,
+  "trained_on": "clean",
+  "n_features": 95,
+  "clean_test": 0.7807203943324318,
+  "degraded_test": 0.6774638776261309
+ },
+ {
+  "name": "all features",
+  "seed": 4,
+  "trained_on": "clean",
+  "n_features": 95,
+  "clean_test": 0.7705259794637698,
+  "degraded_test": 0.6581358210022861
+ },
+ {
+  "name": "without edge and contrast",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 72,
+  "clean_test": 0.7894615975711623,
+  "degraded_test": 0.6585224129667202
+ },
+ {
+  "name": "without colour",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 86,
+  "clean_test": 0.79940551016387,
+  "degraded_test": 0.6516622191943532
+ },
+ {
+  "name": "without strokes",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 86,
+  "clean_test": 0.8005819754658288,
+  "degraded_test": 0.6484091300182139
+ },
+ {
+  "name": "without background",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 85,
+  "clean_test": 0.8021642774977472,
+  "degraded_test": 0.6659877171717412
+ },
+ {
+  "name": "without seam",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 90,
+  "clean_test": 0.8068697714618479,
+  "degraded_test": 0.6555859294050407
+ },
+ {
+  "name": "without JPEG grid",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 91,
+  "clean_test": 0.8050378409023671,
+  "degraded_test": 0.6571038192358193
+ },
+ {
+  "name": "without histograms",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 75,
+  "clean_test": 0.7846417719916294,
+  "degraded_test": 0.6516359305519106
+ },
+ {
+  "name": "without geometry",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 87,
+  "clean_test": 0.802651307496786,
+  "degraded_test": 0.6610876284109575
+ },
+ {
+  "name": "without line context",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 88,
+  "clean_test": 0.7787241360769378,
+  "degraded_test": 0.5987338977720835
+ },
+ {
+  "name": "no comparison with neighbours (raw and geometry only)",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 50,
+  "clean_test": 0.7544381999328029,
+  "degraded_test": 0.5604560456380763
+ },
+ {
+  "name": "comparison with neighbours only",
+  "seed": 0,
+  "trained_on": "clean",
+  "n_features": 45,
+  "clean_test": 0.7576150958604438,
+  "degraded_test": 0.6751674678372485
+ },
+ {
+  "name": "all features",
+  "seed": 0,
+  "trained_on": "degraded",
+  "n_features": 95,
+  "clean_test": 0.6940099176978709,
+  "degraded_test": 0.7332949826971581
+ },
+ {
+  "name": "no comparison with neighbours (raw and geometry only)",
+  "seed": 0,
+  "trained_on": "degraded",
+  "n_features": 50,
+  "clean_test": 0.6163325213142323,
+  "degraded_test": 0.662274278864557
+ }
+]

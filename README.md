@@ -79,7 +79,7 @@ cd frontend && npm install && npm run dev        # proxies /api to the backend
 docker compose up --build
 ```
 
-Tests: `cd backend && pytest tests` (93) and `cd frontend && npm test` (72).
+Tests: `cd backend && pytest tests` (101) and `cd frontend && npm test` (72).
 
 ## API
 
@@ -93,8 +93,7 @@ Tests: `cd backend && pytest tests` (93) and `cd frontend && npm test` (72).
 The prototype has no authentication, rate limiting or transport security: put a reverse proxy in front of it before exposing it.
 
 Uploads are kept in memory (a request class prevents the web framework from spooling large files to disk) and are
-not stored; only sizes, verdicts and counts are logged. The legacy aliases `fake_score`, `is_fake` and `verdict_text` are
-still returned for old clients.
+not stored; only sizes, verdicts and counts are logged. 
 
 ## Validate and calibrate it yourself
 

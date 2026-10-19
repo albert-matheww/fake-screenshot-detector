@@ -215,3 +215,46 @@ def test_the_v1_cues_run_and_say_so_for_a_lossless_file(client):
     by = {c["id"]: c for c in r.get_json()["checks"]}
     assert by["v1.ela"]["status"] == "not_applicable" and "lossless" in by["v1.ela"]["why"]
     assert all(by[k]["gate"]["status"] == "advisory" for k in ("v1.ela", "v1.ghost", "v1.quant", "v1.noise", "v1.clone"))
+
+
+def test_an_amount_with_one_extra_leading_digit_is_review_not_conflict_and_never_corroboration():
+    src = fields.extract_text("Rs.8,063.17 debited on 12-10-2026. UPI Ref No 628512345678")
+    shot = fields.extract_text("Paid 18,063.17 on 12 Oct 2026. UPI transaction ID 628512345678")   # the rupee sign was read as a 1
+    r = reconcile.compare_fields(src, {"any": shot, "confident": shot})
+    assert r["status"] == "review" and not r["differs"]
+    amount_row = next(x for x in r["rows"] if x["kind"] == "amounts")
+    assert amount_row["status"] == "near"
+
+
+def test_a_clearly_different_amount_is_still_a_conflict():
+    src = fields.extract_text("Rs.8,063.17 debited on 12-10-2026. UPI Ref No 628512345678")
+    shot = fields.extract_text("Paid 9,999.00 on 12 Oct 2026. UPI transaction ID 628512345678")
+    assert reconcile.compare_fields(src, {"any": shot, "confident": shot})["status"] == "conflict"
+
+
+# ---------------------------------------------------------------- real-data repairs: dates without a year, whole-rupee amounts, lists
+
+def test_day_and_month_without_a_year_is_read_and_matches_a_full_source_date():
+    f = fields.extract_text("Mohammed Roshan 16 October\nBava S Restaurant 15 Oct")
+    assert "--10-16" in f["dates"] and "--10-15" in f["dates"]
+    src = fields.extract_text("Debited Rs:105.00 on 16-10-2026 00:59:19")
+    shot = {"any": {**fields.extract_text("Paid 105 16 October"), }, "confident": fields.extract_text("Paid 105 16 October")}
+    r = reconcile.compare_fields(src, shot)
+    assert next(x for x in r["rows"] if x["kind"] == "dates")["status"] == "matched"
+    assert next(x for x in r["rows"] if x["kind"] == "amounts")["status"] == "near"         # a bare 105 can only ever make Rs 105.00 "near"
+    assert r["status"] == "review"
+
+
+def test_a_whole_rupee_amount_with_the_currency_sign_read_as_a_digit_is_review_not_corroboration():
+    src = fields.extract_text("Debited Rs:105.00 on 16-10-2026")
+    shot = fields.extract_text("Mohammed Roshan 2105\n16 October")                         # the rupee sign came out as a 2
+    r = reconcile.compare_fields(src, {"any": shot, "confident": shot})
+    assert r["status"] == "review"
+
+
+def test_a_payment_that_is_not_on_a_long_list_is_not_a_conflict():
+    rows = "\n".join(f"Person {i} {100 + 17 * i} 12 October" for i in range(8))
+    shot = fields.extract_text(rows)
+    src = fields.extract_text("Debited Rs:5.00 on 20-10-2026")
+    r = reconcile.compare_fields(src, {"any": shot, "confident": shot})
+    assert r["status"] != "conflict"

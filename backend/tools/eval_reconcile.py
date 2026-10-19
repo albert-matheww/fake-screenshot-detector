@@ -34,7 +34,7 @@ def main():
         f = F.extract_words(ctx["words"])           # single read: the 'sender' side of the truth
         ref = f["refs"][0] if f["refs"] else None
         amount = f["amounts"][0] if f["amounts"] else None
-        date = f["dates"][0] if f["dates"] else None
+        date = next((d for d in f["dates"] if not d.startswith("--")), None)   # a full date; day-and-month-only dates cannot build a source
         if not (ref or (amount is not None and date)):
             continue                                # nothing to build a source from
         usable += 1

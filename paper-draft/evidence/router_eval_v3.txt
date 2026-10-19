@@ -1,0 +1,40 @@
+23 labelled real screenshots
+
+truth -> fused router output (type counts)
+  payment_receipt  {'payment_receipt': 8}
+  bank_statement   {'bank_statement': 2, 'unknown': 1}
+  order_invoice    {'order_invoice': 3}
+  chat             {'unknown': 1}
+  social_post      {'social_post': 1, 'unknown': 1}
+  message_alert    {'message_alert': 3}
+  web_page         {'unknown': 2, 'web_page': 1}
+content router A     answered 18/23, accuracy when answered 1.00
+structure router B   answered 23/23, accuracy when answered 0.17
+fused                answered 18/23, accuracy when answered 1.00
+
+gate: {
+ "content": {
+  "validated": false,
+  "n": 23,
+  "answered": 18,
+  "accuracy": 1.0,
+  "accuracy_interval": [
+   0.824,
+   1.0
+  ],
+  "wrong_answer_rate": 0.0,
+  "reason": "needs n >= 60, answers on at least half, accuracy >= 0.85, wrong-answer rate <= 0.05; got n=23, answered 18, accuracy 1.00"
+ },
+ "structure": {
+  "validated": false,
+  "n": 23,
+  "answered": 23,
+  "accuracy": 0.174,
+  "accuracy_interval": [
+   0.07,
+   0.371
+  ],
+  "wrong_answer_rate": 0.826,
+  "reason": "needs n >= 60, answers on at least half, accuracy >= 0.85, wrong-answer rate <= 0.05; got n=23, answered 23, accuracy 0.17"
+ }
+}
