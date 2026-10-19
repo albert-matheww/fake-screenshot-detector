@@ -20,7 +20,8 @@ MIN_WORDS_FOR_TEXT_CHECKS = 15
 MIN_OCR_CONF = 60.0
 
 
-CATEGORY = {"file_metadata": "file", "content_logic": "content", "layout_grid": "visual", "rendering": "visual"}
+CATEGORY = {"file_metadata": "file", "content_logic": "content", "layout_grid": "visual", "rendering": "visual",
+            "v1.ela": "visual", "v1.ghost": "visual", "v1.quant": "visual", "v1.noise": "visual", "v1.clone": "visual"}
 
 
 def category(check_id: str) -> str:
@@ -211,9 +212,11 @@ def typed_message(ctx) -> Dict[str, Any]:
     return result("typed.message_alert", "Message and OTP format", "finding" if f else "clear", f)
 
 
-GENERIC: List[Callable] = [file_metadata, content_logic, layout_grid, rendering_consistency]
+from . import legacy_cues  # noqa: E402  (after result() is defined; legacy_cues imports this module)
+
+GENERIC: List[Callable] = [file_metadata, content_logic, layout_grid, rendering_consistency] + legacy_cues.CHECKS
 TYPED: Dict[str, Callable] = {
     "payment_receipt": typed_payment, "bank_statement": typed_bank, "order_invoice": typed_order,
     "chat": typed_chat, "message_alert": typed_message,
 }
-ALL_IDS = ["file_metadata", "content_logic", "layout_grid", "rendering"] + [f"typed.{t}" for t in TYPED]
+ALL_IDS = ["file_metadata", "content_logic", "layout_grid", "rendering"] + legacy_cues.IDS + [f"typed.{t}" for t in TYPED]

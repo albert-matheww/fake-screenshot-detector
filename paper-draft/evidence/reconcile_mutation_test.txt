@@ -1,0 +1,3 @@
+32 screenshots, 17 had facts to build a source from
+faithful source -> {'corroborated': 17}
+one fact changed -> {('amount', 'conflict'): 4, ('date', 'conflict'): 8, ('ref digit', 'review'): 4, ('amount', 'partial'): 1}

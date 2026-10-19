@@ -94,3 +94,28 @@ describe("analyzeImage", () => {
     });
   });
 });
+
+describe("type and reconcile requests", () => {
+  const orig = client.post;
+  afterEach(() => { client.post = orig; });
+
+  it("sends the chosen type with the screenshot, and nothing for 'auto'", async () => {
+    const sent = [];
+    client.post = async (_u, form) => { sent.push(form); return { data: {} }; };
+    await analyzeImage(new File(["x"], "a.png"), { type: "bank_statement" });
+    await analyzeImage(new File(["x"], "a.png"), { type: "auto" });
+    expect(sent[0].get("type")).toBe("bank_statement");
+    expect(sent[1].get("type")).toBeNull();
+  });
+
+  it("reconcileImages sends the screenshot, type, pasted text and second image", async () => {
+    const { reconcileImages } = await import("./api.js");
+    let call;
+    client.post = async (u, form) => { call = { u, form }; return { data: { ok: true } }; };
+    await reconcileImages(new File(["x"], "a.png"), { type: "payment_receipt", sourceText: "Rs 5", sourceImage: new File(["y"], "b.png") });
+    expect(call.u).toBe("/reconcile");
+    expect(call.form.get("type")).toBe("payment_receipt");
+    expect(call.form.get("source_text")).toBe("Rs 5");
+    expect(call.form.get("source_image").name).toBe("b.png");
+  });
+});

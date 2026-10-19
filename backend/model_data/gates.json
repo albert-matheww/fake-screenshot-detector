@@ -3,7 +3,7 @@
   "min_genuine": 20,
   "max_upper95": 0.15
  },
- "calibrated_on": "2026-10-18",
+ "calibrated_on": "2026-10-19",
  "genuine_by_type": {
   "bank_statement": 3,
   "web_page": 3,
@@ -49,6 +49,51 @@
    "not_applicable": 0,
    "upper95": 0.321,
    "reason": "false-alarm rate 3/23 with upper bound 0.32 above 0.15"
+  },
+  "v1.ela": {
+   "status": "advisory",
+   "n": 15,
+   "flagged": 15,
+   "low_severity_findings": 0,
+   "not_applicable": 8,
+   "upper95": 1.0,
+   "reason": "applicable on only 15 genuine real screenshots (need 20); 5 more needed"
+  },
+  "v1.ghost": {
+   "status": "advisory",
+   "n": 15,
+   "flagged": 10,
+   "low_severity_findings": 0,
+   "not_applicable": 8,
+   "upper95": 0.848,
+   "reason": "applicable on only 15 genuine real screenshots (need 20); 5 more needed"
+  },
+  "v1.quant": {
+   "status": "advisory",
+   "n": 15,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 8,
+   "upper95": 0.204,
+   "reason": "applicable on only 15 genuine real screenshots (need 20); 5 more needed"
+  },
+  "v1.noise": {
+   "status": "advisory",
+   "n": 23,
+   "flagged": 23,
+   "low_severity_findings": 0,
+   "not_applicable": 0,
+   "upper95": 1.0,
+   "reason": "false-alarm rate 23/23 with upper bound 1.00 above 0.15"
+  },
+  "v1.clone": {
+   "status": "live",
+   "n": 23,
+   "flagged": 0,
+   "low_severity_findings": 0,
+   "not_applicable": 0,
+   "upper95": 0.143,
+   "reason": null
   },
   "typed.payment_receipt": {
    "status": "advisory",

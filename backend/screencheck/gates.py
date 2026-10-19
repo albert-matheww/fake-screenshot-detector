@@ -24,12 +24,24 @@ def load() -> Dict[str, Any]:
 _CACHE: Dict[str, Any] = {}
 
 
+HINT_ONLY_PREFIX = "v1."   # the version-1 pixel cues are hints by design: they can be shown, never counted
+UNINFORMATIVE_SHARE = 0.5   # a hint that flags at least this share of genuine screenshots carries no information
+UNINFORMATIVE_MIN_N = 10
+
+
 def gate_for(check_id: str) -> Dict[str, Any]:
     g = _CACHE.get("g") or load()
     _CACHE["g"] = g
-    return g.get("checks", {}).get(check_id) or {
+    gate = g.get("checks", {}).get(check_id) or {
         "status": "advisory", "n": 0, "flagged": 0,
         "reason": f"not calibrated yet: needs at least {MIN_GENUINE} genuine real screenshots on which it applies"}
+    if check_id.startswith(HINT_ONLY_PREFIX):
+        n, fl = int(gate.get("n", 0)), int(gate.get("flagged", 0))
+        uninformative = n >= UNINFORMATIVE_MIN_N and fl / n >= UNINFORMATIVE_SHARE
+        reason = (f"Uninformative: it flagged {fl} of {n} genuine screenshots, so a flag says nothing." if uninformative
+                  else "A version-1 cue, kept as a hint by design: shown, never counted toward the verdict.")
+        gate = {**gate, "status": "advisory", "uninformative": uninformative, "reason": reason}
+    return gate
 
 
 def is_live(check_id: str) -> bool:

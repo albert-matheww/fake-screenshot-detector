@@ -42,7 +42,8 @@ LABELS = {
 def decide(route: Dict[str, Any], checks: List[Dict[str, Any]], words_read: int) -> Dict[str, Any]:
     live_find = [c for c in checks if c["gate"]["status"] == "live" and c["status"] == "finding"]
     live_clear = [c for c in checks if c["gate"]["status"] == "live" and c["status"] == "clear"]
-    adv_find = [c for c in checks if c["gate"]["status"] != "live" and c["status"] == "finding"]
+    # an uncalibrated signal makes the answer more cautious, unless it is known to fire on genuine screenshots as often as not
+    adv_find = [c for c in checks if c["gate"]["status"] != "live" and c["status"] == "finding" and not c["gate"].get("uninformative")]
     na = [c for c in checks if c["status"] == "not_applicable"]
     reasons: List[str] = []
 

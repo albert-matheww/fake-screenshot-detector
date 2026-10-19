@@ -5,6 +5,8 @@ import LoadingPanel from "./components/LoadingPanel.jsx";
 import ErrorPanel from "./components/ErrorPanel.jsx";
 import ModelStatus from "./components/ModelStatus.jsx";
 import ComparePanel from "./components/ComparePanel.jsx";
+import ReconcilePanel from "./components/ReconcilePanel.jsx";
+import TypePicker from "./components/TypePicker.jsx";
 import { analyzeImage, getStatus, toApiError } from "./services/api.js";
 import { normalizeResult } from "./lib/result.js";
 import { DEMO_FIXTURES, DEMO_LABELS, getDemoKey, renderDemoImage } from "./lib/demo.js";
@@ -14,6 +16,7 @@ export default function App() {
   const [demoKey, setDemoKey] = useState(() => getDemoKey());
   const [mode, setMode] = useState("analyse");
   const [file, setFile] = useState(null);
+  const [type, setType] = useState("auto");
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -70,7 +73,7 @@ export default function App() {
     setError(null);
     setResult(null);
     try {
-      const data = await analyzeImage(file, { signal: controller.signal });
+      const data = await analyzeImage(file, { signal: controller.signal, type });
       if (!normalizeResult(data)) {
         setError({
           kind: "bad_response",
@@ -87,7 +90,7 @@ export default function App() {
       abortRef.current = null;
       setLoading(false);
     }
-  }, [file]);
+  }, [file, type]);
 
   const handleCancel = () => abortRef.current?.abort();
 
@@ -144,16 +147,21 @@ export default function App() {
           <button type="button" className={`modebar__tab${mode === "compare" ? " is-active" : ""}`} aria-pressed={mode === "compare"} onClick={() => setMode("compare")}>
             Compare with a genuine copy
           </button>
+          <button type="button" className={`modebar__tab${mode === "reconcile" ? " is-active" : ""}`} aria-pressed={mode === "reconcile"} onClick={() => setMode("reconcile")}>
+            Check against a second source
+          </button>
         </nav>
       )}
 
       <main className="app__main">
         {!demoKey && mode === "compare" && <ComparePanel />}
+        {!demoKey && mode === "reconcile" && <ReconcilePanel />}
         {!demoKey && mode === "analyse" && !shownResult && <ImageUpload onFileSelected={handleFileSelected} disabled={loading} />}
 
         {mode === "analyse" && showPreview && (
           <div className="preview-card">
             <img src={previewUrl} alt="Selected screenshot preview" />
+            {!loading && <TypePicker value={type} onChange={setType} />}
             {loading ? (
               <LoadingPanel onCancel={handleCancel} />
             ) : (

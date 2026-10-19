@@ -43,6 +43,18 @@ def _allowed_file(filename: str) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in Config.ALLOWED_EXTENSIONS
 
 
+def _type_from_form():
+    """The screenshot type the person chose (optional). Returns (type or None, error message or None)."""
+    from screencheck.common import TYPES
+
+    t = (request.form.get("type") or "").strip()
+    if not t or t == "auto":
+        return None, None
+    if t not in TYPES:
+        return None, f"Unknown type. Allowed: {TYPES}"
+    return t, None
+
+
 @app.route("/status", methods=["GET"])
 def status():
     return jsonify({"status": "ok", "service": "screenshot-forensics", "model": model_info()})
@@ -66,10 +78,13 @@ def analyze():
     if not raw_bytes:
         return jsonify({"error": "Uploaded file is empty."}), 400
 
+    forced_type, err = _type_from_form()
+    if err:
+        return jsonify({"error": err}), 400
     logger.info("Received image for analysis (%d bytes)", len(raw_bytes))
 
     try:
-        result = analyze_image_bytes(raw_bytes, config=Config)
+        result = analyze_image_bytes(raw_bytes, config=Config, forced_type=forced_type)
     except UnidentifiedImageError:
         return jsonify({"error": "File could not be read as an image."}), 400
     except Exception:
@@ -109,6 +124,46 @@ def compare():
         return jsonify({"error": "Internal error during comparison."}), 500
     finally:
         raws = None
+    return jsonify(result), 200
+
+
+@app.route("/reconcile", methods=["POST"])
+def reconcile_endpoint():
+    """Check a screenshot against a second, independent source: pasted text (`source_text`) and/or a second image
+    (`source_image`). Returns the normal analysis plus `reconcile` and an assurance level that includes the second source."""
+    from screencheck.reconcile_api import reconcile_bytes
+
+    if "image" not in request.files:
+        return jsonify({"error": "No 'image' file part in request."}), 400
+    f = request.files["image"]
+    if f.filename == "" or not _allowed_file(f.filename):
+        return jsonify({"error": "'image' must be a png, jpg, jpeg or webp file."}), 400
+    raw = f.read()
+    source_text = (request.form.get("source_text") or "")[:20000]
+    source_raw = None
+    if "source_image" in request.files and request.files["source_image"].filename:
+        sf = request.files["source_image"]
+        if not _allowed_file(sf.filename):
+            return jsonify({"error": "'source_image' must be a png, jpg, jpeg or webp file."}), 400
+        source_raw = sf.read()
+    if not raw:
+        return jsonify({"error": "Uploaded file is empty."}), 400
+    if not source_text.strip() and not source_raw:
+        return jsonify({"error": "Provide the second source as pasted text ('source_text') or an image ('source_image')."}), 400
+    forced_type, err = _type_from_form()
+    if err:
+        return jsonify({"error": err}), 400
+    logger.info("Received screenshot for reconciliation (%d bytes, source text %d chars, source image %s)",
+                len(raw), len(source_text), bool(source_raw))
+    try:
+        result = reconcile_bytes(raw, forced_type, source_text, source_raw)
+    except UnidentifiedImageError:
+        return jsonify({"error": "A file could not be read as an image."}), 400
+    except Exception:
+        logger.exception("Reconciliation failed")
+        return jsonify({"error": "Internal error during reconciliation."}), 500
+    finally:
+        raw = source_raw = None
     return jsonify(result), 200
 
 

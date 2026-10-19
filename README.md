@@ -1,6 +1,6 @@
 # Fake Screenshot Detector
 
-**Checks what a screenshot says and how it was made, tells you what each check could and could not see, and never
+**Checks what a screenshot says and how it was made, tells you how much independent evidence supports it, and never
 says an image is genuine.**
 
 > **Read this first.** Earlier versions tried to *detect edited pixels* and, measured on real edits, did not work: a
@@ -29,6 +29,19 @@ says an image is genuine.**
    issuer. An uncalibrated signal can only make the answer more cautious.
 6. **Compare mode.** If you hold a genuine copy, upload both and every difference is marked. It needs no model and
    also finds edits typed in the original font.
+7. **You choose the type.** Pick the kind of screenshot (payment receipt, bank statement, order, chat, ...) and the checks
+   written for it run; "not sure" falls back to automatic detection.
+8. **Reconcile mode (a second source).** A forged screenshot can agree with itself but cannot change another record. Paste
+   the receiver's bank SMS or a statement line (or upload a screenshot of it): every reference, amount, date and time in it
+   is looked up in the screenshot. The screenshot's text is read twice, and a mismatch is a *conflict* only when both reads
+   agree on a different value; a reference that differs by one digit is flagged for a look by eye and never counts as
+   agreement.
+9. **Assurance levels instead of "genuine".** Level 0 unverified (or a contradiction / conflict was found), level 1 no
+   contradiction found (still unverified), level 2 consistent with an independent source, level 3 verified against signed
+   data (not available yet). Nothing is ever called genuine.
+10. **Version-1 cues as hints.** Error-level analysis, JPEG ghost, noise, copy-move and quantisation tables are shown as hints
+    and can never count toward a verdict. Measured on the 23 genuine screenshots, ELA flagged 15 of 15 (applicable ones)
+    and noise 23 of 23, so those two are labelled *not informative*.
 
 ![Result screen](docs/demo_v2_result.jpg)
 
@@ -45,6 +58,8 @@ Real set: 23 genuine screenshots in six categories and 9 edited screenshots with
 | Content router on real screenshots | 18 of 23 answered, 18 of 18 correct (interval 82% to 100%) |
 | Structure router trained on generated screenshots | 17% correct on real screenshots: **not used** |
 | Word-rendering model | 3 of 23 genuine flagged (upper bound 32%): **advisory** |
+| Reconcile mode, mutation test on the real screenshots (17 with facts) | faithful second source: 17 of 17 corroborated, 0 false conflicts; one fact changed (digit, amount or date): 17 of 17 noticed (4 amount and 8 date conflicts, 4 one-digit reference reviews, 1 amount change left at partial) |
+| Pixel model trained on real edits (STFD, 3,932 tampered screenshots, split by source) | word-level AUC 0.81 on held-out STFD words (0.56 for the model trained on generated edits); after chat-app re-compression 0.73; on genuine Rico app screens it flagged 40 to 80% of images, so it is **not used** |
 
 So today the pipeline can *flag a contradiction* (a date whose weekday is wrong, a generator watermark, an editor
 tag) and otherwise says "inconclusive, verify". Compare mode is the strong tool when an original exists. Making the
@@ -64,13 +79,14 @@ cd frontend && npm install && npm run dev        # proxies /api to the backend
 docker compose up --build
 ```
 
-Tests: `cd backend && pytest tests` (55) and `cd frontend && npm test` (64).
+Tests: `cd backend && pytest tests` (86) and `cd frontend && npm test` (72).
 
 ## API
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /analyze` (multipart `image`, png/jpg/jpeg/webp, at most 10 MB) | Full pipeline. Returns `verdict`, `verdict_label`, `risk_score`, `reasons`, `regions`, `findings`, `routing`, `capture`, `checks` (each with `status`, `gate`, `why`), `coverage`, `verify_steps`, `limitations`, `image`, `stats`, `meta`. |
+| `POST /reconcile` (multipart `image`, `source_text` and/or `source_image`, optional `type`) | The full analysis plus `reconcile` (per-fact `matched` / `differs` / `near` / `unclear`) and an `assurance` level that includes the second source. |
+| `POST /analyze` (multipart `image`, optional `type` = payment_receipt, bank_statement, order_invoice, chat, message_alert, social_post, web_page; png/jpg/jpeg/webp, at most 10 MB) | Full pipeline; also returns `assurance` and `fields`. Returns `verdict`, `verdict_label`, `risk_score`, `reasons`, `regions`, `findings`, `routing`, `capture`, `checks` (each with `status`, `gate`, `why`), `coverage`, `verify_steps`, `limitations`, `image`, `stats`, `meta`. |
 | `POST /compare` (multipart `original`, `suspect`) | `status` (`differences_found`, `no_difference`, `layout_mismatch`), `regions`, `text_changes`, `caution`. |
 | `GET /status` | Service health, rendering-model info, router validation state, gate states. |
 

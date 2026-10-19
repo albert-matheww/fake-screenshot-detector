@@ -59,6 +59,21 @@ export function formatDuration(ms) {
 
 const asStringArray = (v) => (Array.isArray(v) ? v.filter((s) => typeof s === "string" && s) : []);
 
+export function normalizeAssurance(a) {
+  if (!a || typeof a !== "object" || !Number.isInteger(a.level) || !Array.isArray(a.ladder)) return null;
+  return {
+    level: a.level,
+    label: typeof a.label === "string" ? a.label : "",
+    status: typeof a.status === "string" ? a.status : "",
+    reasons: asStringArray(a.reasons),
+    nextStep: typeof a.next_step === "string" ? a.next_step : "",
+    ladder: a.ladder.filter((r) => r && Number.isInteger(r.level)).map((r) => ({
+      level: r.level, label: String(r.label ?? ""), requirement: String(r.requirement ?? ""), reached: Boolean(r.reached),
+    })),
+    note: typeof a.never_genuine === "string" ? a.never_genuine : "",
+  };
+}
+
 /**
  * Defensive normalisation of the /analyze payload. Returns null when the
  * payload is not a recognisable v2 result (caller shows an error instead of
@@ -107,6 +122,9 @@ export function normalizeResult(raw) {
     checks: (Array.isArray(raw.checks) ? raw.checks : []).filter((c) => c && typeof c.id === "string"),
     coverage: raw.coverage && typeof raw.coverage === "object" ? raw.coverage : null,
     verifySteps: asStringArray(raw.verify_steps),
+    assurance: normalizeAssurance(raw.assurance),
+    fields: raw.fields && typeof raw.fields === "object" ? raw.fields : null,
+    reconcile: raw.reconcile && typeof raw.reconcile === "object" ? raw.reconcile : null,
     image,
     stats: raw.stats ?? {},
     meta: raw.meta ?? {},

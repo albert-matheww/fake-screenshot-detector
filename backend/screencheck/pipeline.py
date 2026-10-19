@@ -4,7 +4,7 @@ from __future__ import annotations
 import hashlib
 import io
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from PIL import Image, ImageOps
@@ -12,7 +12,7 @@ from PIL import Image, ImageOps
 import analysis_model as am
 import textforensics as tf
 
-from . import capture, checks, gates, router, verdict
+from . import assurance, capture, checks, fields, gates, router, verdict
 
 
 def model_info() -> Dict[str, Any]:
@@ -51,9 +51,21 @@ def build_context(raw_bytes: bytes) -> Dict[str, Any]:
     return {"image": image, "rgb_img": rgb_img, "rgb": rgb, "words": words, "capture": cap, "route": router.route(rgb, words)}
 
 
-def analyze_bytes(raw_bytes: bytes, config=None) -> Dict[str, Any]:
+def forced_route(typ: str, route: Dict[str, Any]) -> Dict[str, Any]:
+    """The person chose the type: use it. The automatic guess stays in the result for comparison."""
+    from .common import TYPE_LABELS
+
+    return {**route, "type": typ, "label": TYPE_LABELS.get(typ, typ), "status": "confident", "confidence": 1.0,
+            "typed_checks_enabled": True, "source": "user", "automatic_guess": route.get("type")}
+
+
+def analyze_bytes(raw_bytes: bytes, config=None, forced_type: Optional[str] = None, ctx_out: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     t0 = time.time()
     ctx = build_context(raw_bytes)
+    if forced_type:
+        ctx["route"] = forced_route(forced_type, ctx["route"])
+    if ctx_out is not None:
+        ctx_out.update(ctx)
     image, fmt = ctx["image"], ctx["image"].format
     W, H = ctx["rgb_img"].size
     cap, words, route = ctx["capture"], ctx["words"], ctx["route"]
@@ -88,6 +100,8 @@ def analyze_bytes(raw_bytes: bytes, config=None) -> Dict[str, Any]:
         "verdict": decision["verdict"], "verdict_label": decision["verdict_label"], "risk_score": decision["risk_score"],
         "reasons": decision["reasons"], "regions": regions[:10], "findings": findings,
         "limitations": verdict.LIMITATIONS, "verify_steps": verdict.VERIFY_STEPS,
+        "assurance": assurance.assess(decision["verdict"], results, len(words)),
+        "fields": fields.display(fields.extract_words(words)),
         "routing": route, "capture": cap, "checks": results, "coverage": decision["coverage"],
         "image": {"width": W, "height": H, "format": fmt},
         "stats": {"ocr_words": len(words), "measured_words": next((c["detail"].get("measured_words", 0) for c in results if c["id"] == "rendering"), 0),

@@ -30,7 +30,9 @@ export default function ChecksPanel({ routing, checks, coverage, verifySteps }) 
               <div className="check__head">
                 <span className="check__name">{c.name}</span>
                 <span className={`chip chip--check-${c.status}`}>{CHECK_STATUS_TEXT[c.status] || c.status}</span>
-                <span className={`chip ${counted ? "chip--live" : "chip--advisory"}`}>{counted ? "counts toward verdict" : "advisory, not counted"}</span>
+                <span className={`chip ${counted ? "chip--live" : "chip--advisory"}`}>
+                  {counted ? "counts toward verdict" : c.gate?.uninformative ? "hint, not informative" : "advisory, not counted"}
+                </span>
               </div>
               {c.why && <p className="muted check__why">{c.why}</p>}
               {c.status === "finding" && c.findings?.length > 0 && (

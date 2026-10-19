@@ -89,9 +89,10 @@ export function toApiError(err) {
   return new ApiError("unknown", serverMessage || `Unexpected response from the server (HTTP ${status}).`, { status });
 }
 
-export async function analyzeImage(file, { onUploadProgress, signal } = {}) {
+export async function analyzeImage(file, { onUploadProgress, signal, type } = {}) {
   const formData = new FormData();
   formData.append("image", file);
+  if (type && type !== "auto") formData.append("type", type);
 
   try {
     const response = await client.post("/analyze", formData, {
@@ -112,6 +113,24 @@ export async function compareImages(original, suspect, { signal } = {}) {
   try {
     const response = await client.post("/compare", formData, {
       headers: { "Content-Type": "multipart/form-data" },
+      signal,
+    });
+    return response.data;
+  } catch (err) {
+    throw toApiError(err);
+  }
+}
+
+export async function reconcileImages(image, { type, sourceText, sourceImage, signal } = {}) {
+  const formData = new FormData();
+  formData.append("image", image);
+  if (type && type !== "auto") formData.append("type", type);
+  if (sourceText) formData.append("source_text", sourceText);
+  if (sourceImage) formData.append("source_image", sourceImage);
+  try {
+    const response = await client.post("/reconcile", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 120000,
       signal,
     });
     return response.data;

@@ -462,3 +462,17 @@ code { font-family: var(--mono); font-size: 0.85em; }
 .compare__error { color: #b91c1c; }
 .compare__table { border-collapse: collapse; width: 100%; font-size: 0.9em; }
 .compare__table th, .compare__table td { border-bottom: 1px solid var(--border, #cbd5e1); padding: 4px 8px; text-align: left; }
+
+/* assurance levels, type picker, reconcile */
+.typepicker { display: flex; flex-direction: column; gap: 4px; margin: 12px 0; }
+.typepicker select, .reconcile textarea { font: inherit; padding: 8px; border-radius: 8px; border: 1px solid var(--border, #cbd5e1); background: transparent; color: inherit; }
+.reconcile textarea { width: 100%; box-sizing: border-box; resize: vertical; }
+.reconcile__result { margin-top: 16px; display: grid; gap: 16px; }
+.ladder { list-style: none; padding: 0; margin: 8px 0 12px; display: grid; gap: 8px; }
+.ladder__step { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 8px; border: 1px dashed var(--border, #cbd5e1); opacity: 0.6; }
+.ladder__step.is-reached { opacity: 1; border-style: solid; }
+.ladder__step.is-current { border-width: 2px; border-color: var(--accent, #1e3a8a); opacity: 1; }
+.ladder__num { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--accent, #1e3a8a); color: #fff; font-weight: 600; flex: none; }
+.ladder__req { display: block; }
+.assurance--blocked .ladder__step.is-current { border-color: var(--tone-suspicious, #b45309); }
+.fact--differs td:last-child, .fact--near td:last-child { font-weight: 600; }

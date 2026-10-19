@@ -1,53 +1,29 @@
-# Screenshots needed to finish validating the detector
+# Screenshots: what is still useful (everything here is optional)
 
-All counts are measured against what the project has today: **23 genuine real screenshots** (payment receipts 8,
-bank statements 3, orders/invoices 3, web pages 3, social posts 2, SMS/e-mail/notifications 3, chats 1) and **9 edited
-screenshots** (with their originals). Nothing below needs a model change: each item switches a check on or lets it be
-measured. Everything must be a REAL screenshot taken on a real device or app, never a generated one, and the genuine
-ones must be untouched. Keep them private; they are only scored on your machine.
+The system no longer depends on a dataset to work. Its checks are rules, compare mode and reconcile mode need no training,
+and no verdict is learned. Real screenshots are useful for two things only: *measuring* how often the rule-based checks
+raise a false alarm, and trying reconcile mode on real pairs.
 
-## A. Genuine screenshots (switch the checks on)
+Current evidence: 23 genuine and 9 edited real screenshots (private, not in the repository), 3,932 tampered screenshots from
+STFD (academic use only, not redistributed) and 300 genuine Rico app screens (CC-BY-4.0). See `README.md`.
 
-A check may influence a verdict only after it has been measured on enough genuine real screenshots
-(`backend/tools/calibrate_gates.py`). Today only file metadata and general content logic are calibrated.
+## Worth collecting if you have the time
 
-| What | Why | Have | Need |
-|---|---|---|---|
-| Any mix of types, at least 8 of each type, labelled by type | Validate the type router (`tools/eval_router.py` needs 60 labelled, accuracy >= 0.85) | 23 | **37 more** (bank 5, web 5, orders 5, chats 7, social 6, SMS/e-mail/notification 5, plus a few of any type). Include screenshots from apps and layouts not yet seen. |
-| Bank statements or transaction lists with an amount and a running balance on each row (at least 5 rows) | Calibrate the running-balance check | 0 | **20** |
-| Screens with a column of at least 8 numbers, evenly spaced (statements, lists, order histories) | Calibrate the number-column check (also helps the router) | 2 | **18** |
-| Payment receipts with a UPI reference (GPay, PhonePe, Paytm, bank apps) | Calibrate the payment checks | 8 | **12** |
-| Orders, invoices, refunds with subtotal/tax/total | Calibrate the order arithmetic check | 2 | **18** |
-| Chat conversations with at least 5 visible message times | Calibrate the chat timestamp check | 0 | **20** |
-| SMS, e-mail or notification screens showing a one-time code | Calibrate the OTP check | 0 | **20** |
+| What | Why | How many |
+|---|---|---|
+| Genuine bank-app screenshots with a running balance (at least 5 rows each) | measure the running-balance rule's false alarms; lets it count toward the verdict | 22 |
+| Genuine UPI payment receipts (GPay, PhonePe, Paytm, bank apps) | same for the payment rules (have 8) | 14 more |
+| Genuine orders, invoices or refunds with subtotal and total | same for the order rules (have 3) | 19 more |
+| Pairs for reconcile mode: a payment screenshot and the matching bank SMS or statement line | try the second-source check on real pairs | 10 pairs |
+| A few real edits with their originals, made by someone other than you | extra compare-mode and reconcile tests | 10 pairs |
 
-Spread them over: PNG originals, WhatsApp/Telegram-shared JPEGs, and at least two phones or operating systems.
+22 genuine screenshots with no false alarm is the least that gives a 95% upper bound under 15% (20 gives 16%).
 
-## B. Real edits (measure whether the checks catch anything)
-
-The first real-edit result (9 edits) was too small and every edit was made by one person. To measure the checks and the
-rendering model fairly:
-
-- **100 edited screenshots, each paired with its untouched original.**
-- Made by **at least 3 different people**, with **at least 5 different tools** (Canva, Photoshop or Photopea, a phone
-  editor, browser Inspect Element, an AI image editor).
-- At least **12 per type**, covering: changed digit, changed whole amount, changed name or date or status, added or
-  removed row, pasted banner or logo, and a few edits made in Inspect Element.
-- Each edit saved three ways: as exported, as a WhatsApp-shared copy, and as a screenshot of the edited screen.
-- The people who capture and edit are different, and nobody runs the detector until every file exists (protocol in
-  `docs/REAL_EDIT_TEST_PLAN.md`).
-
-## C. For compare mode
-
-Nothing more is needed: it works whenever a genuine copy exists. Useful extra test material: five of your genuine
-screenshots each re-captured on a second device (to see how it behaves across devices).
-
-## How to apply them
+## How to use them
 
 ```bash
 cd backend
-python tools/eval_router.py --real-dir <folder> --real-labels tools/real_labels.json --write-gate
-python tools/calibrate_gates.py --real-dir <folder> --real-labels tools/real_labels.json --write
+python tools/calibrate_gates.py --real-dir <folder of genuine screenshots> --real-labels tools/real_labels.json --write
+python tools/eval_reconcile.py <folder>        # mutation test of reconcile mode
 ```
-
-Put the new screenshots in one folder and add each file name and its type (payment_receipt, bank_statement, order_invoice, chat, social_post, message_alert or web_page) to `tools/real_labels.json` first.
+Add each file name and its type to `tools/real_labels.json` first.

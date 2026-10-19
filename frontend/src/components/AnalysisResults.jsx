@@ -6,6 +6,7 @@ import FindingsList from "./FindingsList.jsx";
 import LimitationsPanel from "./LimitationsPanel.jsx";
 import StatsRow from "./StatsRow.jsx";
 import ChecksPanel from "./ChecksPanel.jsx";
+import AssurancePanel from "./AssurancePanel.jsx";
 import { normalizeResult } from "../lib/result.js";
 
 export function downloadJson(data, filename) {
@@ -58,6 +59,8 @@ export default function AnalysisResults({ result, imageUrl, onReset }) {
   return (
     <div className="results" onKeyDown={handleKeyDown}>
       <VerdictBanner view={view} onDownload={handleDownload} onReset={onReset} ref={headingRef} />
+
+      {!view.reconcile && <AssurancePanel assurance={view.assurance} />}
 
       <div className="results__grid">
         <div className="results__media">
