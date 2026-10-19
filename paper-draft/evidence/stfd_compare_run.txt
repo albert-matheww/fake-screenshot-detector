@@ -1,0 +1,131 @@
+clean: train 129912 words (8554 edited), test 28216 (1749 edited)
+shared: train 117115 words (7872 edited), test 25900 (1662 edited)
+
+== A clean only
+{
+ "thresholds_from_shared_val": {
+  "5%": 0.5693965598401821,
+  "1%": 0.6688832359887911
+ },
+ "clean_test": {
+  "word_auc": 0.8062518622767733,
+  "tpr_at_5%": 0.5791881074899943,
+  "fpr_at_5%": 0.13926776740847094,
+  "by_type": {
+   "1_Copy-move": 0.711,
+   "2_Splicing": 0.745,
+   "4_Insertion": 0.965,
+   "5_Replacement": 0.934
+  }
+ },
+ "shared_test": {
+  "word_auc": 0.6648277649569964,
+  "tpr_at_5%": 0.16726835138387486,
+  "fpr_at_5%": 0.06052479577522898,
+  "by_type": {
+   "1_Copy-move": 0.638,
+   "2_Splicing": 0.675,
+   "4_Insertion": 0.645,
+   "5_Replacement": 0.658
+  }
+ },
+ "owner": {
+  "n_authentic": 23,
+  "n_edited": 9,
+  "image_auc": 0.6231884057971014,
+  "flagged_at_5%": {
+   "authentic": 13,
+   "edited": 6
+  },
+  "flagged_at_1%": {
+   "authentic": 3,
+   "edited": 4
+  }
+ }
+}
+
+== B shared only
+{
+ "thresholds_from_shared_val": {
+  "5%": 0.6694719184127399,
+  "1%": 0.7537336200814421
+ },
+ "clean_test": {
+  "word_auc": 0.6940099176978709,
+  "tpr_at_5%": 0.2138364779874214,
+  "fpr_at_5%": 0.05988589564363169,
+  "by_type": {
+   "1_Copy-move": 0.664,
+   "2_Splicing": 0.722,
+   "4_Insertion": 0.688,
+   "5_Replacement": 0.709
+  }
+ },
+ "shared_test": {
+  "word_auc": 0.7332949826971581,
+  "tpr_at_5%": 0.22442839951865223,
+  "fpr_at_5%": 0.054377423879858076,
+  "by_type": {
+   "1_Copy-move": 0.671,
+   "2_Splicing": 0.749,
+   "4_Insertion": 0.762,
+   "5_Replacement": 0.744
+  }
+ },
+ "owner": {
+  "n_authentic": 23,
+  "n_edited": 9,
+  "image_auc": 0.45169082125603865,
+  "flagged_at_5%": {
+   "authentic": 15,
+   "edited": 5
+  },
+  "flagged_at_1%": {
+   "authentic": 2,
+   "edited": 0
+  }
+ }
+}
+
+== C clean + shared
+{
+ "thresholds_from_shared_val": {
+  "5%": 0.6730045420107789,
+  "1%": 0.7620122120517234
+ },
+ "clean_test": {
+  "word_auc": 0.7927253034367554,
+  "tpr_at_5%": 0.39908519153802174,
+  "fpr_at_5%": 0.059508066649034644,
+  "by_type": {
+   "1_Copy-move": 0.684,
+   "2_Splicing": 0.751,
+   "4_Insertion": 0.946,
+   "5_Replacement": 0.909
+  }
+ },
+ "shared_test": {
+  "word_auc": 0.732248798988848,
+  "tpr_at_5%": 0.2352587244283995,
+  "fpr_at_5%": 0.05685287564980609,
+  "by_type": {
+   "1_Copy-move": 0.666,
+   "2_Splicing": 0.752,
+   "4_Insertion": 0.761,
+   "5_Replacement": 0.723
+  }
+ },
+ "owner": {
+  "n_authentic": 23,
+  "n_edited": 9,
+  "image_auc": 0.49516908212560384,
+  "flagged_at_5%": {
+   "authentic": 15,
+   "edited": 4
+  },
+  "flagged_at_1%": {
+   "authentic": 2,
+   "edited": 3
+  }
+ }
+}
