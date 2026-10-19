@@ -212,3 +212,48 @@ def test_analyze_response_exposes_routing_checks_and_coverage(client):
     assert all("gate" in c for c in b["checks"])
     assert set(b["coverage"]) >= {"live_findings", "live_clear", "advisory_findings", "not_applicable"}
     assert b["verify_steps"] and b["limitations"]
+
+
+# ---------------------------------------------------------------- rows rebuilt from word positions
+
+def _row(items, y, line_prefix, h=24):
+    """items: (text, left) pairs on one visual row; every word gets its own Tesseract line key, as happens for far-apart columns."""
+    return [{"text": t, "left": x, "top": y, "width": 12 * len(t), "height": h, "conf": 95.0, "line": f"{line_prefix}-{i}"} for i, (t, x) in enumerate(items)]
+
+
+def test_rows_join_a_label_and_an_amount_that_tesseract_put_in_different_lines():
+    import semantic
+    words = _row([("Subtotal", 40), ("45.00", 800)], 100, "a") + _row([("Total", 40), ("40.00", 800)], 150, "b")
+    assert semantic.rows_from_words(words) == ["Subtotal 45.00", "Total 40.00"]
+    assert semantic.lines_from_words(words) != semantic.rows_from_words(words)       # the old grouping kept them apart
+
+
+def test_total_below_subtotal_is_found_when_label_and_amount_are_far_apart():
+    import semantic
+    words = _row([("Subtotal", 40), ("45.00", 800)], 100, "a") + _row([("Total", 40), ("40.00", 800)], 150, "b")
+    assert any(f["id"] == "arith.total_below_subtotal" for f in semantic.check_text(words))
+    ok = _row([("Subtotal", 40), ("45.00", 800)], 100, "a") + _row([("Total", 40), ("47.25", 800)], 150, "b")
+    assert not any(f["id"].startswith("arith.") for f in semantic.check_text(ok))
+
+
+def test_running_balance_break_is_found_with_columns_far_apart():
+    bal, amts = [1000.0, 950.0, 900.0, 880.0, 830.0, 780.0, 760.0], [50.0, 50.0, 20.0, 50.0, 50.0, 20.0]
+    def doc(balances):
+        words = []
+        for i in range(1, 7):
+            words += _row([(f"{i}Jan", 40), (f"{amts[i - 1]:.2f}", 600), (f"{balances[i]:,.2f}", 800)], 60 + 45 * i, f"r{i}")
+        return {"words": words, "capture": {}}
+    assert checks.typed_bank(doc(bal))["status"] == "clear"
+    bad = list(bal); bad[3] = 980.0
+    assert checks.typed_bank(doc(bad))["status"] == "finding"
+
+
+def test_running_balance_ignores_a_row_whose_amount_could_not_be_read():
+    bal, amts = [1000.0, 950.0, 900.0, 880.0, 830.0, 780.0, 760.0, 700.0], [50.0, 50.0, 20.0, 50.0, 50.0, 20.0, 60.0]
+    words = []
+    for i in range(1, 8):
+        cells = [(f"{i}Jan", 40), (f"{amts[i - 1]:.2f}", 600), (f"{bal[i]:,.2f}", 800)]
+        if i == 3:
+            cells[1] = ("20-00", 600)          # OCR lost the decimal point: this row now has one readable amount
+        words += _row(cells, 60 + 45 * i, f"r{i}")
+    assert checks.typed_bank({"words": words, "capture": {}})["status"] == "clear"

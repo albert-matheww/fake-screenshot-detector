@@ -1,7 +1,7 @@
 {
   "verdict": "inconclusive",
-  "verdict_label": "Not enough readable text to analyse",
-  "risk_score": 0.0,
+  "verdict_label": "Inconclusive - verify with the issuer",
+  "risk_score": 0.42,
   "reasons": [
     "Only 3 words could be read from this image, which is too few to compare against each other.",
     "Photos and images with very little text cannot be assessed by this tool."
@@ -36,5 +36,41 @@
   },
   "fake_score": 0.0,
   "is_fake": false,
-  "verdict_text": "Not enough readable text to analyse"
+  "verdict_text": "Inconclusive - verify with the issuer",
+  "assurance": {
+    "level": 0,
+    "label": "Unverified",
+    "status": "unverified",
+    "reasons": [
+      "Too little could be examined to say anything about the content."
+    ],
+    "next_step": "Add a second source you did not get from the sender (reconcile mode). A screenshot that agrees with itself can still be forged.",
+    "ladder": [
+      {
+        "level": 0,
+        "label": "Unverified",
+        "requirement": "The screenshot alone.",
+        "reached": true
+      },
+      {
+        "level": 1,
+        "label": "No contradiction found (still unverified)",
+        "requirement": "What it says is consistent with itself.",
+        "reached": false
+      },
+      {
+        "level": 2,
+        "label": "Consistent with an independent source",
+        "requirement": "A second source you did not get from the sender (the receiver's bank SMS, a statement line, the issuer's e-mail) agrees on the reference, or on the amount and the date.",
+        "reached": false
+      },
+      {
+        "level": 3,
+        "label": "Confirmed by signed data",
+        "requirement": "A digital signature or signed QR code that can be checked. Not available yet.",
+        "reached": false
+      }
+    ],
+    "never_genuine": "No level proves the screenshot is untouched. Level 2 only means an independent source agrees with it."
+  }
 }

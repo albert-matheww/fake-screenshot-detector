@@ -90,6 +90,28 @@ def lines_from_words(words: Sequence[Dict[str, Any]]) -> List[str]:
     return [" ".join(x["text"] for x in sorted(by[k], key=lambda z: z["left"])) for k in order]
 
 
+def rows_from_words(words: Sequence[Dict[str, Any]]) -> List[str]:
+    """Rebuild the text rows of a screenshot from the word positions.
+
+    Tesseract's own line identifiers put a label on the left and its amount on the far right of the same row into different
+    lines (the usual layout of an invoice or a statement), so the arithmetic and running-balance rules would never see them
+    together. A row here is every word whose vertical centre lies within half a text height of the row's, left to right."""
+    ws = [w for w in words if w["text"].strip()]
+    if not ws:
+        return []
+    med = sorted(w["height"] for w in ws)[len(ws) // 2]
+    rows: List[Dict[str, Any]] = []
+    for w in sorted(ws, key=lambda z: z["top"] + z["height"] / 2.0):
+        cy = w["top"] + w["height"] / 2.0
+        if rows and abs(cy - rows[-1]["cy"]) <= 0.5 * max(8.0, min(med, float(w["height"]))):
+            r = rows[-1]
+            r["words"].append(w)
+            r["cy"] = sum(x["top"] + x["height"] / 2.0 for x in r["words"]) / len(r["words"])
+        else:
+            rows.append({"cy": cy, "words": [w]})
+    return [" ".join(x["text"] for x in sorted(r["words"], key=lambda z: z["left"])) for r in rows]
+
+
 def _luhn(num: str) -> bool:
     ds = [int(c) for c in num if c.isdigit()]
     if len(ds) < 12:
@@ -129,7 +151,7 @@ def check_text(words: Sequence[Dict[str, Any]], today: Optional[_dt.date] = None
     out: List[Dict[str, Any]] = []
     if not words:
         return out
-    lines = lines_from_words(words)
+    lines = rows_from_words(words)
     text = "\n".join(lines)
     low = text.lower()
 

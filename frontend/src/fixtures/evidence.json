@@ -1,7 +1,7 @@
 {
   "verdict": "evidence_of_editing",
-  "verdict_label": "Evidence of editing found",
-  "risk_score": 0.94,
+  "verdict_label": "Inconsistency found",
+  "risk_score": 0.88,
   "reasons": [
     "The word \"$399.901\" looks edited: stroke thickness differs from neighbouring words on the same line (z=7.1).",
     "The word \"2023\" sits about 3 px off the baseline of the rest of the date (z=5.2) and its edges are sharper than the text around it.",
@@ -119,5 +119,41 @@
   },
   "fake_score": 0.94,
   "is_fake": true,
-  "verdict_text": "Evidence of editing found"
+  "verdict_text": "Inconsistency found",
+  "assurance": {
+    "level": 0,
+    "label": "Unverified",
+    "status": "contradiction",
+    "reasons": [
+      "A calibrated check found a contradiction in this screenshot."
+    ],
+    "next_step": "Add a second source you did not get from the sender (reconcile mode). A screenshot that agrees with itself can still be forged.",
+    "ladder": [
+      {
+        "level": 0,
+        "label": "Unverified",
+        "requirement": "The screenshot alone.",
+        "reached": true
+      },
+      {
+        "level": 1,
+        "label": "No contradiction found (still unverified)",
+        "requirement": "What it says is consistent with itself.",
+        "reached": false
+      },
+      {
+        "level": 2,
+        "label": "Consistent with an independent source",
+        "requirement": "A second source you did not get from the sender (the receiver's bank SMS, a statement line, the issuer's e-mail) agrees on the reference, or on the amount and the date.",
+        "reached": false
+      },
+      {
+        "level": 3,
+        "label": "Confirmed by signed data",
+        "requirement": "A digital signature or signed QR code that can be checked. Not available yet.",
+        "reached": false
+      }
+    ],
+    "never_genuine": "No level proves the screenshot is untouched. Level 2 only means an independent source agrees with it."
+  }
 }

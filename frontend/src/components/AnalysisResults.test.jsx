@@ -8,10 +8,10 @@ const renderFx = (key, props = {}) =>
 
 describe("AnalysisResults", () => {
   it.each([
-    ["evidence", "Evidence of editing found", 4, 3],
-    ["suspicious", "Suspicious - review recommended", 2, 1],
-    ["no_evidence", "No evidence of editing found", 0, 0],
-    ["inconclusive", "Not enough readable text to analyse", 0, 0],
+    ["evidence", "Inconsistency found", 4, 3],
+    ["suspicious", "Possible inconsistency - review recommended", 2, 1],
+    ["no_evidence", "No inconsistency found by the checks that could run", 0, 0],
+    ["inconclusive", "Inconclusive - verify with the issuer", 0, 0],
   ])("renders the %s state", (key, label, overlayCount, findingCount) => {
     const { container } = renderFx(key);
     expect(screen.getByRole("heading", { level: 2, name: label })).toBeInTheDocument();
@@ -34,7 +34,7 @@ describe("AnalysisResults", () => {
 
   it.each(Object.keys(DEMO_FIXTURES))("never uses 'authentic' / 'genuine' / 'verified' wording (%s)", (key) => {
     const { container } = renderFx(key);
-    expect(container.textContent).not.toMatch(/authentic|genuine|verified|\breal\b|is safe/i);
+    expect(container.textContent).not.toMatch(/authentic|genuine|\bverified\b|\breal\b|is safe/i);
   });
 
   it("says no contradictions when there are no findings, instead of hiding the section", () => {
@@ -85,7 +85,7 @@ describe("AnalysisResults", () => {
   it("exposes the gauge with both tier boundaries", () => {
     renderFx("suspicious");
     const meter = screen.getByRole("meter");
-    expect(meter).toHaveAttribute("aria-valuenow", "52");
+    expect(meter).toHaveAttribute("aria-valuenow", "58");
     expect(meter.getAttribute("aria-valuetext")).toMatch(/40%/);
     expect(meter.getAttribute("aria-valuetext")).toMatch(/70%/);
   });

@@ -6,5 +6,4 @@ pytest-cache-files-*/
 .scratch_forge/
 tests/
 tools/
-legacy/
 *.pyc

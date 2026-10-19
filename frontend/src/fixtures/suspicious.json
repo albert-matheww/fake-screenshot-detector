@@ -1,7 +1,7 @@
 {
   "verdict": "suspicious",
-  "verdict_label": "Suspicious - review recommended",
-  "risk_score": 0.52,
+  "verdict_label": "Possible inconsistency - review recommended",
+  "risk_score": 0.58,
   "reasons": [
     "The word \"$50.90\" may be edited: stroke thickness is slightly heavier than neighbouring words on the same line (z=3.4).",
     "The image metadata names an editing program (Adobe Photoshop 24.1)."
@@ -70,5 +70,41 @@
   },
   "fake_score": 0.52,
   "is_fake": false,
-  "verdict_text": "Suspicious - review recommended"
+  "verdict_text": "Possible inconsistency - review recommended",
+  "assurance": {
+    "level": 0,
+    "label": "Unverified",
+    "status": "contradiction",
+    "reasons": [
+      "A calibrated check found something unusual in this screenshot."
+    ],
+    "next_step": "Add a second source you did not get from the sender (reconcile mode). A screenshot that agrees with itself can still be forged.",
+    "ladder": [
+      {
+        "level": 0,
+        "label": "Unverified",
+        "requirement": "The screenshot alone.",
+        "reached": true
+      },
+      {
+        "level": 1,
+        "label": "No contradiction found (still unverified)",
+        "requirement": "What it says is consistent with itself.",
+        "reached": false
+      },
+      {
+        "level": 2,
+        "label": "Consistent with an independent source",
+        "requirement": "A second source you did not get from the sender (the receiver's bank SMS, a statement line, the issuer's e-mail) agrees on the reference, or on the amount and the date.",
+        "reached": false
+      },
+      {
+        "level": 3,
+        "label": "Confirmed by signed data",
+        "requirement": "A digital signature or signed QR code that can be checked. Not available yet.",
+        "reached": false
+      }
+    ],
+    "never_genuine": "No level proves the screenshot is untouched. Level 2 only means an independent source agrees with it."
+  }
 }

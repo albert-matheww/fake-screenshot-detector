@@ -7,7 +7,7 @@ const ladder = (reached) => [
   { level: 0, label: "Unverified", requirement: "The screenshot alone.", reached: true },
   { level: 1, label: "No contradiction found (still unverified)", requirement: "Consistent with itself.", reached: reached >= 1 },
   { level: 2, label: "Consistent with an independent source", requirement: "A second source agrees.", reached: reached >= 2 },
-  { level: 3, label: "Verified against signed data", requirement: "Not available yet.", reached: false },
+  { level: 3, label: "Confirmed by signed data", requirement: "Not available yet.", reached: false },
 ];
 const raw = (level, status, reasons = []) => ({ level, label: ladder(level)[level].label, status, reasons, next_step: "Add a second source.", ladder: ladder(level), never_genuine: "No level means the screenshot is genuine." });
 

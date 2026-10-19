@@ -120,7 +120,7 @@ def _line_amounts(line: str) -> List[float]:
 
 def typed_payment(ctx) -> Dict[str, Any]:
     words = _confident(ctx["words"])
-    text = "\n".join(semantic.lines_from_words(words))
+    text = "\n".join(semantic.rows_from_words(words))
     low = text.lower()
     f: List[Dict[str, Any]] = []
     m = re.search(r"upi (?:transaction|ref(?:erence)?)\.? ?(?:id|no|number)?\W{0,6}(\d[\d ]{8,20}\d)", low)
@@ -143,21 +143,29 @@ def typed_payment(ctx) -> Dict[str, Any]:
 
 def typed_bank(ctx) -> Dict[str, Any]:
     """Running balance: each row's balance should equal the previous balance plus/minus its amount."""
-    lines = semantic.lines_from_words(_confident(ctx["words"]))
+    lines = semantic.rows_from_words(_confident(ctx["words"]))
     rows = []
     for ln in lines:
         a = _line_amounts(ln)
         if len(a) >= 2:
             rows.append((a[-2], a[-1], ln))
-    if len(rows) < 5:
+        elif len(a) == 1:
+            rows.append(None)       # an amount or a balance that could not be read: a gap, not a link (OCR often drops a decimal point)
+    real = [r for r in rows if r is not None]
+    if len(real) < 5:
         return result("typed.bank_statement", "Bank statement checks", "not_applicable",
                       why="Fewer than five rows with an amount and a running balance were read.")
     consistent = []
     for i in range(1, len(rows)):
+        if rows[i] is None or rows[i - 1] is None:
+            continue
         amt, bal, _ = rows[i]
         pbal = rows[i - 1][1]
         consistent.append(abs(abs(bal - pbal) - amt) <= 0.011)
     n = len(consistent)
+    if n < 4:
+        return result("typed.bank_statement", "Bank statement checks", "not_applicable",
+                      why="Too few consecutive rows could be read to test the running balance.")
     fails = [i for i, c in enumerate(consistent) if not c]
     share = 1 - len(fails) / n
     if share < 0.5:
@@ -168,7 +176,7 @@ def typed_bank(ctx) -> Dict[str, Any]:
     contiguous = fails and fails[-1] - fails[0] == len(fails) - 1
     if fails and contiguous and len(fails) <= 2 and n - len(fails) >= 3:
         f.append({"id": "bank.running_balance", "severity": "medium",
-                  "message": f"The running balance breaks at row {fails[0] + 2} (previous balance +/- amount does not give the balance shown) "
+                  "message": "The running balance breaks at one place (the previous balance plus or minus the amount does not give the balance shown) "
                              "while the other rows follow it.",
                   "evidence": {"rows": [i + 2 for i in fails], "consistent_share": round(share, 2)}})
     return result("typed.bank_statement", "Bank statement checks", "finding" if f else "clear", f)
@@ -177,7 +185,7 @@ def typed_bank(ctx) -> Dict[str, Any]:
 def typed_order(ctx) -> Dict[str, Any]:
     words = _confident(ctx["words"])
     f = [x for x in semantic.check_text(words) if x["id"].startswith("arith.")]
-    text = "\n".join(semantic.lines_from_words(words)).lower()
+    text = "\n".join(semantic.rows_from_words(words)).lower()
     if not re.search(r"\b(sub ?total|grand total|order total|total)\b", text):
         return result("typed.order_invoice", "Order or invoice arithmetic", "not_applicable", why="No subtotal or total line was read.")
     return result("typed.order_invoice", "Order or invoice arithmetic", "finding" if f else "clear", f)
@@ -200,7 +208,7 @@ def typed_chat(ctx) -> Dict[str, Any]:
 
 def typed_message(ctx) -> Dict[str, Any]:
     words = _confident(ctx["words"])
-    text = "\n".join(semantic.lines_from_words(words))
+    text = "\n".join(semantic.rows_from_words(words))
     m = re.search(r"\b(otp|code|pin)\b\D{0,25}(\d{4,8})\b", text, re.I)
     if not m:
         return result("typed.message_alert", "Message and OTP format", "not_applicable", why="No one-time code was read.")

@@ -37,7 +37,7 @@ says an image is genuine.**
    agree on a different value; a reference that differs by one digit is flagged for a look by eye and never counts as
    agreement.
 9. **Assurance levels instead of "genuine".** Level 0 unverified (or a contradiction / conflict was found), level 1 no
-   contradiction found (still unverified), level 2 consistent with an independent source, level 3 verified against signed
+   contradiction found (still unverified), level 2 consistent with an independent source, level 3 confirmed by signed
    data (not available yet). Nothing is ever called genuine.
 10. **Version-1 cues as hints.** Error-level analysis, JPEG ghost, noise, copy-move and quantisation tables are shown as hints
     and can never count toward a verdict. Measured on the 23 genuine screenshots, ELA flagged 15 of 15 (applicable ones)
@@ -89,6 +89,8 @@ Tests: `cd backend && pytest tests` (86) and `cd frontend && npm test` (72).
 | `POST /analyze` (multipart `image`, optional `type` = payment_receipt, bank_statement, order_invoice, chat, message_alert, social_post, web_page; png/jpg/jpeg/webp, at most 10 MB) | Full pipeline; also returns `assurance` and `fields`. Returns `verdict`, `verdict_label`, `risk_score`, `reasons`, `regions`, `findings`, `routing`, `capture`, `checks` (each with `status`, `gate`, `why`), `coverage`, `verify_steps`, `limitations`, `image`, `stats`, `meta`. |
 | `POST /compare` (multipart `original`, `suspect`) | `status` (`differences_found`, `no_difference`, `layout_mismatch`), `regions`, `text_changes`, `caution`. |
 | `GET /status` | Service health, rendering-model info, router validation state, gate states. |
+
+The prototype has no authentication, rate limiting or transport security: put a reverse proxy in front of it before exposing it.
 
 Uploads are kept in memory (a request class prevents the web framework from spooling large files to disk) and are
 not stored; only sizes, verdicts and counts are logged. The legacy aliases `fake_score`, `is_fake` and `verdict_text` are

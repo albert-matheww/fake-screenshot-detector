@@ -1,0 +1,36 @@
+1440 documents scored in 84s (per mutation 30, clean per document type 40)
+
+RECALL: the rule written for the mutation fires (expected finding id present)
+mutation                   expected id                               PNG         shared  verdict moves (PNG)
+weekday                    date.weekday_mismatch          30/30 (89%-100%) 30/30 (89%-100%)       30/30
+future_date                date.future                    30/30 (89%-100%) 30/30 (89%-100%)       30/30
+total_below_subtotal       arith.total_below_subtotal     30/30 (89%-100%) 29/30 (83%-99%)       30/30
+items_vs_subtotal          arith.items_vs_subtotal        29/30 (83%-99%) 29/30 (83%-99%)       29/30
+iban_digit                 id.iban_checksum               27/30 (74%-97%) 28/30 (79%-98%)       27/30
+card_digit                 id.card_luhn                   30/30 (89%-100%) 30/30 (89%-100%)       30/30
+placeholder_name           text.placeholder_name          30/30 (89%-100%) 30/30 (89%-100%)       30/30
+generator_watermark        text.generator_marker          30/30 (89%-100%) 30/30 (89%-100%)       30/30
+impossible_time            time.invalid                   30/30 (89%-100%) 30/30 (89%-100%)        5/30
+running_balance_balance    bank.running_balance           30/30 (89%-100%) 28/30 (79%-98%)        0/30
+running_balance_amount     bank.running_balance           30/30 (89%-100%) 28/30 (79%-98%)        0/30
+upi_ref_length             pay.upi_ref_length             30/30 (89%-100%) 30/30 (89%-100%)        0/30
+status_contradiction       pay.status_contradiction       30/30 (89%-100%) 29/30 (83%-99%)        0/30
+chat_time_order            chat.time_order                29/30 (83%-99%) 28/30 (79%-98%)        0/30
+otp_length                 msg.otp_length                 30/30 (89%-100%) 30/30 (89%-100%)        0/30
+off_grid_number            layout.column_off_grid         29/30 (83%-99%) 29/30 (83%-99%)        0/30
+
+SILENCE on clean documents: any finding by a content, type-specific or layout check
+document          any finding PNG     any finding shared    medium/high PNG   medium/high shared
+invoice             1/40 (0%-13%)          1/40 (0%-13%)      1/40 (0%-13%)        1/40 (0%-13%)
+statement           2/40 (1%-17%)           0/40 (0%-9%)      2/40 (1%-17%)         0/40 (0%-9%)
+payment              0/40 (0%-9%)           0/40 (0%-9%)       0/40 (0%-9%)         0/40 (0%-9%)
+chat                 0/40 (0%-9%)          3/40 (3%-20%)       0/40 (0%-9%)         0/40 (0%-9%)
+otp                  0/40 (0%-9%)           0/40 (0%-9%)       0/40 (0%-9%)         0/40 (0%-9%)
+layout              2/40 (1%-17%)          1/40 (0%-13%)      2/40 (1%-17%)         0/40 (0%-9%)
+all clean documents, PNG: medium/high finding on 5 of 240 (0.9% to 4.8%)
+all clean documents, shared: medium/high finding on 1 of 240 (0.1% to 2.3%)
+
+Which clean documents raised a finding (id: count)
+{'arith.items_vs_subtotal': 2, 'bank.running_balance': 2, 'layout.column_off_grid': 2, 'chat.time_order': 2, 'time.invalid': 2}
+
+assurance level of clean documents: {1: 472, 0: 8} | of mutated documents: {0: 886, 1: 74}

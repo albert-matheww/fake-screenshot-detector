@@ -17,7 +17,7 @@ describe("App demo mode", () => {
   it("renders the fixture immediately without calling the backend", () => {
     window.history.replaceState({}, "", "/?demo=evidence");
     render(<App />);
-    expect(screen.getByRole("heading", { level: 2, name: /evidence of editing found/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: /inconsistency found/i })).toBeInTheDocument();
     expect(screen.getAllByTestId("region-box")).toHaveLength(4);
     expect(getStatus).not.toHaveBeenCalled();
     expect(analyzeImage).not.toHaveBeenCalled();
@@ -27,7 +27,7 @@ describe("App demo mode", () => {
   it("renders the no-evidence state with calm wording", () => {
     window.history.replaceState({}, "", "/?demo=no_evidence");
     const { container } = render(<App />);
-    expect(screen.getByRole("heading", { level: 2, name: /no evidence of editing found/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: /no inconsistency found/i })).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/authentic|genuine/i);
     expect(screen.getByTestId("limitations")).toBeInTheDocument();
   });

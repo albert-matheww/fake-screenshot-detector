@@ -106,7 +106,7 @@ def extract_text(text: str) -> Dict[str, List[Any]]:
 
 
 def extract_words(words: Sequence[Dict[str, Any]]) -> Dict[str, List[Any]]:
-    return extract_text("\n".join(semantic.lines_from_words(words)))
+    return extract_text("\n".join(semantic.rows_from_words(words)))
 
 
 def extract_consensus(rgb_img, words: Sequence[Dict[str, Any]]) -> Dict[str, Dict[str, List[Any]]]:

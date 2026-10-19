@@ -3,7 +3,7 @@
   Level 0  Unverified            the screenshot alone, or a contradiction / conflict was found
   Level 1  No contradiction      what the screenshot says is consistent with itself (still unverified)
   Level 2  Consistent with an independent source   a second source (bank SMS, statement, the receiver's app) agrees
-  Level 3  Verified against signed data            not available yet (needs a signature or QR that can be checked)
+  Level 3  Confirmed by signed data            not available yet (needs a signature or QR that can be checked)
 
 The tool never says 'genuine'. A forger can make one screenshot agree with itself, which is why level 1 is not proof.
 """
@@ -16,7 +16,7 @@ LADDER = [
     {"level": 1, "label": "No contradiction found (still unverified)", "requirement": "What it says is consistent with itself."},
     {"level": 2, "label": "Consistent with an independent source",
      "requirement": "A second source you did not get from the sender (the receiver's bank SMS, a statement line, the issuer's e-mail) agrees on the reference, or on the amount and the date."},
-    {"level": 3, "label": "Verified against signed data", "requirement": "A digital signature or signed QR code that can be checked. Not available yet."},
+    {"level": 3, "label": "Confirmed by signed data", "requirement": "A digital signature or signed QR code that can be checked. Not available yet."},
 ]
 
 NEXT_STEP = {
@@ -67,4 +67,4 @@ def assess(verdict: str, checks: List[Dict[str, Any]], words_read: int, reconcil
     blocked = status in ("contradiction", "possible_issue", "conflict", "review")
     return {"level": level, "label": top["label"], "status": status, "reasons": reasons, "next_step": NEXT_STEP.get(level),
             "ladder": [{**r, "reached": r["level"] == 0 or (not blocked and r["level"] <= level)} for r in LADDER],
-            "never_genuine": "No level proves a screenshot is real. Level 2 only means an independent source agrees with it."}
+            "never_genuine": "No level proves the screenshot is untouched. Level 2 only means an independent source agrees with it."}

@@ -1,7 +1,7 @@
 {
   "verdict": "no_evidence",
-  "verdict_label": "No evidence of editing found",
-  "risk_score": 0.09,
+  "verdict_label": "No inconsistency found by the checks that could run",
+  "risk_score": 0.15,
   "reasons": [
     "No word was measured as inconsistent with its neighbours on the same line.",
     "The amounts, dates and reference numbers read from the image agree with each other."
@@ -36,5 +36,41 @@
   },
   "fake_score": 0.09,
   "is_fake": false,
-  "verdict_text": "No evidence of editing found"
+  "verdict_text": "No inconsistency found by the checks that could run",
+  "assurance": {
+    "level": 1,
+    "label": "No contradiction found (still unverified)",
+    "status": "consistent",
+    "reasons": [
+      "2 content check(s) examined the text and found no contradiction."
+    ],
+    "next_step": "Add a second source you did not get from the sender (reconcile mode). A screenshot that agrees with itself can still be forged.",
+    "ladder": [
+      {
+        "level": 0,
+        "label": "Unverified",
+        "requirement": "The screenshot alone.",
+        "reached": true
+      },
+      {
+        "level": 1,
+        "label": "No contradiction found (still unverified)",
+        "requirement": "What it says is consistent with itself.",
+        "reached": true
+      },
+      {
+        "level": 2,
+        "label": "Consistent with an independent source",
+        "requirement": "A second source you did not get from the sender (the receiver's bank SMS, a statement line, the issuer's e-mail) agrees on the reference, or on the amount and the date.",
+        "reached": false
+      },
+      {
+        "level": 3,
+        "label": "Confirmed by signed data",
+        "requirement": "A digital signature or signed QR code that can be checked. Not available yet.",
+        "reached": false
+      }
+    ],
+    "never_genuine": "No level proves the screenshot is untouched. Level 2 only means an independent source agrees with it."
+  }
 }
