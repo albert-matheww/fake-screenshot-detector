@@ -1,0 +1,8 @@
+300 genuine Rico screens, 276 scorable, 42s
+model A threshold 5% (0.569): flags 215 of 276 genuine screens
+model A threshold 1% (0.669): flags 139 of 276 genuine screens
+model C threshold 5% (0.673): flags 221 of 276 genuine screens
+model C threshold 1% (0.762): flags 111 of 276 genuine screens
+shipped model THR_LO (0.847): flags 74 of 276
+shipped model THR_HI (0.966): flags 40 of 276
+live-check findings: 2 of 300 | verdicts {'inconclusive': 300} | layout_grid applicable on 2

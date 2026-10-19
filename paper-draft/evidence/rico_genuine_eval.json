@@ -1,0 +1,2934 @@
+[
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.7372960534118346,
+  "C": 0.7884309599701942,
+  "S": 0.08841850834705607,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 29,
+  "A": 0.6077120835775455,
+  "C": 0.7319135198726466,
+  "S": 0.8432962209869828,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 32,
+  "A": 0.7718883297548228,
+  "C": 0.7708955302922385,
+  "S": 0.34939290188580663,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 63,
+  "A": 0.5660525037547607,
+  "C": 0.6507359527311726,
+  "S": 0.018468162584191306,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 25,
+  "A": 0.6934416955708422,
+  "C": 0.6914742474684417,
+  "S": 0.9610602676323616,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 25,
+  "A": 0.5753011717961614,
+  "C": 0.696140999718973,
+  "S": 0.8683140949952831,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.8052969282393311,
+  "C": 0.8567609552417618,
+  "S": 0.8934831583172113,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 25,
+  "A": 0.5731484909580132,
+  "C": 0.8273809047506041,
+  "S": 0.6742043889305463,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.6619035947077799,
+  "C": 0.6870430829576838,
+  "S": 0.07484386222315693,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 45,
+  "A": 0.7411279581639657,
+  "C": 0.8107681399136323,
+  "S": 0.6075031384840598,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 4,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 18,
+  "A": 0.8052706994602434,
+  "C": 0.7726064296967857,
+  "S": 0.6239043722432756,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 44,
+  "A": 0.6275244305159918,
+  "C": 0.6713716389637189,
+  "S": 0.22105695300129527,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 37,
+  "A": 0.5448037706370805,
+  "C": 0.6608316136653757,
+  "S": 0.8844836525939491,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 39,
+  "A": 0.7227464144255239,
+  "C": 0.7093684337267506,
+  "S": 0.5291639951494145,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.7776539127348627,
+  "C": 0.7767817453611585,
+  "S": 0.9873517416898592,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 25,
+  "A": 0.6391205015939309,
+  "C": 0.7285950914722271,
+  "S": 0.010146823477105051,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 22,
+  "A": 0.7937877498642804,
+  "C": 0.7916553004156993,
+  "S": 0.9864747277870166,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 39,
+  "A": 0.7131194890885176,
+  "C": 0.7709355508158791,
+  "S": 0.997078635650921,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 56,
+  "A": 0.5544639873463112,
+  "C": 0.698236046624242,
+  "S": 0.4028237970492499,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.7194372058153601,
+  "C": 0.8071444626425551,
+  "S": 0.751938251131992,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 17,
+  "A": 0.7570347144894841,
+  "C": 0.7838460607736082,
+  "S": 0.7762549802491945,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.8990980563969643,
+  "C": 0.7334278560053045,
+  "S": 0.6343442807133535,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 5,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 39,
+  "A": 0.6280507635150827,
+  "C": 0.6946496212629728,
+  "S": 0.9908759163318996,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 93,
+  "A": 0.49852999106963164,
+  "C": 0.6806737407916342,
+  "S": 0.9034877472650028,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 19,
+  "A": 0.7477989284707562,
+  "C": 0.8100193202441626,
+  "S": 0.8363850327774686,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.7725753904146373,
+  "C": 0.8746846817396924,
+  "S": 0.03383921604356448,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 34,
+  "A": 0.6249212058581496,
+  "C": 0.7594590830187645,
+  "S": 0.7833976137991285,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 22,
+  "A": 0.520038059286161,
+  "C": 0.7192932320502484,
+  "S": 0.1529282375046409,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 42,
+  "A": 0.6035988257412203,
+  "C": 0.7031753596452824,
+  "S": 0.42564468505998765,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 40,
+  "A": 0.5568603436545293,
+  "C": 0.608983445047617,
+  "S": 0.9991720505469736,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 32,
+  "A": 0.5638349722119036,
+  "C": 0.8469488432845395,
+  "S": 0.1712703933384773,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 71,
+  "A": 0.6267867518407428,
+  "C": 0.6905679423640724,
+  "S": 0.5527813494060243,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 62,
+  "A": 0.5569039921663254,
+  "C": 0.4892314557808187,
+  "S": 0.9795578901371372,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 9,
+  "A": 0.588279748315175,
+  "C": 0.708203326871318,
+  "S": 0.08193820029626489,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 9,
+  "A": 0.7217087135429991,
+  "C": 0.6523114037339784,
+  "S": 0.337699393194036,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 42,
+  "A": 0.7656195325176383,
+  "C": 0.7491892283222503,
+  "S": 0.624037150081414,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 26,
+  "A": 0.6691009968067774,
+  "C": 0.7091587736574726,
+  "S": 0.9829695056737919,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 28,
+  "A": 0.658173356895262,
+  "C": 0.8450152950763996,
+  "S": 0.027333311845560322,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 15,
+  "A": 0.7026228871435121,
+  "C": 0.7619309716747138,
+  "S": 0.659068942526021,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.8078747187437577,
+  "C": 0.8013611167289167,
+  "S": 0.38421018921130606,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 13,
+  "A": 0.659907630475864,
+  "C": 0.8007693473042702,
+  "S": 0.48517298294836575,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 14,
+  "A": 0.7510209341591721,
+  "C": 0.7549719664015547,
+  "S": 0.8519447494385045,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 34,
+  "A": 0.7117358729882854,
+  "C": 0.681586408147586,
+  "S": 0.8726713751930761,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 13,
+  "A": 0.6692284346054309,
+  "C": 0.7025509730805131,
+  "S": 0.704555312810235,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 10,
+  "A": 0.8196960112185789,
+  "C": 0.8648714287827063,
+  "S": 0.270243409449213,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 60,
+  "A": 0.597802866234006,
+  "C": 0.615097604794875,
+  "S": 0.8760167699623775,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 59,
+  "A": 0.5488038851067649,
+  "C": 0.6784052510713932,
+  "S": 0.3572246689438525,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.7225874986074879,
+  "C": 0.7791415921630238,
+  "S": 0.25580398159323253,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 19,
+  "A": 0.7361753957524246,
+  "C": 0.7293580737275542,
+  "S": 0.8568701153546748,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 4,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.699607819294918,
+  "C": 0.6852126192237962,
+  "S": 0.9842536256397164,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 75,
+  "A": 0.4480173469229098,
+  "C": 0.5619002880545293,
+  "S": 0.543223151195513,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.6712954079463771,
+  "C": 0.7410747187219295,
+  "S": 0.9114610192937624,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 38,
+  "A": 0.5656685455990889,
+  "C": 0.751385908801707,
+  "S": 0.480304504159118,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 19,
+  "A": 0.6641979615176619,
+  "C": 0.6735992036625728,
+  "S": 0.500231152965978,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 17,
+  "A": 0.7779469642074638,
+  "C": 0.8250309149871028,
+  "S": 0.9970913230018751,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.5885840112417746,
+  "C": 0.653311041449773,
+  "S": 0.010081900694289488,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 20,
+  "A": 0.7590485036051223,
+  "C": 0.8059865738340276,
+  "S": 0.9997488064495407,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 20,
+  "A": 0.7854796880063902,
+  "C": 0.8134785420448691,
+  "S": 0.7175217484864148,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 27,
+  "A": 0.6434215321591916,
+  "C": 0.7703601258634595,
+  "S": 0.5451078451589679,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 32,
+  "A": 0.6672069192952808,
+  "C": 0.824411852935781,
+  "S": 0.16804034446374302,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 25,
+  "A": 0.6066258743063553,
+  "C": 0.6461785196658648,
+  "S": 0.738592269769996,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.6840620307003314,
+  "C": 0.7194413552763631,
+  "S": 0.9910031811331992,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 5,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 46,
+  "A": 0.6626237676453435,
+  "C": 0.7153614032172904,
+  "S": 0.5356360135845775,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 65,
+  "A": 0.53282681393254,
+  "C": 0.6353301373685817,
+  "S": 0.21270495139164194,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.7460185612181655,
+  "C": 0.8300432246387526,
+  "S": 0.09572586281620876,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 15,
+  "A": 0.7697105961700487,
+  "C": 0.7859595582401637,
+  "S": 0.9807073291562175,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 43,
+  "A": 0.48022597291775593,
+  "C": 0.6518061268774357,
+  "S": 0.5289705684620774,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.5914290166484019,
+  "C": 0.7694065100789931,
+  "S": 0.2614225557053367,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 44,
+  "A": 0.5627554586689895,
+  "C": 0.7101759007320715,
+  "S": 0.11044303199038627,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 15,
+  "A": 0.7742387903359051,
+  "C": 0.8314054036464243,
+  "S": 0.7727594299480393,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 49,
+  "A": 0.5205682407982914,
+  "C": 0.6297143014436101,
+  "S": 0.019560222663592617,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 18,
+  "A": 0.765114133714395,
+  "C": 0.8313795089469026,
+  "S": 0.8423437866530145,
+  "live_findings": [
+   "content_logic"
+  ],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 8,
+  "A": 0.6688287999574949,
+  "C": 0.7252351326118455,
+  "S": 0.9711781619411102,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 7,
+  "A": 0.6692221914012277,
+  "C": 0.7784629279430063,
+  "S": 0.8450272867985291,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 19,
+  "A": 0.737143182371856,
+  "C": 0.8766466459051696,
+  "S": 0.9427607230927292,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 26,
+  "A": 0.620647123236154,
+  "C": 0.8164746076526919,
+  "S": 0.4811089460720204,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 15,
+  "A": 0.8392080993051477,
+  "C": 0.712881481008722,
+  "S": 0.6350063967204576,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.49467184977115913,
+  "C": 0.644214324649377,
+  "S": 0.03570918930135229,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 24,
+  "A": 0.5038708887703033,
+  "C": 0.6321281673116214,
+  "S": 0.7523610064786422,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 8,
+  "A": 0.7327475985636127,
+  "C": 0.7931769665547796,
+  "S": 0.5129182569608669,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 53,
+  "A": 0.5816187718034441,
+  "C": 0.6332571580867659,
+  "S": 0.8965773287153905,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 4,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 44,
+  "A": 0.6114181013639299,
+  "C": 0.7496601696467983,
+  "S": 0.8610328504680719,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 23,
+  "A": 0.6970744860832567,
+  "C": 0.8145176966650595,
+  "S": 0.861388469759455,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 3,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.8174865288572887,
+  "C": 0.8112789253937047,
+  "S": 0.0868276856183291,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 18,
+  "A": 0.7522022672377777,
+  "C": 0.7992982192934114,
+  "S": 0.50826123706218,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 15,
+  "A": 0.766013686770378,
+  "C": 0.739249793950593,
+  "S": 0.8663129045331273,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 20,
+  "A": 0.7998521045524523,
+  "C": 0.7463744506429955,
+  "S": 0.12423232208833968,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 26,
+  "A": 0.7066225493746271,
+  "C": 0.7408511155229001,
+  "S": 0.8129418552053619,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 9,
+  "A": 0.6406084335068171,
+  "C": 0.7279471471256631,
+  "S": 0.05134228606743813,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.7105528350195124,
+  "C": 0.7499419238001072,
+  "S": 0.683820686215218,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.7640248792585527,
+  "C": 0.8161669873239112,
+  "S": 0.5795350448365278,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 34,
+  "A": 0.5440145874571066,
+  "C": 0.7331753271851659,
+  "S": 0.5800929303189912,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 8,
+  "A": 0.6960393662519285,
+  "C": 0.7338608870598737,
+  "S": 0.9686375523756268,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 25,
+  "A": 0.7744958496885176,
+  "C": 0.7153784853154616,
+  "S": 0.9945097486357904,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 17,
+  "A": 0.6081260650768927,
+  "C": 0.7115721055979298,
+  "S": 0.9981146342304204,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 34,
+  "A": 0.41562077165548417,
+  "C": 0.7492436323175119,
+  "S": 0.43073045294850437,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 31,
+  "A": 0.6905589806722104,
+  "C": 0.7830174203549257,
+  "S": 0.9436653352619245,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 29,
+  "A": 0.6365928714094408,
+  "C": 0.7211698732415283,
+  "S": 0.8356238458920068,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 19,
+  "A": 0.6755185121648869,
+  "C": 0.7012702295184685,
+  "S": 0.74295544380569,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 20,
+  "A": 0.7205323651855731,
+  "C": 0.7577532331050807,
+  "S": 0.7899224967407183,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.578848973380979,
+  "C": 0.6221740732387702,
+  "S": 0.9699808801293371,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.7429068877132756,
+  "C": 0.7658344798018782,
+  "S": 0.18921138834228093,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 40,
+  "A": 0.5339244906490042,
+  "C": 0.7609635021982208,
+  "S": 0.572733705574205,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.8566805592920514,
+  "C": 0.7943095053910231,
+  "S": 0.07204992511726546,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 17,
+  "A": 0.646477591507964,
+  "C": 0.8048551940669213,
+  "S": 0.16746423222577503,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 32,
+  "A": 0.5149591649250319,
+  "C": 0.6724019745830233,
+  "S": 0.8151243940795077,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 22,
+  "A": 0.5908176924775828,
+  "C": 0.7525362230849331,
+  "S": 0.10056718845959807,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 28,
+  "A": 0.6562851707046772,
+  "C": 0.6827739928167615,
+  "S": 0.9915359718443563,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 81,
+  "A": 0.4407530570888514,
+  "C": 0.6611563481812389,
+  "S": 0.25007807918243646,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 20,
+  "A": 0.7222165365279659,
+  "C": 0.7521861576430972,
+  "S": 0.03482326737630913,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 18,
+  "A": 0.7298859398973947,
+  "C": 0.819240821575046,
+  "S": 0.9844881282586698,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 75,
+  "A": 0.6585610526330535,
+  "C": 0.7046961296542456,
+  "S": 0.21673097359798504,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 37,
+  "A": 0.5147232611660746,
+  "C": 0.5882888840560491,
+  "S": 0.28489291525697424,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 31,
+  "A": 0.744724730788591,
+  "C": 0.7843353308380194,
+  "S": 0.975417982372942,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 78,
+  "A": 0.6599608200918248,
+  "C": 0.6498179810511259,
+  "S": 0.04464701743654395,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 8,
+  "A": 0.6533191406368597,
+  "C": 0.7902408959337803,
+  "S": 0.24362063972455492,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 13,
+  "A": 0.7197424752410072,
+  "C": 0.8079691707203605,
+  "S": 0.7337931063878792,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.7730190552887081,
+  "C": 0.8003697585949829,
+  "S": 0.8232566374417805,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 13,
+  "A": 0.7176294465927611,
+  "C": 0.7869894204623041,
+  "S": 0.9967551037431478,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 15,
+  "A": 0.6385110995673929,
+  "C": 0.7678658021606165,
+  "S": 0.06959203954405596,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 7,
+  "A": 0.5038599622072527,
+  "C": 0.5431519425072204,
+  "S": 0.08746614944057565,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 22,
+  "A": 0.597082092919763,
+  "C": 0.6750397446507918,
+  "S": 0.9958872380907262,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 35,
+  "A": 0.49601559900027703,
+  "C": 0.696793213771133,
+  "S": 0.10435814412523987,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 19,
+  "A": 0.7885997118388444,
+  "C": 0.8565101393430248,
+  "S": 0.4987688088349952,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 38,
+  "A": 0.7512858317499517,
+  "C": 0.7841742247663737,
+  "S": 0.9636270638377257,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 5,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 20,
+  "A": 0.6931281304040706,
+  "C": 0.7798916574144229,
+  "S": 0.23450534110848184,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 10,
+  "A": 0.6835174302575372,
+  "C": 0.7760027946537288,
+  "S": 0.1611008762723583,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 22,
+  "A": 0.537011930067918,
+  "C": 0.6401446067359877,
+  "S": 0.6213764753740415,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 24,
+  "A": 0.7530485256005095,
+  "C": 0.8141701278689039,
+  "S": 0.8682545911534347,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.8216295396378019,
+  "C": 0.7888909927016006,
+  "S": 0.9825970427846682,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 33,
+  "A": 0.5889295017706181,
+  "C": 0.7490964915639836,
+  "S": 0.19377203752584954,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 36,
+  "A": 0.5625093563315869,
+  "C": 0.8228839027501169,
+  "S": 0.07714267818207458,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 66,
+  "A": 0.6997369250782048,
+  "C": 0.7525220851911346,
+  "S": 0.13972183997490878,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 19,
+  "A": 0.6541640254869536,
+  "C": 0.7655704821313993,
+  "S": 0.739450062543922,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 19,
+  "A": 0.7558370244464078,
+  "C": 0.7982438867846583,
+  "S": 0.753190351591854,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 24,
+  "A": 0.6612314217795662,
+  "C": 0.7002699446133784,
+  "S": 0.43343631515887665,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.6199500971958726,
+  "C": 0.7247812835783731,
+  "S": 0.6368315274789166,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 23,
+  "A": 0.77727603232757,
+  "C": 0.8413525986098379,
+  "S": 0.368615734327585,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.7900589397125248,
+  "C": 0.7201259186116321,
+  "S": 0.9697370716882522,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 23,
+  "A": 0.6919766852863999,
+  "C": 0.7577906466252371,
+  "S": 0.9496898472291825,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.7692872141664308,
+  "C": 0.7676554121130542,
+  "S": 0.8915964377300784,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.7032596557748324,
+  "C": 0.7922870544801472,
+  "S": 0.07133704009881932,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 14,
+  "A": 0.6133068515922149,
+  "C": 0.7178388345129504,
+  "S": 0.6691680947958372,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 3,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 31,
+  "A": 0.620967230731221,
+  "C": 0.7494676010852378,
+  "S": 0.4178504378399786,
+  "live_findings": [
+   "content_logic"
+  ],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 27,
+  "A": 0.5784299987729252,
+  "C": 0.7759914828310025,
+  "S": 0.5001890661415085,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 19,
+  "A": 0.6406177970624758,
+  "C": 0.7197413511424575,
+  "S": 0.9306199054499407,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 42,
+  "A": 0.6569592145933227,
+  "C": 0.7765827842106577,
+  "S": 0.20526877928073484,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 4,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 10,
+  "A": 0.6738763704546824,
+  "C": 0.8016034066443488,
+  "S": 0.9680891918029908,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 22,
+  "A": 0.5318716033117185,
+  "C": 0.5996674409914867,
+  "S": 0.9784454353951371,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 108,
+  "A": 0.43008841092675587,
+  "C": 0.5322368382089201,
+  "S": 0.10389939087534679,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 7,
+  "A": 0.6762014560874093,
+  "C": 0.7762383102078235,
+  "S": 0.4643253085559862,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 61,
+  "A": 0.5162737387614227,
+  "C": 0.6250926136220384,
+  "S": 0.18847395262696426,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 73,
+  "A": 0.48801131669258446,
+  "C": 0.6189960086383838,
+  "S": 0.6303488595385183,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.7981227362917152,
+  "C": 0.7678517135542308,
+  "S": 0.3244942041465599,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 60,
+  "A": 0.8509263601966165,
+  "C": 0.6004203499224846,
+  "S": 0.22950134010912926,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 17,
+  "A": 0.7791843009452114,
+  "C": 0.7641102630150091,
+  "S": 0.15087244726452542,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 29,
+  "A": 0.6746831785207508,
+  "C": 0.7866495840023104,
+  "S": 0.8678361344075961,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 40,
+  "A": 0.671385455884226,
+  "C": 0.6752318638118121,
+  "S": 0.15405254880117195,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.7795904408518795,
+  "C": 0.8425364128137125,
+  "S": 0.9961605042049859,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 69,
+  "A": 0.5637457876705919,
+  "C": 0.6713070491400533,
+  "S": 0.577682224698143,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 14,
+  "A": 0.6763676960460356,
+  "C": 0.7491292273312645,
+  "S": 0.2488329143005847,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 15,
+  "A": 0.7584251444707032,
+  "C": 0.786797399528132,
+  "S": 0.020875899057728315,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.7538323305817101,
+  "C": 0.8050378134167646,
+  "S": 0.9331608118926545,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 59,
+  "A": 0.6913792175608622,
+  "C": 0.7770152969223866,
+  "S": 0.8967165365151661,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.6933011419572906,
+  "C": 0.8260142128072318,
+  "S": 0.8148769059867856,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 10,
+  "A": 0.7705694545567155,
+  "C": 0.8016739940060186,
+  "S": 0.6635862837050862,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 130,
+  "A": 0.5112257458050442,
+  "C": 0.6085117110784334,
+  "S": 0.3397836194716055,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 44,
+  "A": 0.6294651898006751,
+  "C": 0.6442440501271682,
+  "S": 0.39951330953735525,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 17,
+  "A": 0.7931913682303143,
+  "C": 0.8480391315183722,
+  "S": 0.5613618961248389,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 7,
+  "A": 0.7510653054651056,
+  "C": 0.8668469384200255,
+  "S": 0.30833700401907677,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 29,
+  "A": 0.7334123077429809,
+  "C": 0.7647512364380509,
+  "S": 0.8403829947757241,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 87,
+  "A": 0.5980482711080635,
+  "C": 0.7769562798720134,
+  "S": 0.04332616936776603,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 100,
+  "A": 0.6449775198552764,
+  "C": 0.6980923709481851,
+  "S": 0.7830024683556186,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.7688127381307611,
+  "C": 0.7929082501087993,
+  "S": 0.9783285407772322,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 41,
+  "A": 0.6977540363739462,
+  "C": 0.7227718465134915,
+  "S": 0.21075882804867485,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 35,
+  "A": 0.5226184481300127,
+  "C": 0.746243911586671,
+  "S": 0.15530467829466715,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 47,
+  "A": 0.4567002504732195,
+  "C": 0.7166245673007938,
+  "S": 0.5206778604249217,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 46,
+  "A": 0.5344247704672656,
+  "C": 0.667709930302614,
+  "S": 0.9828176780265444,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 53,
+  "A": 0.5073638504203264,
+  "C": 0.6787892128368285,
+  "S": 0.6419526198871525,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 46,
+  "A": 0.6962986295378993,
+  "C": 0.8090215335460961,
+  "S": 0.7824338707139011,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 78,
+  "A": 0.7337600892512949,
+  "C": 0.7545697608709154,
+  "S": 0.5703584450589873,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 34,
+  "A": 0.5726986104601552,
+  "C": 0.7465121688807312,
+  "S": 0.4279911443486057,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 50,
+  "A": 0.4280901847447208,
+  "C": 0.529482107640743,
+  "S": 0.0876311624666997,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 14,
+  "A": 0.6899952409755288,
+  "C": 0.679898419865553,
+  "S": 0.4584654436800925,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 37,
+  "A": 0.5229688127326263,
+  "C": 0.7364544861820498,
+  "S": 0.6390019894330112,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 34,
+  "A": 0.5672329561097376,
+  "C": 0.724542667077362,
+  "S": 0.8315071448934123,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 35,
+  "A": 0.7100783848267845,
+  "C": 0.6814027299789511,
+  "S": 0.06700872040256672,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 15,
+  "A": 0.601738144664971,
+  "C": 0.7029187454602492,
+  "S": 0.0904320187830646,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 8,
+  "A": 0.6899517622843343,
+  "C": 0.7591690424229186,
+  "S": 0.8125663286774932,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 33,
+  "A": 0.7453024779435797,
+  "C": 0.8155034672310412,
+  "S": 0.3571655662662728,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.7146842473221279,
+  "C": 0.7584730136700795,
+  "S": 0.4553939322485226,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 36,
+  "A": 0.5855172719213646,
+  "C": 0.7164209224021517,
+  "S": 0.5243210113060927,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 31,
+  "A": 0.5603254046011215,
+  "C": 0.7002455399109769,
+  "S": 0.045282966393794394,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 30,
+  "A": 0.5875758049688697,
+  "C": 0.7651284219668485,
+  "S": 0.6862881324287817,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 10,
+  "A": 0.720518829393757,
+  "C": 0.7590622406361041,
+  "S": 0.0024950208007236225,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 72,
+  "A": 0.4700580276296011,
+  "C": 0.6536285505708233,
+  "S": 0.7867296703048966,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 34,
+  "A": 0.753198904910853,
+  "C": 0.8123790144048881,
+  "S": 0.35493708810586494,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 9,
+  "A": 0.6795039729570349,
+  "C": 0.8306463679491521,
+  "S": 0.15936357371903448,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.5712846414221161,
+  "C": 0.6378880496591098,
+  "S": 0.16768521010127,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.6063600797578194,
+  "C": 0.6695483824940106,
+  "S": 0.6787060823413795,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 137,
+  "A": 0.43740694766359933,
+  "C": 0.5865294577891763,
+  "S": 0.9290567779916014,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 49,
+  "A": 0.6165023266394336,
+  "C": 0.7765573020995469,
+  "S": 0.04844390973523546,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 90,
+  "A": 0.5480665622461914,
+  "C": 0.6288382128773522,
+  "S": 0.39091702896413144,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 14,
+  "A": 0.634288162234796,
+  "C": 0.7319746679561141,
+  "S": 0.06221719426475157,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 26,
+  "A": 0.6360521693259338,
+  "C": 0.6192845225805984,
+  "S": 0.7180026006138343,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 14,
+  "A": 0.8300170692774211,
+  "C": 0.7768676658289948,
+  "S": 0.7232255206114557,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 78,
+  "A": 0.4432784039534749,
+  "C": 0.5646022246386078,
+  "S": 0.4541554939623947,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 59,
+  "A": 0.5776345806149601,
+  "C": 0.7541766164102777,
+  "S": 0.9272631591621687,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 33,
+  "A": 0.715013147529639,
+  "C": 0.7894216706842574,
+  "S": 0.7991409930350518,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 23,
+  "A": 0.7176022160092987,
+  "C": 0.7913052553290498,
+  "S": 0.6562771389095703,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.7046780625415761,
+  "C": 0.7195478950818451,
+  "S": 0.8152879908228375,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.645810456017142,
+  "C": 0.7182228259091409,
+  "S": 0.9782678205907109,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 45,
+  "A": 0.6418204621020124,
+  "C": 0.6580297668980475,
+  "S": 0.7127391016559116,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 13,
+  "A": 0.7033939301809528,
+  "C": 0.8054852291771746,
+  "S": 0.9494572320308328,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 14,
+  "A": 0.7680127013368964,
+  "C": 0.8746110368440262,
+  "S": 0.09907172774325344,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.812567434393707,
+  "C": 0.7452974907431429,
+  "S": 0.9746464008421319,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 66,
+  "A": 0.5534482801723266,
+  "C": 0.6264770549526691,
+  "S": 0.39852215768427174,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 17,
+  "A": 0.7145133284754672,
+  "C": 0.8212787697126862,
+  "S": 0.4876519001273741,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 14,
+  "A": 0.6832903280714406,
+  "C": 0.7584197100316039,
+  "S": 0.32908960712809787,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 30,
+  "A": 0.5457197065650962,
+  "C": 0.5550564339101751,
+  "S": 0.7089284358662203,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 13,
+  "A": 0.6975821047659237,
+  "C": 0.7533082625743761,
+  "S": 0.33409613127520543,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.7443345409722582,
+  "C": 0.7709172808788372,
+  "S": 0.7828047266844455,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.6780201591923769,
+  "C": 0.6589592497764124,
+  "S": 0.98081457670778,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 10,
+  "A": 0.6685063026690444,
+  "C": 0.6432041510379017,
+  "S": 0.26722173991255005,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 13,
+  "A": 0.6434699225673087,
+  "C": 0.7008149603833942,
+  "S": 0.3663828466757333,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 24,
+  "A": 0.624871616814075,
+  "C": 0.7601469678402952,
+  "S": 0.3848012117837372,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.6437216771169467,
+  "C": 0.7566412448591345,
+  "S": 0.7245640301664809,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 30,
+  "A": 0.6447752241780623,
+  "C": 0.7077394360012278,
+  "S": 0.908568813151373,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 161,
+  "A": 0.7158807979739951,
+  "C": 0.7530243701580358,
+  "S": 0.08808205068677469,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 39,
+  "A": 0.6659697206481733,
+  "C": 0.8156376776085741,
+  "S": 0.7994409453028147,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 50,
+  "A": 0.7345866602183975,
+  "C": 0.7513231596538364,
+  "S": 0.320861828506632,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 44,
+  "A": 0.500695112348346,
+  "C": 0.5717637619282446,
+  "S": 0.805756617423702,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.8931802339123864,
+  "C": 0.8821092393664901,
+  "S": 0.9860965805546829,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 12,
+  "A": 0.6203548729425162,
+  "C": 0.7349110372889085,
+  "S": 0.11902574254030003,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 35,
+  "A": 0.5817075583128838,
+  "C": 0.7002571930147392,
+  "S": 0.2378666434911478,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 14,
+  "A": 0.8011534439150605,
+  "C": 0.811703628825488,
+  "S": 0.5669303415261508,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 18,
+  "A": 0.7890532855788482,
+  "C": 0.7788532787073048,
+  "S": 0.3002351484635135,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 41,
+  "A": 0.5815824457411147,
+  "C": 0.7531108780991711,
+  "S": 0.3773304078407128,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.6797415605225219,
+  "C": 0.8416841628614047,
+  "S": 0.9874023235547913,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 28,
+  "A": 0.7493828684775429,
+  "C": 0.7480894972713754,
+  "S": 0.8209812154214908,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 13,
+  "A": 0.7225673380399663,
+  "C": 0.6456229768027067,
+  "S": 0.03288820305738376,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 18,
+  "A": 0.6996154872929534,
+  "C": 0.8119968635306531,
+  "S": 0.036048109564269404,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 35,
+  "A": 0.4828546195944081,
+  "C": 0.7574413314679997,
+  "S": 0.5209610564856962,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 36,
+  "A": 0.5332963489173758,
+  "C": 0.6863481277412721,
+  "S": 0.056903589431627696,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 24,
+  "A": 0.5225281877478867,
+  "C": 0.6536777381130315,
+  "S": 0.9704013185697721,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 20,
+  "A": 0.8242348025238025,
+  "C": 0.8116470170830005,
+  "S": 0.8742555695186259,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 43,
+  "A": 0.5439797206029804,
+  "C": 0.6988374185159228,
+  "S": 0.5141863556069006,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 16,
+  "A": 0.775431499112867,
+  "C": 0.8354662623753111,
+  "S": 0.26517472687936994,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.6039036486754819,
+  "C": 0.7757268684482287,
+  "S": 0.9959375037063339,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 41,
+  "A": 0.5849390570805882,
+  "C": 0.7487871162274128,
+  "S": 0.7708812517969382,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 26,
+  "A": 0.768867295972306,
+  "C": 0.9230781777425042,
+  "S": 0.4219555417739044,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 20,
+  "A": 0.8155128926836515,
+  "C": 0.8328359821177691,
+  "S": 0.9954311796429766,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 43,
+  "A": 0.8165224342392344,
+  "C": 0.7198025609680591,
+  "S": 0.9176086555713656,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.6845481877837414,
+  "C": 0.7775871874298153,
+  "S": 0.7794406657741542,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 61,
+  "A": 0.44431059167756126,
+  "C": 0.6640770231921683,
+  "S": 0.060700176595373925,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.6978936680795937,
+  "C": 0.8417684744647878,
+  "S": 0.5076613483473589,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 166,
+  "A": 0.5129454650262087,
+  "C": 0.5598236059257428,
+  "S": 0.33530406608731395,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 58,
+  "A": 0.5492884362945563,
+  "C": 0.7781981901345556,
+  "S": 0.7083313888462213,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": false,
+  "n_words": 0,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 107,
+  "A": 0.6380330987709362,
+  "C": 0.6731086920189762,
+  "S": 0.985849627647733,
+  "live_findings": [],
+  "layout_grid": "clear",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 23,
+  "A": 0.7691541187444431,
+  "C": 0.8647448999731633,
+  "S": 0.029431606751586115,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 35,
+  "A": 0.6303009691198529,
+  "C": 0.6047387386335139,
+  "S": 0.7180071931742089,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.623934308170825,
+  "C": 0.7765501365423594,
+  "S": 0.9890735927605816,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 73,
+  "A": 0.48994930051021346,
+  "C": 0.6549565348448557,
+  "S": 0.7255799026575322,
+  "live_findings": [],
+  "layout_grid": "finding",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 80,
+  "A": 0.6719259252505999,
+  "C": 0.6370160357943332,
+  "S": 0.02669871635191302,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.7712208936373428,
+  "C": 0.8572019578322873,
+  "S": 0.13084804588320015,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 27,
+  "A": 0.7143424206444244,
+  "C": 0.7450530460000543,
+  "S": 0.45777904175027395,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 20,
+  "A": 0.747714979266925,
+  "C": 0.8147530514038727,
+  "S": 0.9164900696442995,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 21,
+  "A": 0.5899637676734428,
+  "C": 0.6851577963813761,
+  "S": 0.9926702538507551,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 100,
+  "A": 0.5552091376254625,
+  "C": 0.5475339697514123,
+  "S": 0.7339294897128276,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 11,
+  "A": 0.5551837094363825,
+  "C": 0.7980359621564787,
+  "S": 0.6962208614710381,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.8533294508897362,
+  "C": 0.8519437411025895,
+  "S": 0.8937582260535196,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 35,
+  "A": 0.5094654847415844,
+  "C": 0.7419648784392717,
+  "S": 0.6463481215029875,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 45,
+  "A": 0.49712068576527163,
+  "C": 0.7020927812078599,
+  "S": 0.540232339098229,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 6,
+  "A": 0.7649202774313758,
+  "C": 0.7509261747241819,
+  "S": 0.9489477614199424,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 50,
+  "A": 0.7021773044807843,
+  "C": 0.7391240610116259,
+  "S": 0.8576403086776008,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ },
+ {
+  "scorable": true,
+  "n_words": 45,
+  "A": 0.5210467347781279,
+  "C": 0.6312710554857829,
+  "S": 0.6287862314335689,
+  "live_findings": [],
+  "layout_grid": "not_applicable",
+  "verdict": "inconclusive"
+ }
+]
