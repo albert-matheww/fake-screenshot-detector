@@ -106,4 +106,9 @@ tests/test_v3.py::test_item_sum_rule_stays_silent_when_a_price_could_not_be_read
 tests/test_v3.py::test_running_balance_with_debit_and_credit_columns_in_either_order PASSED [ 99%]
 tests/test_v3.py::test_running_balance_break_is_found_with_debit_and_credit_columns_in_either_order PASSED [100%]
 
-============================= 101 passed in 10.12s =============================
+=============================== warnings summary ===============================
+venv/lib/python3.14/site-packages/joblib/numpy_pickle.py:207: 6887 warnings
+tests/test_api.py: 1202 warnings
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+===================== 101 passed, 8089 warnings in 10.52s ======================

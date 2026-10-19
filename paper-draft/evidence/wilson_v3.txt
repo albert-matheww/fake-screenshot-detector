@@ -14,5 +14,6 @@ gate: one false alarm in n=34: 1/34 = 0.029, interval 0.005 to 0.149
 gate: two false alarms in n=45: 2/45 = 0.044, interval 0.012 to 0.148
 STFD pipeline: verdict suspicious: 4/3932 = 0.001, interval 0.000 to 0.003
 STFD pipeline: advisory flag meets the mask (of flags): 280/1056 = 0.265, interval 0.239 to 0.293
-mutation test: clean documents, medium or high finding, PNG: 5/240 = 0.021, interval 0.009 to 0.048
-mutation test: clean documents, medium or high finding, shared: 1/240 = 0.004, interval 0.001 to 0.023
+mutation test: clean documents, medium or high finding, PNG: 10/600 = 0.017, interval 0.009 to 0.030
+mutation test: clean documents, medium or high finding, shared: 14/600 = 0.023, interval 0.014 to 0.039
+mutation test: clean invoices, item-sum finding, shared: 9/100 = 0.090, interval 0.048 to 0.162

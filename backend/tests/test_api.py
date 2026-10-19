@@ -31,6 +31,9 @@ def test_status_reports_model(client):
     body = client.get("/status").get_json()
     assert body["status"] == "ok"
     assert body["model"]["loaded"] is True
+    # a version-1 cue is never live, whatever the stored gate file says
+    gates = body["model"]["gates"]
+    assert all(v != "live" for k, v in gates.items() if k.startswith("v1."))
 
 
 def test_analyze_missing_file(client):

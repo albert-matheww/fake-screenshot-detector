@@ -26,7 +26,7 @@ const STUDENTS = [
 ];
 // the template: cover and title page list all team members; declaration, certificate and acknowledgement carry only the submitter
 const SUBMITTERS = (process.env.SUBMITTERS ? process.env.SUBMITTERS.split(",") : ["23BCE1765"]);
-const PLACEHOLDER = { guide: "Dr. Pradeep K", designation: "<Designation>", area: "<area of the guide's expertise>", hod: "Dr. Prasanna J" };
+const PLACEHOLDER = { guide: "Dr. Pradeep K", designation: "Associate Professor", area: "cloud computing", hod: "Dr. Prasanna J" };
 
 const tocPages = fs.existsSync(process.argv[2] || "") ? JSON.parse(fs.readFileSync(process.argv[2], "utf8")) : {};
 
@@ -49,6 +49,7 @@ function initials(a) {
   return given.split(/[\s]+/).filter(Boolean).map((g) => (g.endsWith(".") ? g : g[0] + ".")).join(" ");
 }
 function fmtAuthor(a) {
+  if (!a.includes(",")) return a.trim();   // a single-name author (for example a user name on a dataset host)
   return `${lastName(a)}, ${initials(a)}`;
 }
 function authorList(auth) {
@@ -258,7 +259,7 @@ function codeLines(lines, caption, startNo) {
   const out = [new Paragraph({ keepNext: true, spacing: { before: 200, after: 80, ...LINE1 }, alignment: AlignmentType.LEFT, children: runs(caption, { size: 22 }) })];
   lines.forEach((l, i) => {
     const no = startNo != null ? String(startNo + i).padStart(4, " ") + "  " : "";
-    out.push(new Paragraph({ spacing: { ...LINE1 }, indent: { left: 0 }, children: [new TextRun({ text: no + l.replace(/\t/g, "    "), font: MONO, size: 18 })] }));
+    out.push(new Paragraph({ spacing: { ...LINE1 }, indent: { left: 0 }, children: [new TextRun({ text: no + l.replace(/\t/g, "    "), font: MONO, size: 20 })] }));
   });
   out.push(new Paragraph({ spacing: { after: 160, ...LINE1 }, children: [] }));
   return out;
@@ -267,7 +268,10 @@ const LISTING = {
   "backend/analysis.py": { start: /^def _risk\(/, end: null },
   "backend/semantic.py": { start: /^def _is_numeric\(/, end: /^def check_status_bar_duplicate\(/ },
   "backend/textforensics.py": { start: /^def word_measurements\(/, end: /^def _robust_z\(/ },
-  "backend/app.py": { start: /^class InMemoryUploadRequest/, end: /^@app.errorhandler\(413\)/ },
+  "backend/app.py": { start: /^class InMemoryUploadRequest/, end: /^app = Flask\(/ },
+  "backend/screencheck/verdict.py": { start: /^def decide\(/, end: null },
+  "backend/screencheck/assurance.py": { start: /^def assess\(/, end: null },
+  "backend/screencheck/reconcile.py": { start: /^def _compare_kind\(/, end: /^def reconcile\(/ },
   "backend/tools/forge/train_text_model.py": { start: /^def word_table_w\(/, end: /^def tpr_at_fpr\(/ },
 };
 function listingBlock(file, caption) {
@@ -285,7 +289,7 @@ function apiJsonBlock(caption) {
   const j = JSON.parse(fs.readFileSync(path.join(HERE, "evidence", "api_response_sample.json"), "utf8"));
   const shorten = (v) => {
     if (typeof v === "string") return v.length > 90 ? v.slice(0, 87) + "..." : v;
-    if (Array.isArray(v)) { const k = v.slice(0, 2).map(shorten); if (v.length > 2) k.push(`... (${v.length - 2} more)`); return k; }
+    if (Array.isArray(v)) { const k = v.slice(0, 1).map(shorten); if (v.length > 1) k.push(`... (${v.length - 1} more)`); return k; }
     if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([a, b]) => [a, shorten(b)]));
     return v;
   };
@@ -378,11 +382,13 @@ let inApp = false;
       const rows = [
         ["Test file", "Tests", "What the tests check"],
         ["tests/test_api.py", "11", "status and analysis endpoints, rejection of missing, wrongly named and unreadable files, response contract, inconclusive result on a blank image, the rule that the lowest tier is never called authentic, escalation by a contradiction and by an editing-software tag, agreement between the model's feature list and the code, and that large uploads are never spooled to disk"],
-        ["tests/test_semantic.py", "18", "rule checks: silence on an ordinary bank page, total below subtotal, item sums, weekday against date, date formats and future dates, IBAN and Luhn checksums, generator watermarks, duplicated status-bar clock, metadata editing tag, and five cases of the layout-grid rule"],
+        ["tests/test_semantic.py", "18", "content rules: silence on an ordinary bank page, total below subtotal, item sums, weekday against date, date formats and future dates, IBAN and Luhn checksums, generator watermarks, duplicated status-bar clock, metadata editing tag, and five cases of the layout-grid rule"],
         ["tests/test_textforensics.py", "6", "OCR and feature shape, a blank image has no measurable words, the edit simulator changes pixels only inside the target box, an edited word is a stronger outlier than untouched words, the font bank holds an unseen test fold, and degradation rescales boxes"],
-        ["Total", "35", ""],
+        ["tests/test_v3.py", "30", "routing by the two routers, the gate rule, the verdict policy (a clean result is never authentic, an advisory signal can only add caution), the type-specific rules, rows rebuilt from word positions (a label and an amount far apart, a running balance with columns far apart or with debit and credit columns in either order, an unreadable row treated as a gap, an unreadable item price, chat times written with AM or PM, the status bar and the chat list of a desktop window ignored), compare mode with harmless re-saves, and the response of /analyze"],
+        ["tests/test_assurance.py", "36", "fact extraction (amounts, dates, times, references), reconciliation (corroboration, conflict, one-digit reference, partial, unclear, time tolerance), assurance levels (never authentic, level 3 never reached, a conflict overrides), the type chosen by the person, /reconcile, and the version-1 cues (never live, uninformative hints ignored)"],
+        ["Total", "101", ""],
       ];
-      target.push(...tableBlock("tests", "Backend automated tests by file (35 tests, all passing in the recorded run)", rows));
+      target.push(...tableBlock("tests", "Backend automated tests by file (101 tests, all passing in the recorded run)", rows));
       i++; continue;
     }
     if ((m = line.match(/^@apijson (\S+)\|(.*)$/))) { target.push(...apiJsonBlock(appendixDigits(m[2]))); i++; continue; }
@@ -399,9 +405,9 @@ let inApp = false;
       const f = path.join(ROOT, m[1]);
       const lines = fs.readFileSync(f, "utf8").split("\n").map((l) => l.replace(/\s+$/, ""));
       while (lines.length && !lines[lines.length - 1]) lines.pop();
-      // wrap long lines to fit the page width at 7.5pt Courier
+      // wrap long lines to fit the page width at 10pt Courier
       const wrapped = [];
-      lines.forEach((l) => { for (let k = 0; k < Math.max(1, Math.ceil(l.length / 88)); k++) wrapped.push((k ? "    " : "") + l.slice(k * 88, (k + 1) * 88)); });
+      lines.forEach((l) => { for (let k = 0; k < Math.max(1, Math.ceil(l.length / 70)); k++) wrapped.push((k ? "    " : "") + l.slice(k * 70, (k + 1) * 70)); });
       target.push(...codeLines(wrapped, appendixDigits(m[2]), null));
       i++; continue;
     }
@@ -412,7 +418,7 @@ let inApp = false;
 }
 
 // ---------------------------------------------------------------- acronyms
-const SYMBOLS = [["p", "Highest word probability of being edited in an image (output of the classifier)"], ["T_s", "Suspicious-tier threshold on p (about 5% false alarms on validation images)"], ["T_e", "Evidence-tier threshold on p (about 1% false alarms on validation images)"], ["z", "Robust z-score of a measurement against the comparison set (median and scaled median absolute deviation)"]];
+const SYMBOLS = [["p", "Highest word probability of being edited in an image (output of the classifier)"], ["T_s", "Suspicious-tier threshold on p (about 5% false alarms on validation images)"], ["T_e", "Evidence-tier threshold on p (about 1% false alarms on validation images)"], ["z", "Robust z-score of a measurement against the comparison set (median and scaled median absolute deviation)"], ["n, k", "Number of genuine screenshots on which a check applied, and number of those on which it raised a finding of medium or high severity"], ["Level", "Assurance level, 0 to 2 (3 is reserved for signed data)"]];
 const ACRONYMS = [
   ["AA", "Anti-aliasing"], ["API", "Application programming interface"], ["AUC", "Area under the ROC curve"],
   ["CPU", "Central processing unit"], ["EXIF", "Exchangeable image file format (image metadata)"],
@@ -421,7 +427,7 @@ const ACRONYMS = [
   ["JPEG", "Joint Photographic Experts Group image format"], ["LCD", "Liquid-crystal display"],
   ["OCR", "Optical character recognition"], ["PNG", "Portable Network Graphics image format"],
   ["ROC", "Receiver operating characteristic"], ["SHA-256", "Secure hash algorithm, 256-bit"],
-  ["TPR", "True-positive rate (share of edited images flagged)"], ["UI", "User interface"],
+  ["OTP", "One-time password or code"], ["SMS", "Short message service"], ["STFD", "Screenshot Text Forgery Dataset"], ["TPR", "True-positive rate (share of edited images flagged)"], ["UI", "User interface"], ["UPI", "Unified Payments Interface"],
 ];
 const acronymsUsed = ACRONYMS.filter(([a]) => new RegExp("\\b" + a.replace("-", "\\-") + "\\b").test(SRC.join("\n")));
 
@@ -539,7 +545,7 @@ const figList = [];
   for (const line of SRC) {
     let m;
     if ((m = line.match(/^@table (\w+)\|(.*)$/))) tableList.push([`Table ${labels.tab[m[1]]}`, plain(m[2]), "t_" + m[1]]);
-    else if (line === "@testtable") tableList.push([`Table ${labels.tab["tests"]}`, "Backend automated tests by file (35 tests, all passing in the recorded run)", "t_tests"]);
+    else if (line === "@testtable") tableList.push([`Table ${labels.tab["tests"]}`, "Backend automated tests by file (101 tests, all passing in the recorded run)", "t_tests"]);
     else if ((m = line.match(/^@fig (\w+)\|[\d.]+\|(.*)$/))) figList.push([`Figure ${labels.fig[m[1]]}`, plain(m[2]), "f_" + m[1]]);
   }
 }

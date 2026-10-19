@@ -26,7 +26,7 @@ def model_info() -> Dict[str, Any]:
         "thresholds": {"suspicious": am.THR_LO, "evidence": am.THR_HI},
         "version": "v3 (type router + calibration-gated checks)",
         "router": router.router_gate(),
-        "gates": {k: v.get("status") for k, v in g.get("checks", {}).items()},
+        "gates": {k: gates.gate_for(k).get("status") for k in g.get("checks", {})},
     }
     return info
 

@@ -98,7 +98,7 @@
   "used_for": "sensor pattern noise (needs a camera)",
   "title": "Digital Camera Identification From Sensor Pattern Noise",
   "authors": [
-   "Luka, J.",
+   "Luk\u00e1\u0161, J.",
    "Fridrich, J.",
    "Goljan, M."
   ],
@@ -346,16 +346,16 @@
  {
   "key": "tornes2023receipt",
   "used_for": "receipt forgery dataset (Find it again)",
-  "title": "Receipt Dataset for Document Forgery Detection",
+  "title": "Receipt Dataset for\u00a0Document Forgery Detection",
   "authors": [
-   "Tornés, Beatriz Martínez",
-   "Taburet, Théo",
+   "Torn\u00e9s, Beatriz Mart\u00ednez",
+   "Taburet, Th\u00e9o",
    "Boros, Emanuela",
    "Rouis, Kais",
    "Doucet, Antoine",
-   "Gomez-Krämer, Petra",
+   "Gomez-Kr\u00e4mer, Petra",
    "Sidere, Nicolas",
-   "d’Andecy, Vincent Poulain"
+   "d\u2019Andecy, Vincent Poulain"
   ],
   "year": 2023,
   "venue": "Lecture Notes in Computer Science",
@@ -503,12 +503,12 @@
  {
   "key": "ronfleux2026docqt",
   "used_for": "document forgery localisation and JPEG quantisation tables",
-  "title": "DocQT: Improving Document Forgery Localization Robustness via Diverse JPEG Quantization Tables",
+  "title": "DocQT: Improving Document Forgery Localization Robustness via\u00a0Diverse JPEG Quantization Tables",
   "authors": [
-   "Ronfleux–Corail, Kylian",
+   "Ronfleux\u2013Corail, Kylian",
    "Bernard, Guillaume",
-   "Coustaty, Mickaël",
-   "Sidère, Nicolas"
+   "Coustaty, Micka\u00ebl",
+   "Sid\u00e8re, Nicolas"
   ],
   "year": 2026,
   "venue": "Lecture Notes in Computer Science",
@@ -522,7 +522,7 @@
   "_type": "book-chapter",
   "_containers": [
    "Lecture Notes in Computer Science",
-   "Document Analysis and Recognition – ICDAR 2026"
+   "Document Analysis and Recognition \u2013 ICDAR 2026"
   ],
   "_publisher": "Springer Nature Switzerland",
   "_event": null
@@ -530,7 +530,7 @@
  {
   "key": "dhouib2026doctamper",
   "used_for": "efficient document tampering localisation",
-  "title": "Efficient Document Tampering Localization with Multi-level Discrepancy Features and Unified DCT–Quantization Embedding",
+  "title": "Efficient Document Tampering Localization with\u00a0Multi-level Discrepancy Features and\u00a0Unified DCT\u2013Quantization Embedding",
   "authors": [
    "Dhouib, Mohamed",
    "Zhu, Ye",
@@ -549,7 +549,7 @@
   "_type": "book-chapter",
   "_containers": [
    "Lecture Notes in Computer Science",
-   "Computer Vision – ECCV 2026"
+   "Computer Vision \u2013 ECCV 2026"
   ],
   "_publisher": "Springer Nature Switzerland",
   "_event": null
@@ -738,13 +738,13 @@
   "title": "Scikit-learn: Machine Learning in Python",
   "authors": [
    "Pedregosa, Fabian",
-   "Varoquaux, Gaël",
+   "Varoquaux, Ga\u00ebl",
    "Gramfort, Alexandre",
    "Michel, Vincent",
    "Thirion, Bertrand",
    "Grisel, Olivier",
    "Blondel, Mathieu",
-   "Müller, Andreas",
+   "M\u00fcller, Andreas",
    "Nothman, Joel",
    "Louppe, Gilles",
    "Prettenhofer, Peter",
@@ -755,7 +755,7 @@
    "Cournapeau, David",
    "Brucher, Matthieu",
    "Perrot, Matthieu",
-   "Duchesnay, Édouard"
+   "Duchesnay, \u00c9douard"
   ],
   "year": 2012,
   "venue": "arXiv preprint",
@@ -914,5 +914,76 @@
   "accessed": "2026-10-15",
   "read_depth": "full",
   "used_for": "format, size and licence of the FSTS release"
+ },
+ {
+  "key": "deka2017rico",
+  "used_for": "Rico, the source of the genuine app screens behind the Rico-derived dataset used for false-alarm measurement",
+  "title": "Rico: A mobile app dataset for building data-driven design applications",
+  "authors": [
+   "Deka, Biplab",
+   "Huang, Zifeng",
+   "Franzen, Chad",
+   "Hibschman, Joshua",
+   "Afergan, Daniel",
+   "Li, Yang",
+   "Nichols, Jeffrey",
+   "Kumar, Ranjitha"
+  ],
+  "year": 2017,
+  "venue": "Proceedings of the 30th Annual ACM Symposium on User Interface Software and Technology",
+  "volume": null,
+  "issue": null,
+  "pages": "845-854",
+  "doi": "10.1145/3126594.3126651",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "metadata",
+  "_type": "proceedings-article",
+  "_containers": [
+   "Proceedings of the 30th Annual ACM Symposium on User Interface Software and Technology"
+  ],
+  "_publisher": "ACM",
+  "_event": "UIST '17"
+ },
+ {
+  "key": "hf_rico",
+  "title": "RICO Screen Annotations (dataset card; mirror of the Roots Automation copy of Google's Screen Annotation data)",
+  "authors": [
+   "Heidenreich, H."
+  ],
+  "year": 2024,
+  "venue": "Hugging Face Datasets",
+  "volume": null,
+  "issue": null,
+  "pages": null,
+  "doi": null,
+  "arxiv": null,
+  "url": "https://huggingface.co/datasets/bevaya/RICO-ScreenAnnotation",
+  "accessed": "2026-10-19",
+  "read_depth": "full",
+  "used_for": "licence (CC BY 4.0) and split sizes of the Rico-derived screens used here"
+ },
+ {
+  "key": "chow1970",
+  "used_for": "the reject option (a classifier may decline to answer, trading errors against refusals)",
+  "title": "On optimum recognition error and reject tradeoff",
+  "authors": [
+   "Chow, C."
+  ],
+  "year": 1970,
+  "venue": "IEEE Transactions on Information Theory",
+  "volume": "16",
+  "issue": "1",
+  "pages": "41-46",
+  "doi": "10.1109/TIT.1970.1054406",
+  "arxiv": null,
+  "url": null,
+  "read_depth": "metadata",
+  "_type": "journal-article",
+  "_containers": [
+   "IEEE Transactions on Information Theory"
+  ],
+  "_publisher": "IEEE",
+  "_event": null
  }
 ]
