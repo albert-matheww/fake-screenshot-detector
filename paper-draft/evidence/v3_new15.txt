@@ -1,0 +1,27 @@
+images 15
+chat             verdict                n=11 {'inconclusive': 11}
+payment_receipt  verdict                n=4 {'inconclusive': 4}
+chat             assurance level        n=11 {1: 11}
+payment_receipt  assurance level        n=4 {1: 4}
+chat             content rules          n=11 {'clear': 11}
+payment_receipt  content rules          n=4 {'clear': 4}
+chat             word-rendering model   n=11 {'clear': 9, 'finding': 2}
+payment_receipt  word-rendering model   n=4 {'clear': 4}
+chat             type-specific rule     n=11 {'not_applicable': 6, 'clear': 5}
+payment_receipt  type-specific rule     n=4 {'not_applicable': 3, 'clear': 1}
+seconds per image: median 0.59 max 1.53
+   chat_instagram_01.jpg inconclusive 1 clear clear not_applicable
+   chat_instagram_02.jpg inconclusive 1 clear clear not_applicable
+   chat_instagram_03.jpg inconclusive 1 clear clear not_applicable
+   chat_whatsapp_desktop_01.webp inconclusive 1 clear clear clear
+   chat_whatsapp_desktop_02.webp inconclusive 1 clear clear clear
+   chat_whatsapp_desktop_03.webp inconclusive 1 clear clear not_applicable
+   chat_whatsapp_desktop_04.webp inconclusive 1 clear clear not_applicable
+   chat_whatsapp_desktop_05.webp inconclusive 1 clear clear clear
+   chat_whatsapp_phone_01.jpg inconclusive 1 clear finding clear
+   chat_whatsapp_phone_02.jpg inconclusive 1 clear finding clear
+   chat_whatsapp_phone_03.jpg inconclusive 1 clear clear not_applicable
+   payment_gpay_list_01.jpg inconclusive 1 clear clear not_applicable
+   payment_gpay_list_02.jpg inconclusive 1 clear clear clear
+   payment_gpay_list_03.jpg inconclusive 1 clear clear not_applicable
+   payment_gpay_list_04.jpg inconclusive 1 clear clear not_applicable

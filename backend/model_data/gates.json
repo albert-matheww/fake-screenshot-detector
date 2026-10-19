@@ -6,103 +6,103 @@
  "calibrated_on": "2026-10-19",
  "genuine_by_type": {
   "bank_statement": 3,
+  "chat": 12,
   "web_page": 3,
   "order_invoice": 3,
-  "payment_receipt": 8,
+  "payment_receipt": 12,
   "social_post": 2,
-  "message_alert": 3,
-  "chat": 1
+  "message_alert": 3
  },
  "checks": {
   "file_metadata": {
    "status": "live",
-   "n": 23,
+   "n": 38,
    "flagged": 0,
    "low_severity_findings": 0,
    "not_applicable": 0,
-   "upper95": 0.143,
+   "upper95": 0.092,
    "reason": null
   },
   "content_logic": {
    "status": "live",
-   "n": 23,
+   "n": 38,
    "flagged": 0,
    "low_severity_findings": 0,
    "not_applicable": 0,
-   "upper95": 0.143,
+   "upper95": 0.092,
    "reason": null
   },
   "layout_grid": {
    "status": "advisory",
-   "n": 2,
+   "n": 8,
    "flagged": 0,
    "low_severity_findings": 0,
-   "not_applicable": 21,
-   "upper95": 0.658,
-   "reason": "applicable on only 2 genuine real screenshots (need 20); 18 more needed"
+   "not_applicable": 30,
+   "upper95": 0.324,
+   "reason": "applicable on only 8 genuine real screenshots (need 20); 12 more needed"
   },
   "rendering": {
    "status": "advisory",
-   "n": 23,
-   "flagged": 3,
+   "n": 38,
+   "flagged": 5,
    "low_severity_findings": 0,
    "not_applicable": 0,
-   "upper95": 0.321,
-   "reason": "false-alarm rate 3/23 with upper bound 0.32 above 0.15"
+   "upper95": 0.273,
+   "reason": "false-alarm rate 5/38 with upper bound 0.27 above 0.15"
   },
   "v1.ela": {
    "status": "advisory",
-   "n": 15,
-   "flagged": 15,
+   "n": 30,
+   "flagged": 30,
    "low_severity_findings": 0,
    "not_applicable": 8,
    "upper95": 1.0,
-   "reason": "applicable on only 15 genuine real screenshots (need 20); 5 more needed"
+   "reason": "false-alarm rate 30/30 with upper bound 1.00 above 0.15"
   },
   "v1.ghost": {
    "status": "advisory",
-   "n": 15,
-   "flagged": 10,
+   "n": 30,
+   "flagged": 15,
    "low_severity_findings": 0,
    "not_applicable": 8,
-   "upper95": 0.848,
-   "reason": "applicable on only 15 genuine real screenshots (need 20); 5 more needed"
+   "upper95": 0.668,
+   "reason": "false-alarm rate 15/30 with upper bound 0.67 above 0.15"
   },
   "v1.quant": {
-   "status": "advisory",
-   "n": 15,
+   "status": "live",
+   "n": 30,
    "flagged": 0,
    "low_severity_findings": 0,
    "not_applicable": 8,
-   "upper95": 0.204,
-   "reason": "applicable on only 15 genuine real screenshots (need 20); 5 more needed"
+   "upper95": 0.114,
+   "reason": null
   },
   "v1.noise": {
    "status": "advisory",
-   "n": 23,
-   "flagged": 23,
+   "n": 38,
+   "flagged": 38,
    "low_severity_findings": 0,
    "not_applicable": 0,
    "upper95": 1.0,
-   "reason": "false-alarm rate 23/23 with upper bound 1.00 above 0.15"
+   "reason": "false-alarm rate 38/38 with upper bound 1.00 above 0.15"
   },
   "v1.clone": {
    "status": "live",
-   "n": 23,
+   "n": 38,
    "flagged": 0,
    "low_severity_findings": 0,
    "not_applicable": 0,
-   "upper95": 0.143,
+   "upper95": 0.092,
    "reason": null
   },
   "typed.payment_receipt": {
    "status": "advisory",
-   "n": 8,
+   "n": 9,
    "flagged": 0,
    "low_severity_findings": 0,
-   "not_applicable": 0,
-   "upper95": 0.324,
-   "reason": "applicable on only 8 genuine real screenshots (need 20); 12 more needed"
+   "not_applicable": 3,
+   "upper95": 0.299,
+   "reason": "applicable on only 9 genuine real screenshots (need 20); 11 more needed"
   },
   "typed.bank_statement": {
    "status": "advisory",
@@ -124,12 +124,12 @@
   },
   "typed.chat": {
    "status": "advisory",
-   "n": 0,
+   "n": 5,
    "flagged": 0,
    "low_severity_findings": 0,
-   "not_applicable": 1,
-   "upper95": 1.0,
-   "reason": "applicable on only 0 genuine real screenshots (need 20); 20 more needed"
+   "not_applicable": 7,
+   "upper95": 0.434,
+   "reason": "applicable on only 5 genuine real screenshots (need 20); 15 more needed"
   },
   "typed.message_alert": {
    "status": "advisory",

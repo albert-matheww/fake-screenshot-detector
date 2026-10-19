@@ -156,7 +156,7 @@ def payment(rng, mut=None):
 
 
 def chat(rng, mut=None):
-    t = rng.randrange(8 * 60, 14 * 60)
+    t = rng.randrange(1 * 60, 10 * 60)             # between 01:00 and 10:00, so 12-hour times never cross noon
     ts = []
     for _ in range(8):
         t += rng.randrange(1, 7)
@@ -164,9 +164,17 @@ def chat(rng, mut=None):
     if mut == "time_order":
         j = rng.randrange(2, 6)
         ts[j] = ts[j - 1] - 45
+    style = rng.choice(["glued", "spaced", "bare"])   # "8:43PM", "8:43 PM" (as WhatsApp prints it) or a 24-hour "8:43"
+    pm = rng.random() < 0.5
+
+    def fmt(m):
+        h, mi = m // 60, m % 60
+        if style == "bare":
+            return f"{h}:{mi:02d}"
+        return f"{h}:{mi:02d}{'' if style == 'glued' else ' '}{'PM' if pm else 'AM'}"
     msgs = ["Hey, are you coming?", "On my way", "Great see you soon", "Did you get the tickets?", "Yes, two seats", "Perfect",
             "Bring the charger", "Will do"]
-    rows = [(m, f"{ts[i] // 60}:{ts[i] % 60:02d}") for i, m in enumerate(msgs)]
+    rows = [(m, fmt(ts[i])) for i, m in enumerate(msgs)]
     return draw_lines(rows, rng), "chat"
 
 

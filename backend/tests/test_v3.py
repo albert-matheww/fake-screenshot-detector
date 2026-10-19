@@ -257,3 +257,34 @@ def test_running_balance_ignores_a_row_whose_amount_could_not_be_read():
             cells[1] = ("20-00", 600)          # OCR lost the decimal point: this row now has one readable amount
         words += _row(cells, 60 + 45 * i, f"r{i}")
     assert checks.typed_bank({"words": words, "capture": {}})["status"] == "clear"
+
+
+def _chat(times, width=700, height=1400, left=300, start_top=200):
+    words = []
+    for i, t in enumerate(times):
+        words += _row([(t, left)], start_top + 70 * i, f"c{i}")
+    return {"words": words, "capture": {"width": width, "height": height}}
+
+
+def test_chat_times_glued_to_am_pm_are_read():
+    ok = _chat(["8:43PM", "8:44PM", "8:46PM", "8:50PM", "9:02PM", "9:03PM"])
+    assert checks.typed_chat(ok)["status"] == "clear"
+    bad = _chat(["8:43PM", "8:44PM", "8:46PM", "8:02PM", "9:02PM", "9:03PM"])
+    assert checks.typed_chat(bad)["status"] == "finding"
+
+
+def test_chat_times_with_a_separate_pm_word_and_across_noon_are_read_as_twelve_hour_times():
+    words = []
+    for i, (t, ap) in enumerate([("11:50", "AM"), ("11:55", "AM"), ("12:03", "PM"), ("12:10", "PM"), ("12:20", "PM"), ("12:21", "PM")]):
+        words += _row([(t, 300), (ap, 300 + 12 * len(t) + 8)], 200 + 70 * i, f"c{i}")
+    assert checks.typed_chat({"words": words, "capture": {"width": 700, "height": 1400}})["status"] == "clear"
+
+
+def test_chat_ignores_the_status_bar_clock_and_the_chat_list_of_a_desktop_window():
+    ok = _chat(["3:46AM", "3:47AM", "3:50AM", "3:52AM", "9:39AM", "9:40AM"])
+    ok["words"] += _row([("5:19", 300)], 20, "bar")              # phone status bar: not a message time
+    assert checks.typed_chat(ok)["status"] == "clear"
+    desk = _chat(["8:43PM", "8:44PM", "8:46PM", "8:50PM", "9:02PM", "9:03PM"], width=2000, height=1300, left=1500)
+    for i, t in enumerate(["5:01PM", "4:44PM", "2:05PM", "12:50PM", "11:31AM"]):
+        desk["words"] += _row([(t, 450)], 300 + 90 * i, f"s{i}")  # sidebar list, newest first
+    assert checks.typed_chat(desk)["status"] == "clear"

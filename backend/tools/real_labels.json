@@ -23,6 +23,21 @@
   "social_media,_email,_notification/WhatsApp_Image_2026-10-15_at_9.23.43_PM.jpeg": "message_alert",
   "social_media,_email,_notification/group_chat_real.png": "chat",
   "social_media,_email,_notification/notification_real.jpeg": "message_alert",
-  "social_media,_email,_notification/social_post_real.jpeg": "social_post"
+  "social_media,_email,_notification/social_post_real.jpeg": "social_post",
+  "chat_whatsapp_desktop_01.webp": "chat",
+  "chat_whatsapp_desktop_02.webp": "chat",
+  "chat_whatsapp_desktop_03.webp": "chat",
+  "chat_whatsapp_desktop_04.webp": "chat",
+  "chat_whatsapp_desktop_05.webp": "chat",
+  "chat_whatsapp_phone_01.jpg": "chat",
+  "chat_whatsapp_phone_02.jpg": "chat",
+  "chat_whatsapp_phone_03.jpg": "chat",
+  "chat_instagram_01.jpg": "chat",
+  "chat_instagram_02.jpg": "chat",
+  "chat_instagram_03.jpg": "chat",
+  "payment_gpay_list_01.jpg": "payment_receipt",
+  "payment_gpay_list_02.jpg": "payment_receipt",
+  "payment_gpay_list_03.jpg": "payment_receipt",
+  "payment_gpay_list_04.jpg": "payment_receipt"
  }
 }

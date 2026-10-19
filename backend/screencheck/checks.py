@@ -191,12 +191,44 @@ def typed_order(ctx) -> Dict[str, Any]:
     return result("typed.order_invoice", "Order or invoice arithmetic", "finding" if f else "clear", f)
 
 
+_CHAT_TIME = re.compile(r"(\d{1,2}):(\d{2})([AaPp][Mm])?[.,]?")
+
+
+def _chat_times(words, width, height):
+    """Message times in reading order, as minutes since midnight. Handles 24-hour times and 12-hour times written with or without
+    a space before AM or PM ("8:43PM", "8:43 PM"). Ignores the status bar (top 7% of the image) and, in a landscape window, the
+    left third, which holds the list of chats with their last-message times and not the messages themselves."""
+    ws = sorted(words, key=lambda w: (w["top"], w["left"]))
+    out = []
+    for i, w in enumerate(ws):
+        m = _CHAT_TIME.fullmatch(w["text"].strip())
+        if not m:
+            continue
+        if height and w["top"] < 0.07 * height:
+            continue
+        if width and height and width > height and w["left"] < 0.33 * width:
+            continue
+        h, mi, ap = int(m.group(1)), int(m.group(2)), (m.group(3) or "").lower()
+        if not ap:                                   # "8:43" and "PM" may be two words on the same row
+            for nx in ws[i + 1:i + 4]:
+                if abs((nx["top"] + nx["height"] / 2) - (w["top"] + w["height"] / 2)) <= 0.5 * w["height"] and 0 <= nx["left"] - (w["left"] + w["width"]) <= 3 * w["height"]:
+                    if nx["text"].strip().lower().rstrip(".,") in ("am", "pm"):
+                        ap = nx["text"].strip().lower()[0] + "m"
+                    break
+        if mi > 59 or h > 24 or (ap and not 1 <= h <= 12):
+            continue
+        if ap:
+            h = h % 12 + (12 if ap == "pm" else 0)
+        out.append((w["top"], h * 60 + mi))
+    return out
+
+
 def typed_chat(ctx) -> Dict[str, Any]:
-    words = _confident(ctx["words"])
-    times = [(w["top"], w["text"]) for w in sorted(words, key=lambda z: z["top"]) if re.fullmatch(r"\d{1,2}:\d{2}", w["text"])]
+    cap = ctx.get("capture") or {}
+    times = _chat_times(_confident(ctx["words"]), cap.get("width"), cap.get("height"))
     if len(times) < 5:
         return result("typed.chat", "Chat timestamp order", "not_applicable", why="Fewer than five message times were read.")
-    mins = [int(t.split(":")[0]) * 60 + int(t.split(":")[1]) for _, t in times]
+    mins = [t for _, t in times]
     drops = [i for i in range(1, len(mins)) if mins[i] + 10 < mins[i - 1] and mins[i - 1] - mins[i] < 600]
     f = []
     if drops:

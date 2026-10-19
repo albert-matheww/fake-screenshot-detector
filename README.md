@@ -79,7 +79,7 @@ cd frontend && npm install && npm run dev        # proxies /api to the backend
 docker compose up --build
 ```
 
-Tests: `cd backend && pytest tests` (86) and `cd frontend && npm test` (72).
+Tests: `cd backend && pytest tests` (93) and `cd frontend && npm test` (72).
 
 ## API
 
